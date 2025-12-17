@@ -1,0 +1,23 @@
+root = "."
+tmp_dir = "tmp"
+
+[build]
+cmd = "go build -o ./tmp/runner cmd/app/main.go"
+bin = "./tmp/runner"
+delay = 500 #ms
+exclude_dir = ["vendor", "docs", "tmp", "migrations"] 
+include_ext = ["go", "tpl", "html"]
+
+[run]
+# Используем ENV PORT, если он установлен, иначе 8080 (должен совпадать с кодом Go)
+cmds = ["/bin/bash", "-c", "exec $GOPATH/bin/air"] 
+
+[log]
+# log time on and colorizing logs is useful.
+time = false
+
+[color]
+main  = "magenta"
+watcher = "cyan"
+build = "yellow"
+runner = "green"

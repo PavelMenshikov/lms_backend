@@ -1,0 +1,113 @@
+basePath: /
+definitions:
+  domain.Role:
+    enum:
+    - student
+    - parent
+    - teacher
+    type: string
+    x-enum-varnames:
+    - RoleStudent
+    - RoleParent
+    - RoleTeacher
+  domain.User:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      first_name:
+        type: string
+      id:
+        type: integer
+      last_name:
+        type: string
+      role:
+        $ref: '#/definitions/domain.Role'
+    type: object
+  http.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  http.RegisterRequest:
+    properties:
+      email:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+      password:
+        type: string
+      role:
+        $ref: '#/definitions/domain.Role'
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API для LMS платформы Cap Education.
+  title: Cap Education LMS - Auth API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Ввод email и пароля, возвращает JWT токен
+      parameters:
+      - description: Данные для входа
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/http.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'token: JWT-токен'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: 'error: Неправильный логин/пароль'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Вход в систему (Log in student)
+      tags:
+      - Аутентификация
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Создает аккаунт ученика или родителя
+      parameters:
+      - description: Данные для регистрации
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/http.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.User'
+        "400":
+          description: 'error: Ошибка валидации'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Регистрация нового пользователя
+      tags:
+      - Аутентификация
+swagger: "2.0"
