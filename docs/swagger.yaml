@@ -1,15 +1,5 @@
 basePath: /
 definitions:
-  http.CreateCourseRequest:
-    properties:
-      description:
-        type: string
-      is_main:
-        description: Основной / Дополнительный
-        type: boolean
-      title:
-        type: string
-    type: object
   http.LoginRequest:
     properties:
       email:
@@ -17,7 +7,7 @@ definitions:
       password:
         type: string
     type: object
-host: localhost:8080
+host: localhost:8000
 info:
   contact: {}
   description: API для LMS платформы Cap Education.
@@ -25,34 +15,31 @@ info:
   version: "1.0"
 paths:
   /admin/courses:
+    get:
+      produces:
+      - application/json
+      responses: {}
+      summary: 'ADMIN: Список всех курсов'
+      tags:
+      - Admin-Content
     post:
       consumes:
-      - application/json
-      description: Создает карточку курса, доступно только RoleAdmin
+      - multipart/form-data
       parameters:
-      - description: Данные нового курса
-        in: body
-        name: request
+      - description: Название курса
+        in: formData
+        name: title
         required: true
-        schema:
-          $ref: '#/definitions/http.CreateCourseRequest'
+        type: string
+      - description: Файл изображения
+        in: formData
+        name: image_file
+        type: file
       produces:
       - application/json
       responses:
         "200":
-          description: 'message: Course created, id: <UUID>'
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "400":
-          description: 'error: Ошибка валидации'
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "403":
-          description: 'Forbidden: Недостаточно прав (не RoleAdmin)'
+          description: OK
           schema:
             additionalProperties:
               type: string
@@ -60,6 +47,130 @@ paths:
       summary: 'ADMIN: Создание нового курса'
       tags:
       - Admin-Content
+  /admin/courses/{id}/settings:
+    put:
+      consumes:
+      - multipart/form-data
+      parameters:
+      - description: ID курса
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: 'ADMIN: Обновление настроек курса'
+      tags:
+      - Admin-Content
+  /admin/courses/{id}/stats:
+    get:
+      parameters:
+      - description: ID курса
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      summary: 'ADMIN: Статистика курса'
+      tags:
+      - Admin-Stats
+  /admin/courses/{id}/structure:
+    get:
+      parameters:
+      - description: ID курса
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      summary: 'ADMIN: Содержание курса (Дерево)'
+      tags:
+      - Admin-Content
+  /admin/courses/{id}/students:
+    get:
+      parameters:
+      - description: ID курса
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      summary: 'ADMIN: Список учеников курса'
+      tags:
+      - Admin-Users
+  /admin/enroll:
+    post:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses: {}
+      summary: 'ADMIN: Запись на курс'
+      tags:
+      - Admin-Users
+  /admin/lessons:
+    post:
+      consumes:
+      - multipart/form-data
+      produces:
+      - application/json
+      responses: {}
+      summary: 'ADMIN: Добавление урока'
+      tags:
+      - Admin-Content
+  /admin/modules:
+    post:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses: {}
+      summary: 'ADMIN: Создание модуля'
+      tags:
+      - Admin-Content
+  /admin/projects:
+    post:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses: {}
+      summary: 'ADMIN: Добавление проекта'
+      tags:
+      - Admin-Content
+  /admin/tests:
+    post:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses: {}
+      summary: 'ADMIN: Добавление теста'
+      tags:
+      - Admin-Content
+  /admin/users:
+    post:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses: {}
+      summary: 'ADMIN: Создание пользователя'
+      tags:
+      - Admin-Users
   /auth/login:
     post:
       consumes:

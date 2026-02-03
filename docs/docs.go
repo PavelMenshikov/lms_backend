@@ -16,10 +16,19 @@ const docTemplate = `{
     "basePath": "{{.BasePath}}",
     "paths": {
         "/admin/courses": {
-            "post": {
-                "description": "Создает карточку курса, доступно только RoleAdmin",
-                "consumes": [
+            "get": {
+                "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "Admin-Content"
+                ],
+                "summary": "ADMIN: Список всех курсов",
+                "responses": {}
+            },
+            "post": {
+                "consumes": [
+                    "multipart/form-data"
                 ],
                 "produces": [
                     "application/json"
@@ -30,36 +39,22 @@ const docTemplate = `{
                 "summary": "ADMIN: Создание нового курса",
                 "parameters": [
                     {
-                        "description": "Данные нового курса",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/http.CreateCourseRequest"
-                        }
+                        "type": "string",
+                        "description": "Название курса",
+                        "name": "title",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Файл изображения",
+                        "name": "image_file",
+                        "in": "formData"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "message: Course created, id: \u003cUUID\u003e",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "error: Ошибка валидации",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden: Недостаточно прав (не RoleAdmin)",
+                        "description": "OK",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -68,6 +63,193 @@ const docTemplate = `{
                         }
                     }
                 }
+            }
+        },
+        "/admin/courses/{id}/settings": {
+            "put": {
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin-Content"
+                ],
+                "summary": "ADMIN: Обновление настроек курса",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID курса",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/courses/{id}/stats": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin-Stats"
+                ],
+                "summary": "ADMIN: Статистика курса",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID курса",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/admin/courses/{id}/structure": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin-Content"
+                ],
+                "summary": "ADMIN: Содержание курса (Дерево)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID курса",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/admin/courses/{id}/students": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin-Users"
+                ],
+                "summary": "ADMIN: Список учеников курса",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID курса",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/admin/enroll": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin-Users"
+                ],
+                "summary": "ADMIN: Запись на курс",
+                "responses": {}
+            }
+        },
+        "/admin/lessons": {
+            "post": {
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin-Content"
+                ],
+                "summary": "ADMIN: Добавление урока",
+                "responses": {}
+            }
+        },
+        "/admin/modules": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin-Content"
+                ],
+                "summary": "ADMIN: Создание модуля",
+                "responses": {}
+            }
+        },
+        "/admin/projects": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin-Content"
+                ],
+                "summary": "ADMIN: Добавление проекта",
+                "responses": {}
+            }
+        },
+        "/admin/tests": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin-Content"
+                ],
+                "summary": "ADMIN: Добавление теста",
+                "responses": {}
+            }
+        },
+        "/admin/users": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin-Users"
+                ],
+                "summary": "ADMIN: Создание пользователя",
+                "responses": {}
             }
         },
         "/auth/login": {
@@ -160,21 +342,6 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "http.CreateCourseRequest": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "is_main": {
-                    "description": "Основной / Дополнительный",
-                    "type": "boolean"
-                },
-                "title": {
-                    "type": "string"
-                }
-            }
-        },
         "http.LoginRequest": {
             "type": "object",
             "properties": {
@@ -192,7 +359,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost:8080",
+	Host:             "localhost:8000",
 	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "Cap Education LMS - API",
