@@ -19,9 +19,10 @@ type ContentAdminRepository interface {
 	GetLessonsByCourseID(ctx context.Context, courseID string) ([]*domain.Lesson, error)
 	CreateUser(ctx context.Context, user *domain.User) (string, error)
 	EnrollStudent(ctx context.Context, userID, courseID string) error
-
 	GetCourseStudents(ctx context.Context, courseID string) ([]*domain.AdminStudentProgress, error)
 	GetCourseStats(ctx context.Context, courseID string) (*domain.AdminCourseStats, error)
+	CreateTest(ctx context.Context, test *domain.Test) (string, error)
+	CreateProject(ctx context.Context, project *domain.Project) (string, error)
 }
 
 type ContentAdminRepoImpl struct {
@@ -117,12 +118,7 @@ func (r *ContentAdminRepoImpl) GetAllCourses(ctx context.Context) ([]*domain.Cou
 
 func (r *ContentAdminRepoImpl) GetCourseByID(ctx context.Context, id string) (*domain.Course, error) {
 	c := &domain.Course{}
-	query := `
-		SELECT id, title, description, is_main, image_url, status, created_at,
-		       has_homework, is_homework_mandatory, is_test_mandatory, 
-		       is_project_mandatory, is_discord_mandatory, is_anti_copy_enabled
-		FROM courses WHERE id = $1
-	`
+	query := `SELECT id, title, description, is_main, image_url, status, created_at, has_homework, is_homework_mandatory, is_test_mandatory, is_project_mandatory, is_discord_mandatory, is_anti_copy_enabled FROM courses WHERE id = $1`
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
 		&c.ID, &c.Title, &c.Description, &c.IsMain, &c.ImageURL, &c.Status, &c.CreatedAt,
 		&c.HasHomework, &c.IsHomeworkMandatory, &c.IsTestMandatory,
@@ -153,14 +149,7 @@ func (r *ContentAdminRepoImpl) GetModulesByCourseID(ctx context.Context, courseI
 }
 
 func (r *ContentAdminRepoImpl) GetLessonsByCourseID(ctx context.Context, courseID string) ([]*domain.Lesson, error) {
-	query := `
-		SELECT l.id, l.module_id, l.teacher_id, l.title, l.lesson_time, l.duration_min, 
-		       l.order_num, l.is_published, l.video_url, l.presentation_url, l.content_text
-		FROM lessons l
-		JOIN modules m ON l.module_id = m.id
-		WHERE m.course_id = $1
-		ORDER BY l.order_num ASC
-	`
+	query := `SELECT l.id, l.module_id, l.teacher_id, l.title, l.lesson_time, l.duration_min, l.order_num, l.is_published, l.video_url, l.presentation_url, l.content_text FROM lessons l JOIN modules m ON l.module_id = m.id WHERE m.course_id = $1 ORDER BY l.order_num ASC`
 	rows, err := r.db.QueryContext(ctx, query, courseID)
 	if err != nil {
 		return nil, err
@@ -169,8 +158,7 @@ func (r *ContentAdminRepoImpl) GetLessonsByCourseID(ctx context.Context, courseI
 	var lessons []*domain.Lesson
 	for rows.Next() {
 		l := &domain.Lesson{}
-		if err := rows.Scan(&l.ID, &l.ModuleID, &l.TeacherID, &l.Title, &l.LessonTime, 
-			&l.DurationMin, &l.OrderNum, &l.IsPublished, &l.VideoURL, &l.PresentationURL, &l.ContentText); err != nil {
+		if err := rows.Scan(&l.ID, &l.ModuleID, &l.TeacherID, &l.Title, &l.LessonTime, &l.DurationMin, &l.OrderNum, &l.IsPublished, &l.VideoURL, &l.PresentationURL, &l.ContentText); err != nil {
 			return nil, err
 		}
 		lessons = append(lessons, l)
@@ -222,15 +210,30 @@ func (r *ContentAdminRepoImpl) GetCourseStudents(ctx context.Context, courseID s
 
 func (r *ContentAdminRepoImpl) GetCourseStats(ctx context.Context, courseID string) (*domain.AdminCourseStats, error) {
 	stats := &domain.AdminCourseStats{SuccessRateBreakdown: make(map[string]int)}
-	query := `
-		SELECT 
-			COUNT(user_id) as total_students,
-			COALESCE(AVG(progress_percent), 0) as avg_progress
-		FROM user_courses WHERE course_id = $1
-	`
+	query := `SELECT COUNT(user_id) as total_students, COALESCE(AVG(progress_percent), 0) as avg_progress FROM user_courses WHERE course_id = $1`
 	err := r.db.QueryRowContext(ctx, query, courseID).Scan(&stats.TotalStudents, &stats.AverageScore)
 	if err != nil {
 		return nil, err
 	}
 	return stats, nil
+}
+
+func (r *ContentAdminRepoImpl) CreateTest(ctx context.Context, test *domain.Test) (string, error) {
+	var newID string
+	query := `INSERT INTO tests (lesson_id, title, description, passing_score) VALUES ($1, $2, $3, $4) RETURNING id`
+	err := r.db.QueryRowContext(ctx, query, test.LessonID, test.Title, test.Description, test.PassingScore).Scan(&newID)
+	if err != nil {
+		return "", fmt.Errorf("failed to create test: %w", err)
+	}
+	return newID, nil
+}
+
+func (r *ContentAdminRepoImpl) CreateProject(ctx context.Context, project *domain.Project) (string, error) {
+	var newID string
+	query := `INSERT INTO projects (lesson_id, title, description, max_score) VALUES ($1, $2, $3, $4) RETURNING id`
+	err := r.db.QueryRowContext(ctx, query, project.LessonID, project.Title, project.Description, project.MaxScore).Scan(&newID)
+	if err != nil {
+		return "", fmt.Errorf("failed to create project: %w", err)
+	}
+	return newID, nil
 }

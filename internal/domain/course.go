@@ -48,6 +48,24 @@ type Lesson struct {
 	ContentText     string    `json:"content_text" db:"content_text"`
 }
 
+type Test struct {
+	ID           string    `json:"id" db:"id"`
+	LessonID     string    `json:"lesson_id" db:"lesson_id"`
+	Title        string    `json:"title" db:"title"`
+	Description  string    `json:"description" db:"description"`
+	PassingScore int       `json:"passing_score" db:"passing_score"`
+	CreatedAt    time.Time `json:"created_at" db:"created_at"`
+}
+
+type Project struct {
+	ID          string    `json:"id" db:"id"`
+	LessonID    string    `json:"lesson_id" db:"lesson_id"`
+	Title       string    `json:"title" db:"title"`
+	Description string    `json:"description" db:"description"`
+	MaxScore    int       `json:"max_score" db:"max_score"`
+	CreatedAt   time.Time `json:"created_at" db:"created_at"`
+}
+
 type CourseStructure struct {
 	Course  *Course           `json:"course"`
 	Modules []*ModuleStructure `json:"modules"`
@@ -59,22 +77,22 @@ type ModuleStructure struct {
 }
 
 type AdminStudentProgress struct {
-	UserID           string    `json:"user_id"`
-	FirstName        string    `json:"first_name"`
-	LastName         string    `json:"last_name"`
-	PhotoURL         string    `json:"photo_url"`
-	Status           string    `json:"status"`
-	StartDate        time.Time `json:"start_date"`
-	ProgressPercent  int       `json:"progress_percent"`
-	LessonsAttended  int       `json:"lessons_attended"`
-	HomeworksDone    int       `json:"homeworks_done"`
+	UserID          string    `json:"user_id"`
+	FirstName       string    `json:"first_name"`
+	LastName        string    `json:"last_name"`
+	PhotoURL        string    `json:"photo_url"`
+	Status          string    `json:"status"`
+	StartDate       time.Time `json:"start_date"`
+	ProgressPercent int       `json:"progress_percent"`
+	LessonsAttended int       `json:"lessons_attended"`
+	HomeworksDone   int       `json:"homeworks_done"`
 }
 
 type AdminCourseStats struct {
-	TotalStudents       int            `json:"total_students"`
-	NewStudentsMonth    int            `json:"new_students_month"`
-	FrozenStudents      int            `json:"frozen_students"`
-	GraduatedStudents   int            `json:"graduated_students"`
-	AverageScore        float64        `json:"average_score"`
+	TotalStudents        int            `json:"total_students"`
+	NewStudentsMonth     int            `json:"new_students_month"`
+	FrozenStudents       int            `json:"frozen_students"`
+	GraduatedStudents    int            `json:"graduated_students"`
+	AverageScore         float64        `json:"average_score"`
 	SuccessRateBreakdown map[string]int `json:"success_rate_breakdown"`
 }

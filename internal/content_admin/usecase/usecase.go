@@ -282,3 +282,37 @@ func (uc *ContentAdminUseCase) GetCourseStudents(ctx context.Context, courseID s
 func (uc *ContentAdminUseCase) GetCourseStats(ctx context.Context, courseID string) (*domain.AdminCourseStats, error) {
 	return uc.repo.GetCourseStats(ctx, courseID)
 }
+
+type CreateTestInput struct {
+	LessonID     string
+	Title        string
+	Description  string
+	PassingScore int
+}
+
+func (uc *ContentAdminUseCase) CreateTest(ctx context.Context, input CreateTestInput) (string, error) {
+	test := &domain.Test{
+		LessonID:     input.LessonID,
+		Title:        input.Title,
+		Description:  input.Description,
+		PassingScore: input.PassingScore,
+	}
+	return uc.repo.CreateTest(ctx, test)
+}
+
+type CreateProjectInput struct {
+	LessonID    string
+	Title       string
+	Description string
+	MaxScore    int
+}
+
+func (uc *ContentAdminUseCase) CreateProject(ctx context.Context, input CreateProjectInput) (string, error) {
+	project := &domain.Project{
+		LessonID:    input.LessonID,
+		Title:       input.Title,
+		Description: input.Description,
+		MaxScore:    input.MaxScore,
+	}
+	return uc.repo.CreateProject(ctx, project)
+}
