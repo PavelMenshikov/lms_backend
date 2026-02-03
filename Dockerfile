@@ -1,35 +1,17 @@
-FROM golang:1.21-alpine AS builder
-
-
-ENV CGO_ENABLED=0
-ENV TZ=Europe/London
-
+FROM golang:1.22-alpine AS builder
+RUN apk add --no-cache git
 WORKDIR /app
-
-
 COPY go.mod go.sum ./
 RUN go mod download
-
-
 COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -o main ./cmd/app/main.go
 
-
-RUN go build -o /goapp cmd/app/main.go
-
-
-
-FROM alpine:3.18
-
- 
-RUN apk add --no-cache tzdata bash
-
-WORKDIR /app
-
-
-COPY --from=builder /goapp /app/main
-
-
-EXPOSE 8080
-
-
-CMD ["/app/main"]
+FROM alpine:latest
+RUN apk --no-cache add ca-certificates tzdata
+WORKDIR /root/
+COPY --from=builder /app/main .
+COPY --from=builder /app/.env .
+COPY --from=builder /app/migrations ./migrations
+COPY --from=builder /app/docs ./docs
+EXPOSE 8000
+CMD ["./main"]

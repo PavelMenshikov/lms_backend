@@ -1,29 +1,14 @@
 basePath: /
 definitions:
-  domain.Role:
-    enum:
-    - student
-    - parent
-    - teacher
-    type: string
-    x-enum-varnames:
-    - RoleStudent
-    - RoleParent
-    - RoleTeacher
-  domain.User:
+  http.CreateCourseRequest:
     properties:
-      created_at:
+      description:
         type: string
-      email:
+      is_main:
+        description: Основной / Дополнительный
+        type: boolean
+      title:
         type: string
-      first_name:
-        type: string
-      id:
-        type: integer
-      last_name:
-        type: string
-      role:
-        $ref: '#/definitions/domain.Role'
     type: object
   http.LoginRequest:
     properties:
@@ -32,31 +17,54 @@ definitions:
       password:
         type: string
     type: object
-  http.RegisterRequest:
-    properties:
-      email:
-        type: string
-      first_name:
-        type: string
-      last_name:
-        type: string
-      password:
-        type: string
-      role:
-        $ref: '#/definitions/domain.Role'
-    type: object
 host: localhost:8080
 info:
   contact: {}
   description: API для LMS платформы Cap Education.
-  title: Cap Education LMS - Auth API
+  title: Cap Education LMS - API
   version: "1.0"
 paths:
+  /admin/courses:
+    post:
+      consumes:
+      - application/json
+      description: Создает карточку курса, доступно только RoleAdmin
+      parameters:
+      - description: Данные нового курса
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/http.CreateCourseRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'message: Course created, id: <UUID>'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: 'error: Ошибка валидации'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: 'Forbidden: Недостаточно прав (не RoleAdmin)'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: 'ADMIN: Создание нового курса'
+      tags:
+      - Admin-Content
   /auth/login:
     post:
       consumes:
       - application/json
-      description: Ввод email и пароля, возвращает JWT токен
+      description: Ввод email и пароля, возвращает HTTP-Only Cookie.
       parameters:
       - description: Данные для входа
         in: body
@@ -68,10 +76,9 @@ paths:
       - application/json
       responses:
         "200":
-          description: 'token: JWT-токен'
+          description: 'message: Login successful, user: {...}'
           schema:
-            additionalProperties:
-              type: string
+            additionalProperties: true
             type: object
         "401":
           description: 'error: Неправильный логин/пароль'
@@ -79,35 +86,36 @@ paths:
             additionalProperties:
               type: string
             type: object
-      summary: Вход в систему (Log in student)
+      summary: Вход в систему (Log in student/admin)
       tags:
       - Аутентификация
   /auth/register:
     post:
-      consumes:
+      description: Данный функционал отключен, пользователи создаются только Администратором.
+      produces:
       - application/json
-      description: Создает аккаунт ученика или родителя
-      parameters:
-      - description: Данные для регистрации
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/http.RegisterRequest'
+      responses:
+        "403":
+          description: 'error: Public registration is disabled.'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Регистрация (ЗАБЛОКИРОВАНО)
+      tags:
+      - Аутентификация
+  /dashboard/home:
+    get:
+      description: Returns the home dashboard for the authenticated user
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/domain.User'
-        "400":
-          description: 'error: Ошибка валидации'
-          schema:
-            additionalProperties:
-              type: string
+            additionalProperties: true
             type: object
-      summary: Регистрация нового пользователя
+      summary: Get user home dashboard
       tags:
-      - Аутентификация
+      - dashboard
 swagger: "2.0"

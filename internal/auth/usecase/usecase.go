@@ -28,19 +28,12 @@ func checkPassword(hash, password string) error {
 }
 
 func (u *AuthUsecase) Register(ctx context.Context, user *domain.User, password string) error {
-	pwd, err := hashPassword(password)
-	if err != nil {
-		return err
-	}
-
-	user.Password = pwd
-	return u.repo.CreateUser(ctx, user)
+	return errors.New("Public registration is disabled.")
 }
 
 func (u *AuthUsecase) Login(ctx context.Context, email, password string) (*domain.User, error) {
 	user, err := u.repo.GetByEmail(ctx, email)
 	if err != nil {
-
 		return nil, errors.New("user not found")
 	}
 

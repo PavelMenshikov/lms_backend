@@ -1,0 +1,35 @@
+ALTER TABLE courses 
+ADD COLUMN has_homework BOOLEAN NOT NULL DEFAULT FALSE,
+ADD COLUMN is_homework_mandatory BOOLEAN NOT NULL DEFAULT FALSE,
+ADD COLUMN is_test_mandatory BOOLEAN NOT NULL DEFAULT FALSE,
+ADD COLUMN is_project_mandatory BOOLEAN NOT NULL DEFAULT FALSE,
+ADD COLUMN is_discord_mandatory BOOLEAN NOT NULL DEFAULT FALSE,
+ADD COLUMN is_anti_copy_enabled BOOLEAN NOT NULL DEFAULT FALSE;
+
+CREATE TABLE IF NOT EXISTS tests (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    lesson_id UUID,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    passing_score INTEGER NOT NULL DEFAULT 70,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    
+    FOREIGN KEY (lesson_id) REFERENCES lessons(id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS projects (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    lesson_id UUID,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    max_score INTEGER NOT NULL DEFAULT 100,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+
+    FOREIGN KEY (lesson_id) REFERENCES lessons(id) ON DELETE SET NULL
+);
+
+ALTER TABLE lessons
+ADD COLUMN video_url VARCHAR(500), 
+ADD COLUMN presentation_url VARCHAR(500),
+ADD COLUMN content_text TEXT, 
+ADD COLUMN is_published BOOLEAN NOT NULL DEFAULT FALSE;

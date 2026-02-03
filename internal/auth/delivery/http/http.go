@@ -2,11 +2,11 @@ package http
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"time"
 
 	"lms_backend/internal/auth/usecase"
-	"lms_backend/internal/domain"
 )
 
 type AuthHandler struct {
@@ -17,47 +17,17 @@ func NewAuthHandler(uc *usecase.AuthUsecase) *AuthHandler {
 	return &AuthHandler{uc: uc}
 }
 
-type RegisterRequest struct {
-	FirstName string      `json:"first_name"`
-	LastName  string      `json:"last_name"`
-	Email     string      `json:"email"`
-	Password  string      `json:"password"`
-	Role      domain.Role `json:"role"`
-}
-
+// РЕГИСТРАЦИЯ ОТМЕНЕНА: оставляем роут для старых Swagger-клиентов, но он выдаст ошибку 403.
 // Register godoc
-// @Summary Регистрация нового пользователя
-// @Description Создает аккаунт ученика или родителя
+// @Summary Регистрация (ЗАБЛОКИРОВАНО)
+// @Description Данный функционал отключен, пользователи создаются только Администратором.
 // @Tags Аутентификация
-// @Accept  json
 // @Produce  json
-// @Param   request body RegisterRequest true "Данные для регистрации"
-// @Success 200 {object} domain.User
-// @Failure 400 {object} map[string]string "error: Ошибка валидации"
+// @Failure 403 {object} map[string]string "error: Public registration is disabled."
 // @Router /auth/register [post]
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
-	var req RegisterRequest
-
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	user := &domain.User{
-		FirstName: req.FirstName,
-		LastName:  req.LastName,
-		Email:     req.Email,
-		Role:      req.Role,
-	}
-
-	if err := h.uc.Register(r.Context(), user, req.Password); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(user)
+	log.Println("ATTEMPT TO USE DEPRECATED /auth/register ROUTE. ACCESS DENIED.")
+	http.Error(w, "Public registration is disabled. Users must be created by Admin.", http.StatusForbidden)
 }
 
 type LoginRequest struct {
@@ -66,13 +36,13 @@ type LoginRequest struct {
 }
 
 // Login godoc
-// @Summary Вход в систему (Log in student)
-// @Description Ввод email и пароля, возвращает JWT токен
+// @Summary Вход в систему (Log in student/admin)
+// @Description Ввод email и пароля, возвращает HTTP-Only Cookie.
 // @Tags Аутентификация
 // @Accept  json
 // @Produce  json
 // @Param   request body LoginRequest true "Данные для входа"
-// @Success 200 {object} map[string]string "token: JWT-токен"
+// @Success 200 {object} map[string]interface{} "message: Login successful, user: {...}"
 // @Failure 401 {object} map[string]string "error: Неправильный логин/пароль"
 // @Router /auth/login [post]
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
@@ -95,7 +65,6 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		Name:     "auth_token",
 		Value:    token,
 		Expires:  time.Now().Add(24 * time.Hour * 7),
-		MaxAge:   int(24 * 7 * time.Hour / time.Second),
 		HttpOnly: true,
 		Secure:   r.TLS != nil,
 		SameSite: http.SameSiteLaxMode,

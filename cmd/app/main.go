@@ -20,17 +20,28 @@ import (
 	dashboardHttp "lms_backend/internal/dashboard/delivery/http"
 	dashboardRepo "lms_backend/internal/dashboard/repository"
 	dashboardUseCase "lms_backend/internal/dashboard/usecase"
+
+	contentAdminHttp "lms_backend/internal/content_admin/delivery/http"
+	contentAdminRepo "lms_backend/internal/content_admin/repository"
+	contentAdminUseCase "lms_backend/internal/content_admin/usecase"
+
+	"lms_backend/internal/domain"
+	storageService "lms_backend/pkg/storage"
 )
 
-// @title Cap Education LMS - Auth API
+// @title Cap Education LMS - API
 // @version 1.0
 // @description API для LMS платформы Cap Education.
-// @host localhost:8080
+// @host localhost:8000
 // @BasePath /
 func main() {
-
 	if err := godotenv.Load(); err != nil {
 		log.Println("No .env file found")
+	}
+
+	apiPort := os.Getenv("API_PORT")
+	if apiPort == "" {
+		apiPort = "8080"
 	}
 
 	host := os.Getenv("DB_HOST")
@@ -49,6 +60,18 @@ func main() {
 	defer db.Close()
 	log.Println("Успешное подключение к PostgreSQL")
 
+	s3Client, err := storageService.NewS3Client(
+		os.Getenv("S3_ENDPOINT_URL"),
+		os.Getenv("S3_REGION"),
+		os.Getenv("S3_BUCKET_NAME"),
+		os.Getenv("S3_ACCESS_KEY_ID"),
+		os.Getenv("S3_SECRET_ACCESS_KEY"),
+	)
+	if err != nil {
+		log.Fatalf("Failed to initialize S3 Storage: %v", err)
+	}
+	log.Println("Успешная инициализация S3 Storage (Mail.ru CS).")
+
 	authRepoImpl := repository.NewAuthRepository(db)
 	authUsecase := authUseCase.NewAuthUsecase(authRepoImpl)
 	authHandler := authHttp.NewAuthHandler(authUsecase)
@@ -57,18 +80,37 @@ func main() {
 	dashboardUsecase := dashboardUseCase.NewDashboardUseCase(dashboardRepository)
 	dashboardHandler := dashboardHttp.NewDashboardHandler(dashboardUsecase)
 
+	adminRepo := contentAdminRepo.NewContentAdminRepository(db)
+	adminUsecase := contentAdminUseCase.NewContentAdminUseCase(adminRepo, s3Client)
+	adminHandler := contentAdminHttp.NewContentAdminHandler(adminUsecase)
+
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
 
 	r.Post("/auth/register", authHandler.Register)
 	r.Post("/auth/login", authHandler.Login)
 
 	r.Group(func(r chi.Router) {
+		r.Use(authMiddleware.AuthMiddleware, authMiddleware.RoleRequiredMiddleware(domain.RoleAdmin, domain.RoleTeacher))
 
+		r.Get("/admin/courses", adminHandler.GetAllCourses)
+		r.Post("/admin/courses", adminHandler.CreateCourse)
+		r.Put("/admin/courses/{id}/settings", adminHandler.UpdateCourseSettings)
+		r.Get("/admin/courses/{id}/structure", adminHandler.GetCourseStructure)
+		r.Get("/admin/courses/{id}/students", adminHandler.GetCourseStudents)
+		r.Get("/admin/courses/{id}/stats", adminHandler.GetCourseStats)
+
+		r.Post("/admin/modules", adminHandler.CreateModule)
+		r.Post("/admin/lessons", adminHandler.CreateLesson)
+
+		r.Post("/admin/users", adminHandler.CreateUser)
+		r.Post("/admin/enroll", adminHandler.EnrollUser)
+	})
+
+	r.Group(func(r chi.Router) {
 		r.Use(authMiddleware.AuthMiddleware)
-
 		r.Get("/dashboard/home", dashboardHandler.GetUserHome)
-
 	})
 
 	r.Get("/swagger/*", httpSwagger.Handler(
@@ -78,8 +120,10 @@ func main() {
 		http.StripPrefix("/docs/", http.FileServer(http.Dir("./docs"))).ServeHTTP(w, r)
 	})
 
-	log.Println("Server started at :8080")
-	if err := http.ListenAndServe(":8080", r); err != nil {
+	listenAddr := ":" + apiPort
+	log.Printf("Server started on port: %s", apiPort)
+
+	if err := http.ListenAndServe(listenAddr, r); err != nil {
 		log.Fatalf("Server failed to start: %v", err)
 	}
 }

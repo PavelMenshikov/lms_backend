@@ -15,9 +15,64 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/admin/courses": {
+            "post": {
+                "description": "Создает карточку курса, доступно только RoleAdmin",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin-Content"
+                ],
+                "summary": "ADMIN: Создание нового курса",
+                "parameters": [
+                    {
+                        "description": "Данные нового курса",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.CreateCourseRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "message: Course created, id: \u003cUUID\u003e",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "error: Ошибка валидации",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden: Недостаточно прав (не RoleAdmin)",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/auth/login": {
             "post": {
-                "description": "Ввод email и пароля, возвращает JWT токен",
+                "description": "Ввод email и пароля, возвращает HTTP-Only Cookie.",
                 "consumes": [
                     "application/json"
                 ],
@@ -27,7 +82,7 @@ const docTemplate = `{
                 "tags": [
                     "Аутентификация"
                 ],
-                "summary": "Вход в систему (Log in student)",
+                "summary": "Вход в систему (Log in student/admin)",
                 "parameters": [
                     {
                         "description": "Данные для входа",
@@ -41,12 +96,10 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "token: JWT-токен",
+                        "description": "message: Login successful, user: {...}",
                         "schema": {
                             "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "additionalProperties": true
                         }
                     },
                     "401": {
@@ -63,37 +116,17 @@ const docTemplate = `{
         },
         "/auth/register": {
             "post": {
-                "description": "Создает аккаунт ученика или родителя",
-                "consumes": [
-                    "application/json"
-                ],
+                "description": "Данный функционал отключен, пользователи создаются только Администратором.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Аутентификация"
                 ],
-                "summary": "Регистрация нового пользователя",
-                "parameters": [
-                    {
-                        "description": "Данные для регистрации",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/http.RegisterRequest"
-                        }
-                    }
-                ],
+                "summary": "Регистрация (ЗАБЛОКИРОВАНО)",
                 "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/domain.User"
-                        }
-                    },
-                    "400": {
-                        "description": "error: Ошибка валидации",
+                    "403": {
+                        "description": "error: Public registration is disabled.",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -103,42 +136,42 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/dashboard/home": {
+            "get": {
+                "description": "Returns the home dashboard for the authenticated user",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "dashboard"
+                ],
+                "summary": "Get user home dashboard",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
-        "domain.Role": {
-            "type": "string",
-            "enum": [
-                "student",
-                "parent",
-                "teacher"
-            ],
-            "x-enum-varnames": [
-                "RoleStudent",
-                "RoleParent",
-                "RoleTeacher"
-            ]
-        },
-        "domain.User": {
+        "http.CreateCourseRequest": {
             "type": "object",
             "properties": {
-                "created_at": {
+                "description": {
                     "type": "string"
                 },
-                "email": {
+                "is_main": {
+                    "description": "Основной / Дополнительный",
+                    "type": "boolean"
+                },
+                "title": {
                     "type": "string"
-                },
-                "first_name": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "last_name": {
-                    "type": "string"
-                },
-                "role": {
-                    "$ref": "#/definitions/domain.Role"
                 }
             }
         },
@@ -152,26 +185,6 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
-        },
-        "http.RegisterRequest": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "first_name": {
-                    "type": "string"
-                },
-                "last_name": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                },
-                "role": {
-                    "$ref": "#/definitions/domain.Role"
-                }
-            }
         }
     }
 }`
@@ -182,7 +195,7 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "localhost:8080",
 	BasePath:         "/",
 	Schemes:          []string{},
-	Title:            "Cap Education LMS - Auth API",
+	Title:            "Cap Education LMS - API",
 	Description:      "API для LMS платформы Cap Education.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
