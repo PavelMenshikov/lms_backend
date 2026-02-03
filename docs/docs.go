@@ -17,6 +17,7 @@ const docTemplate = `{
     "paths": {
         "/admin/courses": {
             "get": {
+                "description": "Возвращает полный список курсов со всеми метаданными.",
                 "produces": [
                     "application/json"
                 ],
@@ -24,9 +25,29 @@ const docTemplate = `{
                     "Admin-Content"
                 ],
                 "summary": "ADMIN: Список всех курсов",
-                "responses": {}
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/domain.Course"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
             },
             "post": {
+                "description": "Создает карточку курса с загрузкой изображения. Доступно только администратору.",
                 "consumes": [
                     "multipart/form-data"
                 ],
@@ -46,15 +67,36 @@ const docTemplate = `{
                         "required": true
                     },
                     {
+                        "type": "string",
+                        "description": "Описание курса",
+                        "name": "description",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Флаг основного курса (true/false)",
+                        "name": "is_main",
+                        "in": "formData"
+                    },
+                    {
                         "type": "file",
-                        "description": "Файл изображения",
+                        "description": "Изображение обложки курса",
                         "name": "image_file",
                         "in": "formData"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "id курса",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "error: Ошибка валидации",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -67,6 +109,7 @@ const docTemplate = `{
         },
         "/admin/courses/{id}/settings": {
             "put": {
+                "description": "Позволяет изменить параметры курса, обложку и статус.",
                 "consumes": [
                     "multipart/form-data"
                 ],
@@ -84,11 +127,86 @@ const docTemplate = `{
                         "name": "id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Новое название",
+                        "name": "title",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Новое описание",
+                        "name": "description",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Тип курса",
+                        "name": "is_main",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Статус: draft, active, archived",
+                        "name": "status",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Наличие ДЗ",
+                        "name": "has_homework",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Обязательность ДЗ",
+                        "name": "is_homework_mandatory",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Обязательность тестов",
+                        "name": "is_test_mandatory",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Обязательность проектов",
+                        "name": "is_project_mandatory",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Обязательность Discord",
+                        "name": "is_discord_mandatory",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Запрет копирования",
+                        "name": "is_anti_copy_enabled",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "file",
+                        "description": "Новая обложка",
+                        "name": "cover_image",
+                        "in": "formData"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "status: updated",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "error: internal error",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -101,6 +219,7 @@ const docTemplate = `{
         },
         "/admin/courses/{id}/stats": {
             "get": {
+                "description": "Возвращает агрегированные данные: кол-во учеников, средний балл и т.д.",
                 "produces": [
                     "application/json"
                 ],
@@ -117,11 +236,19 @@ const docTemplate = `{
                         "required": true
                     }
                 ],
-                "responses": {}
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/domain.AdminCourseStats"
+                        }
+                    }
+                }
             }
         },
         "/admin/courses/{id}/structure": {
             "get": {
+                "description": "Возвращает иерархическую структуру: Курс -\u003e Модули -\u003e Уроки.",
                 "produces": [
                     "application/json"
                 ],
@@ -138,11 +265,28 @@ const docTemplate = `{
                         "required": true
                     }
                 ],
-                "responses": {}
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/domain.CourseStructure"
+                        }
+                    },
+                    "500": {
+                        "description": "error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
             }
         },
         "/admin/courses/{id}/students": {
             "get": {
+                "description": "Возвращает список всех учеников с их текущим прогрессом на курсе.",
                 "produces": [
                     "application/json"
                 ],
@@ -159,11 +303,22 @@ const docTemplate = `{
                         "required": true
                     }
                 ],
-                "responses": {}
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/domain.AdminStudentProgress"
+                            }
+                        }
+                    }
+                }
             }
         },
         "/admin/enroll": {
             "post": {
+                "description": "Привязывает ученика к конкретному курсу.",
                 "consumes": [
                     "application/json"
                 ],
@@ -174,11 +329,33 @@ const docTemplate = `{
                     "Admin-Users"
                 ],
                 "summary": "ADMIN: Запись на курс",
-                "responses": {}
+                "parameters": [
+                    {
+                        "description": "Связка UserID и CourseID",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.EnrollRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "status: enrolled",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
             }
         },
         "/admin/lessons": {
             "post": {
+                "description": "Создает урок с загрузкой видео и презентации в S3.",
                 "consumes": [
                     "multipart/form-data"
                 ],
@@ -189,11 +366,70 @@ const docTemplate = `{
                     "Admin-Content"
                 ],
                 "summary": "ADMIN: Добавление урока",
-                "responses": {}
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID модуля",
+                        "name": "module_id",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID преподавателя",
+                        "name": "teacher_id",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Название урока",
+                        "name": "title",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Порядковый номер",
+                        "name": "order_num",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "HTML/JSON контент урока",
+                        "name": "content_text",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "file",
+                        "description": "Видео файл (до 500MB)",
+                        "name": "video_file",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "file",
+                        "description": "Файл презентации",
+                        "name": "presentation_file",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "id",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
             }
         },
         "/admin/modules": {
             "post": {
+                "description": "Добавляет модуль в учебный план курса.",
                 "consumes": [
                     "application/json"
                 ],
@@ -204,11 +440,33 @@ const docTemplate = `{
                     "Admin-Content"
                 ],
                 "summary": "ADMIN: Создание модуля",
-                "responses": {}
+                "parameters": [
+                    {
+                        "description": "Данные модуля",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.CreateModuleRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "id",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
             }
         },
         "/admin/projects": {
             "post": {
+                "description": "Создает финальный проект и привязывает его к уроку.",
                 "consumes": [
                     "application/json"
                 ],
@@ -219,11 +477,33 @@ const docTemplate = `{
                     "Admin-Content"
                 ],
                 "summary": "ADMIN: Добавление проекта",
-                "responses": {}
+                "parameters": [
+                    {
+                        "description": "Данные проекта",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.CreateProjectRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "id",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
             }
         },
         "/admin/tests": {
             "post": {
+                "description": "Создает тест и привязывает его к уроку.",
                 "consumes": [
                     "application/json"
                 ],
@@ -234,11 +514,33 @@ const docTemplate = `{
                     "Admin-Content"
                 ],
                 "summary": "ADMIN: Добавление теста",
-                "responses": {}
+                "parameters": [
+                    {
+                        "description": "Данные теста",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.CreateTestRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "id",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
             }
         },
         "/admin/users": {
             "post": {
+                "description": "Создает аккаунт для ученика, учителя, родителя или куратора.",
                 "consumes": [
                     "application/json"
                 ],
@@ -249,7 +551,28 @@ const docTemplate = `{
                     "Admin-Users"
                 ],
                 "summary": "ADMIN: Создание пользователя",
-                "responses": {}
+                "parameters": [
+                    {
+                        "description": "Данные пользователя",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.CreateUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "id",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
             }
         },
         "/auth/login": {
@@ -342,6 +665,331 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "domain.AdminCourseStats": {
+            "type": "object",
+            "properties": {
+                "average_score": {
+                    "type": "number"
+                },
+                "frozen_students": {
+                    "type": "integer"
+                },
+                "graduated_students": {
+                    "type": "integer"
+                },
+                "new_students_month": {
+                    "type": "integer"
+                },
+                "success_rate_breakdown": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer"
+                    }
+                },
+                "total_students": {
+                    "type": "integer"
+                }
+            }
+        },
+        "domain.AdminStudentProgress": {
+            "type": "object",
+            "properties": {
+                "first_name": {
+                    "type": "string"
+                },
+                "homeworks_done": {
+                    "type": "integer"
+                },
+                "last_name": {
+                    "type": "string"
+                },
+                "lessons_attended": {
+                    "type": "integer"
+                },
+                "photo_url": {
+                    "type": "string"
+                },
+                "progress_percent": {
+                    "type": "integer"
+                },
+                "start_date": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.Course": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "has_homework": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "image_url": {
+                    "type": "string"
+                },
+                "is_anti_copy_enabled": {
+                    "type": "boolean"
+                },
+                "is_discord_mandatory": {
+                    "type": "boolean"
+                },
+                "is_homework_mandatory": {
+                    "type": "boolean"
+                },
+                "is_main": {
+                    "type": "boolean"
+                },
+                "is_project_mandatory": {
+                    "type": "boolean"
+                },
+                "is_test_mandatory": {
+                    "type": "boolean"
+                },
+                "status": {
+                    "$ref": "#/definitions/domain.CourseStatus"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.CourseStatus": {
+            "type": "string",
+            "enum": [
+                "draft",
+                "active",
+                "archived"
+            ],
+            "x-enum-varnames": [
+                "CourseStatusDraft",
+                "CourseStatusActive",
+                "CourseStatusArchived"
+            ]
+        },
+        "domain.CourseStructure": {
+            "type": "object",
+            "properties": {
+                "course": {
+                    "$ref": "#/definitions/domain.Course"
+                },
+                "modules": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.ModuleStructure"
+                    }
+                }
+            }
+        },
+        "domain.Lesson": {
+            "type": "object",
+            "properties": {
+                "content_text": {
+                    "type": "string"
+                },
+                "duration_min": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_published": {
+                    "type": "boolean"
+                },
+                "lesson_time": {
+                    "type": "string"
+                },
+                "module_id": {
+                    "type": "string"
+                },
+                "order_num": {
+                    "type": "integer"
+                },
+                "presentation_url": {
+                    "type": "string"
+                },
+                "teacher_id": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "video_url": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.Module": {
+            "type": "object",
+            "properties": {
+                "course_id": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "order_num": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.ModuleStructure": {
+            "type": "object",
+            "properties": {
+                "lessons": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.Lesson"
+                    }
+                },
+                "module": {
+                    "$ref": "#/definitions/domain.Module"
+                }
+            }
+        },
+        "domain.Role": {
+            "type": "string",
+            "enum": [
+                "student",
+                "parent",
+                "teacher",
+                "moderator",
+                "curator",
+                "admin"
+            ],
+            "x-enum-varnames": [
+                "RoleStudent",
+                "RoleParent",
+                "RoleTeacher",
+                "RoleModerator",
+                "RoleCurator",
+                "RoleAdmin"
+            ]
+        },
+        "http.CreateModuleRequest": {
+            "type": "object",
+            "properties": {
+                "course_id": {
+                    "type": "string",
+                    "example": "c1111111-1111-1111-1111-111111111111"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "Типы данных, переменные, циклы"
+                },
+                "order_num": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Основы синтаксиса"
+                }
+            }
+        },
+        "http.CreateProjectRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "Разработка API на Go"
+                },
+                "lesson_id": {
+                    "type": "string",
+                    "example": "l2222222-2222-2222-2222-222222222222"
+                },
+                "max_score": {
+                    "type": "integer",
+                    "example": 100
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Финальный проект"
+                }
+            }
+        },
+        "http.CreateTestRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "Тест на проверку базовых знаний Go"
+                },
+                "lesson_id": {
+                    "type": "string",
+                    "example": "l2222222-2222-2222-2222-222222222222"
+                },
+                "passing_score": {
+                    "type": "integer",
+                    "example": 70
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Итоговый тест по модулю 1"
+                }
+            }
+        },
+        "http.CreateUserRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "student@test.kz"
+                },
+                "first_name": {
+                    "type": "string",
+                    "example": "Иван"
+                },
+                "last_name": {
+                    "type": "string",
+                    "example": "Иванов"
+                },
+                "password": {
+                    "type": "string",
+                    "example": "secret123"
+                },
+                "role": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/domain.Role"
+                        }
+                    ],
+                    "example": "student"
+                }
+            }
+        },
+        "http.EnrollRequest": {
+            "type": "object",
+            "properties": {
+                "course_id": {
+                    "type": "string",
+                    "example": "c1111111-1111-1111-1111-111111111111"
+                },
+                "user_id": {
+                    "type": "string",
+                    "example": "a0000000-0000-0000-0000-000000000001"
+                }
+            }
+        },
         "http.LoginRequest": {
             "type": "object",
             "properties": {
