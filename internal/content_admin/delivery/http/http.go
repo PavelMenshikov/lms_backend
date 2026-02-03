@@ -2,7 +2,6 @@ package http
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"mime/multipart"
 	"net/http"
@@ -58,7 +57,7 @@ type CreateModuleRequest struct {
 
 // CreateCourse godoc
 // @Summary ADMIN: Создание нового курса
-// @Description Создает карточку курса с загрузкой изображения. Доступно только администратору.
+// @Description Создает карточку курса с загрузкой изображения.
 // @Tags Admin-Content
 // @Accept multipart/form-data
 // @Produce json
@@ -66,8 +65,8 @@ type CreateModuleRequest struct {
 // @Param description formData string false "Описание курса"
 // @Param is_main formData boolean false "Флаг основного курса (true/false)"
 // @Param image_file formData file false "Изображение обложки курса"
-// @Success 200 {object} map[string]string "id курса"
-// @Failure 400 {object} map[string]string "error: Ошибка валидации"
+// @Success 200 {object} map[string]string "id"
+// @Failure 400 {object} map[string]string "error"
 // @Router /admin/courses [post]
 func (h *ContentAdminHandler) CreateCourse(w http.ResponseWriter, r *http.Request) {
 	const MAX_UPLOAD_SIZE = 10 << 20
@@ -97,11 +96,13 @@ func (h *ContentAdminHandler) CreateCourse(w http.ResponseWriter, r *http.Reques
 
 	courseID, err := h.uc.CreateCourse(r.Context(), input)
 	if err != nil {
+		log.Printf("ERROR creating course: %v", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"id": courseID})
 }
 
@@ -123,12 +124,15 @@ func (h *ContentAdminHandler) CreateCourse(w http.ResponseWriter, r *http.Reques
 // @Param is_discord_mandatory formData boolean false "Обязательность Discord"
 // @Param is_anti_copy_enabled formData boolean false "Запрет копирования"
 // @Param cover_image formData file false "Новая обложка"
-// @Success 200 {object} map[string]string "status: updated"
-// @Failure 500 {object} map[string]string "error: internal error"
+// @Success 200 {object} map[string]string "status"
+// @Failure 500 {object} map[string]string "error"
 // @Router /admin/courses/{id}/settings [put]
 func (h *ContentAdminHandler) UpdateCourseSettings(w http.ResponseWriter, r *http.Request) {
 	const MAX_UPLOAD_SIZE = 10 << 20
-	r.ParseMultipartForm(MAX_UPLOAD_SIZE)
+	if err := r.ParseMultipartForm(MAX_UPLOAD_SIZE); err != nil {
+		http.Error(w, "File upload size exceeded limit.", http.StatusBadRequest)
+		return
+	}
 
 	courseID := chi.URLParam(r, "id")
 	parseBool := func(key string) bool { return r.FormValue(key) == "true" || r.FormValue(key) == "on" }
@@ -158,7 +162,10 @@ func (h *ContentAdminHandler) UpdateCourseSettings(w http.ResponseWriter, r *htt
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"status": "updated"})
 }
 
 // GetAllCourses godoc
@@ -167,7 +174,6 @@ func (h *ContentAdminHandler) UpdateCourseSettings(w http.ResponseWriter, r *htt
 // @Tags Admin-Content
 // @Produce json
 // @Success 200 {array} domain.Course
-// @Failure 500 {object} map[string]string "error"
 // @Router /admin/courses [get]
 func (h *ContentAdminHandler) GetAllCourses(w http.ResponseWriter, r *http.Request) {
 	courses, err := h.uc.GetAllCourses(r.Context())
@@ -186,7 +192,6 @@ func (h *ContentAdminHandler) GetAllCourses(w http.ResponseWriter, r *http.Reque
 // @Produce json
 // @Param id path string true "ID курса"
 // @Success 200 {object} domain.CourseStructure
-// @Failure 500 {object} map[string]string "error"
 // @Router /admin/courses/{id}/structure [get]
 func (h *ContentAdminHandler) GetCourseStructure(w http.ResponseWriter, r *http.Request) {
 	structure, err := h.uc.GetCourseStructure(r.Context(), chi.URLParam(r, "id"))
@@ -379,7 +384,7 @@ func (h *ContentAdminHandler) CreateUser(w http.ResponseWriter, r *http.Request)
 // @Accept json
 // @Produce json
 // @Param request body EnrollRequest true "Связка UserID и CourseID"
-// @Success 200 {object} map[string]string "status: enrolled"
+// @Success 200 {object} map[string]string "status"
 // @Router /admin/enroll [post]
 func (h *ContentAdminHandler) EnrollUser(w http.ResponseWriter, r *http.Request) {
 	var req EnrollRequest
