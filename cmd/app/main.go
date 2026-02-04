@@ -25,15 +25,27 @@ import (
 	contentAdminRepo "lms_backend/internal/content_admin/repository"
 	contentAdminUseCase "lms_backend/internal/content_admin/usecase"
 
+	learningHttp "lms_backend/internal/learning/delivery/http"
+	learningRepo "lms_backend/internal/learning/repository"
+	learningUseCase "lms_backend/internal/learning/usecase"
+
+	reviewHttp "lms_backend/internal/review/delivery/http"
+	reviewRepo "lms_backend/internal/review/repository"
+	reviewUseCase "lms_backend/internal/review/usecase"
+
+	profileHttp "lms_backend/internal/profile/delivery/http"
+	profileRepo "lms_backend/internal/profile/repository"
+	profileUseCase "lms_backend/internal/profile/usecase"
+
+	scheduleHttp "lms_backend/internal/schedule/delivery/http"
+	scheduleRepo "lms_backend/internal/schedule/repository"
+	scheduleUseCase "lms_backend/internal/schedule/usecase"
+
 	"lms_backend/internal/domain"
+	dbPkg "lms_backend/pkg/database"
 	storageService "lms_backend/pkg/storage"
 )
 
-// @title Cap Education LMS - API
-// @version 1.0
-// @description API для LMS платформы Cap Education.
-// @host localhost:8000
-// @BasePath /
 func main() {
 	if err := godotenv.Load(); err != nil {
 		log.Println("No .env file found")
@@ -58,7 +70,10 @@ func main() {
 		log.Fatal(err)
 	}
 	defer db.Close()
-	log.Println("Успешное подключение к PostgreSQL")
+
+	if err := dbPkg.RunMigrations(db); err != nil {
+		log.Fatalf("Migrations failed: %v", err)
+	}
 
 	s3Client, err := storageService.NewS3Client(
 		os.Getenv("S3_ENDPOINT_URL"),
@@ -68,9 +83,8 @@ func main() {
 		os.Getenv("S3_SECRET_ACCESS_KEY"),
 	)
 	if err != nil {
-		log.Fatalf("Failed to initialize S3 Storage: %v", err)
+		log.Fatalf("S3 initialization failed: %v", err)
 	}
-	log.Println("Успешная инициализация S3 Storage (Mail.ru CS).")
 
 	authRepoImpl := repository.NewAuthRepository(db)
 	authUsecase := authUseCase.NewAuthUsecase(authRepoImpl)
@@ -84,6 +98,22 @@ func main() {
 	adminUsecase := contentAdminUseCase.NewContentAdminUseCase(adminRepo, s3Client)
 	adminHandler := contentAdminHttp.NewContentAdminHandler(adminUsecase)
 
+	learningRepoImpl := learningRepo.NewLearningRepository(db)
+	learningUC := learningUseCase.NewLearningUseCase(learningRepoImpl, s3Client)
+	learningHandler := learningHttp.NewLearningHandler(learningUC)
+
+	reviewRepoImpl := reviewRepo.NewReviewRepository(db)
+	reviewUC := reviewUseCase.NewReviewUseCase(reviewRepoImpl)
+	reviewHandler := reviewHttp.NewReviewHandler(reviewUC)
+
+	profileRepoImpl := profileRepo.NewProfileRepository(db)
+	profileUC := profileUseCase.NewProfileUseCase(profileRepoImpl, s3Client)
+	profileHandler := profileHttp.NewProfileHandler(profileUC)
+
+	scheduleRepoImpl := scheduleRepo.NewScheduleRepository(db)
+	scheduleUC := scheduleUseCase.NewScheduleUseCase(scheduleRepoImpl)
+	scheduleHandler := scheduleHttp.NewScheduleHandler(scheduleUC)
+
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
@@ -92,8 +122,9 @@ func main() {
 	r.Post("/auth/login", authHandler.Login)
 
 	r.Group(func(r chi.Router) {
-		r.Use(authMiddleware.AuthMiddleware, authMiddleware.RoleRequiredMiddleware(domain.RoleAdmin, domain.RoleTeacher))
+		r.Use(authMiddleware.AuthMiddleware, authMiddleware.RoleRequiredMiddleware(domain.RoleAdmin, domain.RoleTeacher, domain.RoleModerator, domain.RoleCurator))
 
+		r.Get("/admin/dashboard/stats", dashboardHandler.GetAdminDashboard)
 		r.Get("/admin/courses", adminHandler.GetAllCourses)
 		r.Post("/admin/courses", adminHandler.CreateCourse)
 		r.Put("/admin/courses/{id}/settings", adminHandler.UpdateCourseSettings)
@@ -103,26 +134,42 @@ func main() {
 
 		r.Post("/admin/modules", adminHandler.CreateModule)
 		r.Post("/admin/lessons", adminHandler.CreateLesson)
+		r.Post("/admin/tests", adminHandler.CreateTest)
+		r.Post("/admin/projects", adminHandler.CreateProject)
 
+		r.Post("/admin/media/upload", adminHandler.UploadMedia)
+
+		r.Get("/admin/users", adminHandler.GetUsersList)
 		r.Post("/admin/users", adminHandler.CreateUser)
+		r.Put("/admin/users/{id}", adminHandler.UpdateUser)
+		r.Delete("/admin/users/{id}", adminHandler.DeleteUser)
 		r.Post("/admin/enroll", adminHandler.EnrollUser)
+
+		r.Get("/staff/submissions", reviewHandler.GetPendingSubmissions)
+		r.Post("/staff/submissions/{id}/evaluate", reviewHandler.EvaluateSubmission)
 	})
 
 	r.Group(func(r chi.Router) {
 		r.Use(authMiddleware.AuthMiddleware)
 		r.Get("/dashboard/home", dashboardHandler.GetUserHome)
+		r.Get("/my-courses", learningHandler.GetMyCourses)
+		r.Get("/courses/{id}", learningHandler.GetCourseContent)
+		r.Get("/lessons/{id}", learningHandler.GetLessonDetail)
+		r.Post("/lessons/{id}/assignment", learningHandler.SubmitAssignment)
+		r.Post("/lessons/{id}/complete", learningHandler.CompleteLesson)
+		r.Get("/profile", profileHandler.GetProfile)
+		r.Put("/profile", profileHandler.UpdateProfile)
+		r.Get("/schedule/weekly", scheduleHandler.GetWeeklySchedule)
+		r.Get("/schedule/monthly", scheduleHandler.GetMonthlySchedule)
 	})
 
-	r.Get("/swagger/*", httpSwagger.Handler(
-		httpSwagger.URL("/docs/swagger.json"),
-	))
+	r.Get("/swagger/*", httpSwagger.Handler(httpSwagger.URL("/docs/swagger.json")))
 	r.Get("/docs/*", func(w http.ResponseWriter, r *http.Request) {
 		http.StripPrefix("/docs/", http.FileServer(http.Dir("./docs"))).ServeHTTP(w, r)
 	})
 
 	listenAddr := ":" + apiPort
 	log.Printf("Server started on port: %s", apiPort)
-
 	if err := http.ListenAndServe(listenAddr, r); err != nil {
 		log.Fatalf("Server failed to start: %v", err)
 	}

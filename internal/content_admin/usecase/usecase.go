@@ -23,6 +23,28 @@ func NewContentAdminUseCase(repo repository.ContentAdminRepository, s3Storage st
 	return &ContentAdminUseCase{repo: repo, s3Storage: s3Storage}
 }
 
+func (uc *ContentAdminUseCase) UploadMedia(ctx context.Context, fileHeader *multipart.FileHeader) (string, error) {
+	if fileHeader == nil {
+		return "", errors.New("no file provided")
+	}
+
+	file, err := fileHeader.Open()
+	if err != nil {
+		return "", fmt.Errorf("failed to open file: %w", err)
+	}
+	defer file.Close()
+
+	s3Key := fmt.Sprintf("editor_content/%d_%s", time.Now().Unix(), fileHeader.Filename)
+	mimeType := fileHeader.Header.Get("Content-Type")
+
+	key, err := uc.s3Storage.UploadFile(ctx, file, s3Key, fileHeader.Size, mimeType)
+	if err != nil {
+		return "", fmt.Errorf("failed to upload to s3: %w", err)
+	}
+
+	return uc.s3Storage.GetPublicURL(ctx, key)
+}
+
 type CreateCourseInput struct {
 	Title       string
 	Description string
@@ -66,23 +88,6 @@ func (uc *ContentAdminUseCase) CreateCourse(ctx context.Context, input CreateCou
 	}
 
 	return uc.repo.CreateCourse(ctx, course)
-}
-
-type CreateModuleInput struct {
-	CourseID    string
-	Title       string
-	Description string
-	OrderNum    int
-}
-
-func (uc *ContentAdminUseCase) CreateModule(ctx context.Context, input CreateModuleInput) (string, error) {
-	module := &domain.Module{
-		CourseID:    input.CourseID,
-		Title:       input.Title,
-		Description: input.Description,
-		OrderNum:    input.OrderNum,
-	}
-	return uc.repo.CreateModule(ctx, module)
 }
 
 type UpdateCourseSettingsInput struct {
@@ -136,6 +141,70 @@ func (uc *ContentAdminUseCase) UpdateCourseSettings(ctx context.Context, input U
 	}
 
 	return uc.repo.UpdateCourseSettings(ctx, course)
+}
+
+func (uc *ContentAdminUseCase) GetAllCourses(ctx context.Context) ([]*domain.Course, error) {
+	return uc.repo.GetAllCourses(ctx)
+}
+
+func (uc *ContentAdminUseCase) GetCourseByID(ctx context.Context, id string) (*domain.Course, error) {
+	return uc.repo.GetCourseByID(ctx, id)
+}
+
+func (uc *ContentAdminUseCase) GetCourseStructure(ctx context.Context, courseID string) (*domain.CourseStructure, error) {
+	course, err := uc.repo.GetCourseByID(ctx, courseID)
+	if err != nil {
+		return nil, err
+	}
+
+	modules, err := uc.repo.GetModulesByCourseID(ctx, courseID)
+	if err != nil {
+		return nil, err
+	}
+
+	allLessons, err := uc.repo.GetLessonsByCourseID(ctx, courseID)
+	if err != nil {
+		return nil, err
+	}
+
+	lessonsByModule := make(map[string][]*domain.Lesson)
+	for _, l := range allLessons {
+		lessonsByModule[l.ModuleID] = append(lessonsByModule[l.ModuleID], l)
+	}
+
+	var moduleStructures []*domain.ModuleStructure
+	for _, m := range modules {
+		ms := &domain.ModuleStructure{
+			Module:  m,
+			Lessons: lessonsByModule[m.ID],
+		}
+		if ms.Lessons == nil {
+			ms.Lessons = []*domain.Lesson{}
+		}
+		moduleStructures = append(moduleStructures, ms)
+	}
+
+	return &domain.CourseStructure{
+		Course:  course,
+		Modules: moduleStructures,
+	}, nil
+}
+
+type CreateModuleInput struct {
+	CourseID    string
+	Title       string
+	Description string
+	OrderNum    int
+}
+
+func (uc *ContentAdminUseCase) CreateModule(ctx context.Context, input CreateModuleInput) (string, error) {
+	module := &domain.Module{
+		CourseID:    input.CourseID,
+		Title:       input.Title,
+		Description: input.Description,
+		OrderNum:    input.OrderNum,
+	}
+	return uc.repo.CreateModule(ctx, module)
 }
 
 type CreateLessonInput struct {
@@ -192,80 +261,79 @@ func (uc *ContentAdminUseCase) CreateLesson(ctx context.Context, input CreateLes
 	return uc.repo.CreateLesson(ctx, lesson)
 }
 
-func (uc *ContentAdminUseCase) GetAllCourses(ctx context.Context) ([]*domain.Course, error) {
-	return uc.repo.GetAllCourses(ctx)
+type ExtendedCreateUserInput struct {
+	FirstName       string
+	LastName        string
+	Email           string
+	Role            domain.Role
+	Password        string
+	Phone           string
+	City            string
+	Language        string
+	Gender          string
+	BirthDate       time.Time
+	ExperienceYears int
+	ParentFirstName string
+	ParentLastName  string
+	ParentPhone     string
+	ParentEmail     string
 }
 
-func (uc *ContentAdminUseCase) GetCourseByID(ctx context.Context, id string) (*domain.Course, error) {
-	return uc.repo.GetCourseByID(ctx, id)
-}
-
-func (uc *ContentAdminUseCase) GetCourseStructure(ctx context.Context, courseID string) (*domain.CourseStructure, error) {
-	course, err := uc.repo.GetCourseByID(ctx, courseID)
+func (uc *ContentAdminUseCase) CreateFullUser(ctx context.Context, input ExtendedCreateUserInput) (map[string]string, error) {
+	hashedPass, err := bcrypt.GenerateFromPassword([]byte(input.Password), 12)
 	if err != nil {
-		return nil, err
-	}
-
-	modules, err := uc.repo.GetModulesByCourseID(ctx, courseID)
-	if err != nil {
-		return nil, err
-	}
-
-	allLessons, err := uc.repo.GetLessonsByCourseID(ctx, courseID)
-	if err != nil {
-		return nil, err
-	}
-
-	lessonsByModule := make(map[string][]*domain.Lesson)
-	for _, l := range allLessons {
-		lessonsByModule[l.ModuleID] = append(lessonsByModule[l.ModuleID], l)
-	}
-
-	var moduleStructures []*domain.ModuleStructure
-	for _, m := range modules {
-		ms := &domain.ModuleStructure{
-			Module:  m,
-			Lessons: lessonsByModule[m.ID],
-		}
-		if ms.Lessons == nil {
-			ms.Lessons = []*domain.Lesson{}
-		}
-		moduleStructures = append(moduleStructures, ms)
-	}
-
-	return &domain.CourseStructure{
-		Course:  course,
-		Modules: moduleStructures,
-	}, nil
-}
-
-type CreateUserInput struct {
-	FirstName string
-	LastName  string
-	Email     string
-	Password  string
-	Role      domain.Role
-}
-
-func (uc *ContentAdminUseCase) CreateUser(ctx context.Context, input CreateUserInput) (string, error) {
-	if input.Email == "" || input.Password == "" {
-		return "", errors.New("email and password are required")
-	}
-
-	hashedBytes, err := bcrypt.GenerateFromPassword([]byte(input.Password), 12)
-	if err != nil {
-		return "", fmt.Errorf("failed to hash password: %w", err)
+		return nil, fmt.Errorf("failed to hash password: %w", err)
 	}
 
 	user := &domain.User{
-		FirstName: input.FirstName,
-		LastName:  input.LastName,
-		Email:     input.Email,
-		Password:  string(hashedBytes),
-		Role:      input.Role,
+		FirstName:       input.FirstName,
+		LastName:        input.LastName,
+		Email:           input.Email,
+		Password:        string(hashedPass),
+		Role:            input.Role,
+		Phone:           input.Phone,
+		City:            input.City,
+		Language:        input.Language,
+		Gender:          input.Gender,
+		BirthDate:       input.BirthDate,
+		ExperienceYears: input.ExperienceYears,
 	}
 
-	return uc.repo.CreateUser(ctx, user)
+	userID, err := uc.repo.CreateUser(ctx, user)
+	if err != nil {
+		return nil, err
+	}
+
+	result := map[string]string{
+		"user_id": userID,
+		"role":    string(input.Role),
+	}
+
+	if input.Role == domain.RoleStudent && input.ParentPhone != "" {
+		parentEmail := input.ParentEmail
+		if parentEmail == "" {
+			parentEmail = fmt.Sprintf("p_%s", input.Email)
+		}
+
+		parent := &domain.User{
+			FirstName: input.ParentFirstName,
+			LastName:  input.ParentLastName,
+			Email:     parentEmail,
+			Phone:     input.ParentPhone,
+			Password:  string(hashedPass),
+			Role:      domain.RoleParent,
+			City:      input.City,
+		}
+
+		parentID, err := uc.repo.CreateUser(ctx, parent)
+		if err == nil {
+			_ = uc.repo.LinkParentToStudent(ctx, userID, parentID)
+			result["parent_id"] = parentID
+			result["parent_email"] = parentEmail
+		}
+	}
+
+	return result, nil
 }
 
 func (uc *ContentAdminUseCase) EnrollStudent(ctx context.Context, userID, courseID string) error {
@@ -281,6 +349,35 @@ func (uc *ContentAdminUseCase) GetCourseStudents(ctx context.Context, courseID s
 
 func (uc *ContentAdminUseCase) GetCourseStats(ctx context.Context, courseID string) (*domain.AdminCourseStats, error) {
 	return uc.repo.GetCourseStats(ctx, courseID)
+}
+
+func (uc *ContentAdminUseCase) GetUsersList(ctx context.Context, role domain.Role) ([]*domain.User, error) {
+	filter := domain.UserFilter{
+		Role:   role,
+		Limit:  100,
+		Offset: 0,
+	}
+	return uc.repo.GetUsers(ctx, filter)
+}
+
+func (uc *ContentAdminUseCase) UpdateUser(ctx context.Context, userID string, input ExtendedCreateUserInput) error {
+	user := &domain.User{
+		ID:              userID,
+		FirstName:       input.FirstName,
+		LastName:        input.LastName,
+		Email:           input.Email,
+		Role:            input.Role,
+		Phone:           input.Phone,
+		City:            input.City,
+		Language:        input.Language,
+		Gender:          input.Gender,
+		ExperienceYears: input.ExperienceYears,
+	}
+	return uc.repo.UpdateUser(ctx, user)
+}
+
+func (uc *ContentAdminUseCase) DeleteUser(ctx context.Context, userID string) error {
+	return uc.repo.DeleteUser(ctx, userID)
 }
 
 type CreateTestInput struct {

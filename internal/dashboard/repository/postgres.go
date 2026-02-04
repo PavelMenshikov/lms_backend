@@ -33,7 +33,7 @@ func (r *DashboardRepositoryImpl) GetLastLessonData(ctx context.Context, userID 
 		LIMIT 1
 	`
 	err := r.db.QueryRowContext(ctx, query, userID).Scan(
-		&lesson.CourseTitle, &lesson.ModuleName, &lesson.LessonTitle, 
+		&lesson.CourseTitle, &lesson.ModuleName, &lesson.LessonTitle,
 		&lesson.LessonID, &lesson.AssignmentStatus,
 	)
 	if err == sql.ErrNoRows {
@@ -109,4 +109,63 @@ func (r *DashboardRepositoryImpl) GetUpcomingLessons(ctx context.Context, userID
 		lessons = append(lessons, l)
 	}
 	return lessons, nil
+}
+
+func (r *DashboardRepositoryImpl) GetAdminCounters(ctx context.Context) (totalStudents, newStudents, totalTeachers, activeCourses int, err error) {
+	query := `
+		SELECT
+			(SELECT COUNT(*) FROM users WHERE role = 'student') as total_students,
+			(SELECT COUNT(*) FROM users WHERE role = 'student' AND created_at > date_trunc('month', now())) as new_students,
+			(SELECT COUNT(*) FROM users WHERE role = 'teacher') as total_teachers,
+			(SELECT COUNT(*) FROM courses WHERE status = 'active') as active_courses
+	`
+	err = r.db.QueryRowContext(ctx, query).Scan(&totalStudents, &newStudents, &totalTeachers, &activeCourses)
+	return
+}
+
+func (r *DashboardRepositoryImpl) GetPerformanceStats(ctx context.Context) (domain.PerformanceZones, error) {
+	var zones domain.PerformanceZones
+	query := `
+		WITH student_scores AS (
+			SELECT user_id, AVG(progress_percent) as score
+			FROM user_courses
+			GROUP BY user_id
+		)
+		SELECT
+			COUNT(CASE WHEN score >= 80 THEN 1 END) as green,
+			COUNT(CASE WHEN score >= 50 AND score < 80 THEN 1 END) as yellow,
+			COUNT(CASE WHEN score < 50 THEN 1 END) as red
+		FROM student_scores
+	`
+	err := r.db.QueryRowContext(ctx, query).Scan(&zones.Green, &zones.Yellow, &zones.Red)
+	return zones, err
+}
+
+func (r *DashboardRepositoryImpl) GetLessonActivity(ctx context.Context) ([]domain.DailyLessonActivity, error) {
+	query := `
+		SELECT 
+			TO_CHAR(lesson_time, 'YYYY-MM-DD') as day,
+			COUNT(CASE WHEN duration_min > 60 THEN 1 END) as group_lessons,
+			COUNT(CASE WHEN duration_min = 30 THEN 1 END) as trial_lessons,
+			COUNT(CASE WHEN duration_min <= 60 AND duration_min > 30 THEN 1 END) as individual_lessons
+		FROM lessons
+		WHERE lesson_time > date_trunc('month', now())
+		GROUP BY day
+		ORDER BY day ASC
+	`
+	rows, err := r.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var activities []domain.DailyLessonActivity
+	for rows.Next() {
+		var a domain.DailyLessonActivity
+		if err := rows.Scan(&a.Date, &a.Group, &a.Trial, &a.Individual); err != nil {
+			return nil, err
+		}
+		activities = append(activities, a)
+	}
+	return activities, nil
 }

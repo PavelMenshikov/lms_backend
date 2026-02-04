@@ -34,3 +34,26 @@ type HomeDashboard struct {
 	UpcomingLessons    []UpcomingLesson  `json:"upcoming_lessons"`
 	User               *User             `json:"user_data"`
 }
+
+type AdminHomeDashboard struct {
+	TotalStudents    int                   `json:"total_students"`
+	StudentsDelta    float64               `json:"students_delta"`
+	NewStudentsMonth int                   `json:"new_students_month"`
+	TotalTeachers    int                   `json:"total_teachers"`
+	ActiveCourses    int                   `json:"active_courses"`
+	Performance      PerformanceZones      `json:"performance"`
+	LessonActivity   []DailyLessonActivity `json:"lesson_activity"`
+}
+
+type PerformanceZones struct {
+	Green  int `json:"green"`
+	Yellow int `json:"yellow"`
+	Red    int `json:"red"`
+}
+
+type DailyLessonActivity struct {
+	Date       string `json:"date"`
+	Group      int    `json:"group"`
+	Trial      int    `json:"trial"`
+	Individual int    `json:"individual"`
+}

@@ -6,6 +6,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 
@@ -21,12 +22,20 @@ func NewContentAdminHandler(uc *usecase.ContentAdminUseCase) *ContentAdminHandle
 	return &ContentAdminHandler{uc: uc}
 }
 
-type CreateUserRequest struct {
-	FirstName string      `json:"first_name" example:"Иван"`
-	LastName  string      `json:"last_name" example:"Иванов"`
-	Email     string      `json:"email" example:"student@test.kz"`
-	Password  string      `json:"password" example:"secret123"`
-	Role      domain.Role `json:"role" example:"student"`
+type CreateFullUserRequest struct {
+	FirstName    string      `json:"first_name" example:"Иван"`
+	LastName     string      `json:"last_name" example:"Иванов"`
+	Email        string      `json:"email" example:"student@test.kz"`
+	Password     string      `json:"password" example:"secret123"`
+	Role         domain.Role `json:"role" example:"student"`
+	Phone        string      `json:"phone" example:"+79998887766"`
+	City         string      `json:"city" example:"Алматы"`
+	Language     string      `json:"language" example:"ru"`
+	Gender       string      `json:"gender" example:"male"`
+	BirthDateStr string      `json:"birth_date" example:"2000-01-01"`
+	ParentName   string      `json:"parent_name" example:"Мама Иванова"`
+	ParentPhone  string      `json:"parent_phone" example:"+7000..."`
+	ParentEmail  string      `json:"parent_email" example:"mom@test.kz"`
 }
 
 type EnrollRequest struct {
@@ -55,7 +64,6 @@ type CreateModuleRequest struct {
 	OrderNum    int    `json:"order_num" example:"1"`
 }
 
-// CreateCourse godoc
 // @Summary ADMIN: Создание нового курса
 // @Description Создает карточку курса с загрузкой изображения.
 // @Tags Admin-Content
@@ -106,26 +114,45 @@ func (h *ContentAdminHandler) CreateCourse(w http.ResponseWriter, r *http.Reques
 	json.NewEncoder(w).Encode(map[string]string{"id": courseID})
 }
 
-// UpdateCourseSettings godoc
+// @Summary ADMIN: Загрузка медиа-файла
+// @Tags Admin-Content
+// @Accept multipart/form-data
+// @Produce json
+// @Param file formData file true "Файл"
+// @Success 200 {object} map[string]string "url"
+// @Router /admin/media/upload [post]
+func (h *ContentAdminHandler) UploadMedia(w http.ResponseWriter, r *http.Request) {
+	const MAX_UPLOAD_SIZE = 10 << 20
+	r.Body = http.MaxBytesReader(w, r.Body, MAX_UPLOAD_SIZE)
+	if err := r.ParseMultipartForm(MAX_UPLOAD_SIZE); err != nil {
+		http.Error(w, "File upload size exceeded limit.", http.StatusBadRequest)
+		return
+	}
+
+	file, header, err := r.FormFile("file")
+	if err != nil {
+		http.Error(w, "Invalid file", http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
+
+	url, err := h.uc.UploadMedia(r.Context(), header)
+	if err != nil {
+		log.Printf("Error uploading media: %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"url": url})
+}
+
 // @Summary ADMIN: Обновление настроек курса
-// @Description Позволяет изменить параметры курса, обложку и статус.
 // @Tags Admin-Content
 // @Accept multipart/form-data
 // @Produce json
 // @Param id path string true "ID курса"
-// @Param title formData string false "Новое название"
-// @Param description formData string false "Новое описание"
-// @Param is_main formData boolean false "Тип курса"
-// @Param status formData string false "Статус: draft, active, archived"
-// @Param has_homework formData boolean false "Наличие ДЗ"
-// @Param is_homework_mandatory formData boolean false "Обязательность ДЗ"
-// @Param is_test_mandatory formData boolean false "Обязательность тестов"
-// @Param is_project_mandatory formData boolean false "Обязательность проектов"
-// @Param is_discord_mandatory formData boolean false "Обязательность Discord"
-// @Param is_anti_copy_enabled formData boolean false "Запрет копирования"
-// @Param cover_image formData file false "Новая обложка"
 // @Success 200 {object} map[string]string "status"
-// @Failure 500 {object} map[string]string "error"
 // @Router /admin/courses/{id}/settings [put]
 func (h *ContentAdminHandler) UpdateCourseSettings(w http.ResponseWriter, r *http.Request) {
 	const MAX_UPLOAD_SIZE = 10 << 20
@@ -162,15 +189,11 @@ func (h *ContentAdminHandler) UpdateCourseSettings(w http.ResponseWriter, r *htt
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"status": "updated"})
 }
 
-// GetAllCourses godoc
 // @Summary ADMIN: Список всех курсов
-// @Description Возвращает полный список курсов со всеми метаданными.
 // @Tags Admin-Content
 // @Produce json
 // @Success 200 {array} domain.Course
@@ -185,9 +208,7 @@ func (h *ContentAdminHandler) GetAllCourses(w http.ResponseWriter, r *http.Reque
 	json.NewEncoder(w).Encode(courses)
 }
 
-// GetCourseStructure godoc
 // @Summary ADMIN: Содержание курса (Дерево)
-// @Description Возвращает иерархическую структуру: Курс -> Модули -> Уроки.
 // @Tags Admin-Content
 // @Produce json
 // @Param id path string true "ID курса"
@@ -203,9 +224,7 @@ func (h *ContentAdminHandler) GetCourseStructure(w http.ResponseWriter, r *http.
 	json.NewEncoder(w).Encode(structure)
 }
 
-// CreateModule godoc
 // @Summary ADMIN: Создание модуля
-// @Description Добавляет модуль в учебный план курса.
 // @Tags Admin-Content
 // @Accept json
 // @Produce json
@@ -235,18 +254,16 @@ func (h *ContentAdminHandler) CreateModule(w http.ResponseWriter, r *http.Reques
 	json.NewEncoder(w).Encode(map[string]string{"id": id})
 }
 
-// CreateLesson godoc
 // @Summary ADMIN: Добавление урока
-// @Description Создает урок с загрузкой видео и презентации в S3.
 // @Tags Admin-Content
 // @Accept multipart/form-data
 // @Produce json
 // @Param module_id formData string true "ID модуля"
 // @Param teacher_id formData string true "ID преподавателя"
 // @Param title formData string true "Название урока"
-// @Param order_num formData int true "Порядковый номер"
+// @Param order_num formData int true "Номер"
 // @Param content_text formData string false "HTML/JSON контент урока"
-// @Param video_file formData file false "Видео файл (до 500MB)"
+// @Param video_file formData file false "Видео (до 500MB)"
 // @Param presentation_file formData file false "Файл презентации"
 // @Success 200 {object} map[string]string "id"
 // @Router /admin/lessons [post]
@@ -285,9 +302,7 @@ func (h *ContentAdminHandler) CreateLesson(w http.ResponseWriter, r *http.Reques
 	json.NewEncoder(w).Encode(map[string]string{"id": id})
 }
 
-// CreateTest godoc
 // @Summary ADMIN: Добавление теста
-// @Description Создает тест и привязывает его к уроку.
 // @Tags Admin-Content
 // @Accept json
 // @Produce json
@@ -315,9 +330,7 @@ func (h *ContentAdminHandler) CreateTest(w http.ResponseWriter, r *http.Request)
 	json.NewEncoder(w).Encode(map[string]string{"id": id})
 }
 
-// CreateProject godoc
 // @Summary ADMIN: Добавление проекта
-// @Description Создает финальный проект и привязывает его к уроку.
 // @Tags Admin-Content
 // @Accept json
 // @Produce json
@@ -345,45 +358,103 @@ func (h *ContentAdminHandler) CreateProject(w http.ResponseWriter, r *http.Reque
 	json.NewEncoder(w).Encode(map[string]string{"id": id})
 }
 
-// CreateUser godoc
-// @Summary ADMIN: Создание пользователя
-// @Description Создает аккаунт для ученика, учителя, родителя или куратора.
+// @Summary ADMIN: Создание пользователя (Полный профиль + Родитель)
 // @Tags Admin-Users
 // @Accept json
 // @Produce json
-// @Param request body CreateUserRequest true "Данные пользователя"
-// @Success 200 {object} map[string]string "id"
+// @Param request body CreateFullUserRequest true "Данные пользователя"
+// @Success 200 {object} map[string]string "id, role, parent_info"
 // @Router /admin/users [post]
 func (h *ContentAdminHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
-	var req CreateUserRequest
+	var req CreateFullUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	input := usecase.CreateUserInput{
-		FirstName: req.FirstName,
-		LastName:  req.LastName,
-		Email:     req.Email,
-		Password:  req.Password,
-		Role:      req.Role,
+
+	birthDate, _ := time.Parse("2006-01-02", req.BirthDateStr)
+
+	input := usecase.ExtendedCreateUserInput{
+		FirstName:       req.FirstName,
+		LastName:        req.LastName,
+		Email:           req.Email,
+		Password:        req.Password,
+		Role:            req.Role,
+		Phone:           req.Phone,
+		City:            req.City,
+		Language:        req.Language,
+		Gender:          req.Gender,
+		BirthDate:       birthDate,
+		ParentFirstName: req.ParentName,
+		ParentPhone:     req.ParentPhone,
+		ParentEmail:     req.ParentEmail,
 	}
-	id, err := h.uc.CreateUser(r.Context(), input)
+
+	result, err := h.uc.CreateFullUser(r.Context(), input)
 	if err != nil {
 		log.Printf("ERROR creating user: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"id": id})
+	json.NewEncoder(w).Encode(result)
 }
 
-// EnrollUser godoc
-// @Summary ADMIN: Запись на курс
-// @Description Привязывает ученика к конкретному курсу.
+// @Summary ADMIN: Изменить пользователя
 // @Tags Admin-Users
 // @Accept json
 // @Produce json
-// @Param request body EnrollRequest true "Связка UserID и CourseID"
+// @Param id path string true "UserID"
+// @Param request body CreateFullUserRequest true "Данные"
+// @Success 200 {object} map[string]string
+// @Router /admin/users/{id} [put]
+func (h *ContentAdminHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
+	userID := chi.URLParam(r, "id")
+	var req CreateFullUserRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	input := usecase.ExtendedCreateUserInput{
+		FirstName: req.FirstName,
+		LastName:  req.LastName,
+		Email:     req.Email,
+		Role:      req.Role,
+		Phone:     req.Phone,
+		City:      req.City,
+		Language:  req.Language,
+		Gender:    req.Gender,
+	}
+
+	if err := h.uc.UpdateUser(r.Context(), userID, input); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"status": "updated"})
+}
+
+// @Summary ADMIN: Удалить пользователя
+// @Tags Admin-Users
+// @Param id path string true "UserID"
+// @Success 200 {object} map[string]string
+// @Router /admin/users/{id} [delete]
+func (h *ContentAdminHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
+	userID := chi.URLParam(r, "id")
+	if err := h.uc.DeleteUser(r.Context(), userID); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"status": "deleted"})
+}
+
+// @Summary ADMIN: Запись на курс
+// @Tags Admin-Users
+// @Accept json
+// @Produce json
+// @Param request body EnrollRequest true "UserID и CourseID"
 // @Success 200 {object} map[string]string "status"
 // @Router /admin/enroll [post]
 func (h *ContentAdminHandler) EnrollUser(w http.ResponseWriter, r *http.Request) {
@@ -402,9 +473,25 @@ func (h *ContentAdminHandler) EnrollUser(w http.ResponseWriter, r *http.Request)
 	json.NewEncoder(w).Encode(map[string]string{"status": "enrolled"})
 }
 
-// GetCourseStudents godoc
+// @Summary ADMIN: Список пользователей
+// @Description Получение таблицы пользователей с фильтрацией по роли.
+// @Tags Admin-Users
+// @Produce json
+// @Param role query string false "Роль (student, teacher...)"
+// @Success 200 {array} domain.User
+// @Router /admin/users [get]
+func (h *ContentAdminHandler) GetUsersList(w http.ResponseWriter, r *http.Request) {
+	role := r.URL.Query().Get("role")
+	users, err := h.uc.GetUsersList(r.Context(), domain.Role(role))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(users)
+}
+
 // @Summary ADMIN: Список учеников курса
-// @Description Возвращает список всех учеников с их текущим прогрессом на курсе.
 // @Tags Admin-Users
 // @Produce json
 // @Param id path string true "ID курса"
@@ -420,9 +507,7 @@ func (h *ContentAdminHandler) GetCourseStudents(w http.ResponseWriter, r *http.R
 	json.NewEncoder(w).Encode(students)
 }
 
-// GetCourseStats godoc
 // @Summary ADMIN: Статистика курса
-// @Description Возвращает агрегированные данные: кол-во учеников, средний балл и т.д.
 // @Tags Admin-Stats
 // @Produce json
 // @Param id path string true "ID курса"
