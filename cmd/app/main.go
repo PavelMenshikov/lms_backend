@@ -42,13 +42,17 @@ import (
 	scheduleUseCase "lms_backend/internal/schedule/usecase"
 
 	"lms_backend/internal/domain"
-	dbPkg "lms_backend/pkg/database"
 	storageService "lms_backend/pkg/storage"
 )
 
+// @title Cap Education LMS - API
+// @version 1.0
+// @description API для LMS платформы Cap Education.
+// @host localhost:8000
+// @BasePath /
 func main() {
 	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found")
+		log.Println("No .env file found (using system envs)")
 	}
 
 	apiPort := os.Getenv("API_PORT")
@@ -70,10 +74,7 @@ func main() {
 		log.Fatal(err)
 	}
 	defer db.Close()
-
-	if err := dbPkg.RunMigrations(db); err != nil {
-		log.Fatalf("Migrations failed: %v", err)
-	}
+	log.Println("Успешное подключение к PostgreSQL")
 
 	s3Client, err := storageService.NewS3Client(
 		os.Getenv("S3_ENDPOINT_URL"),
@@ -83,8 +84,9 @@ func main() {
 		os.Getenv("S3_SECRET_ACCESS_KEY"),
 	)
 	if err != nil {
-		log.Fatalf("S3 initialization failed: %v", err)
+		log.Fatalf("Failed to initialize S3 Storage: %v", err)
 	}
+	log.Println("Успешная инициализация S3 Storage (Mail.ru CS).")
 
 	authRepoImpl := repository.NewAuthRepository(db)
 	authUsecase := authUseCase.NewAuthUsecase(authRepoImpl)

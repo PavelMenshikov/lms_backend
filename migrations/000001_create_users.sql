@@ -1,11 +1,6 @@
-DO $$ 
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
-        CREATE TYPE user_role AS ENUM ('student', 'parent', 'teacher', 'curator', 'moderator', 'admin');
-    END IF;
-END $$;
+CREATE TYPE user_role AS ENUM ('student', 'parent', 'teacher', 'curator', 'moderator', 'admin');
 
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     first_name VARCHAR(50) NOT NULL,
     last_name VARCHAR(50) NOT NULL,
@@ -25,4 +20,4 @@ CREATE TABLE IF NOT EXISTS users (
     avatar_url VARCHAR(500)
 );
 
-CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
+CREATE INDEX idx_users_role ON users(role);
