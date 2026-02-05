@@ -3,6 +3,8 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"fmt"
 	"lms_backend/internal/domain"
 )
 
@@ -25,8 +27,9 @@ func (r *ProfileRepoImpl) GetProfile(ctx context.Context, userID string) (*domai
 	u := &domain.User{}
 	query := `
 		SELECT id, first_name, last_name, email, role, created_at,
-		       phone, city, language, gender, birth_date, school_name,
-		       experience_years, whatsapp_link, telegram_link, avatar_url
+		       COALESCE(phone, ''), COALESCE(city, ''), COALESCE(language, 'ru'), COALESCE(gender, ''), 
+               COALESCE(birth_date, '0001-01-01 00:00:00Z'), COALESCE(school_name, ''),
+		       COALESCE(experience_years, 0), COALESCE(whatsapp_link, ''), COALESCE(telegram_link, ''), COALESCE(avatar_url, '')
 		FROM users WHERE id = $1
 	`
 	err := r.db.QueryRowContext(ctx, query, userID).Scan(
@@ -34,6 +37,9 @@ func (r *ProfileRepoImpl) GetProfile(ctx context.Context, userID string) (*domai
 		&u.Phone, &u.City, &u.Language, &u.Gender, &u.BirthDate, &u.SchoolName,
 		&u.ExperienceYears, &u.Whatsapp, &u.Telegram, &u.AvatarURL,
 	)
+	if err == sql.ErrNoRows {
+		return nil, errors.New("profile not found")
+	}
 	return u, err
 }
 
@@ -45,10 +51,16 @@ func (r *ProfileRepoImpl) UpdateProfile(ctx context.Context, u *domain.User) err
 			telegram_link = $8, avatar_url = $9
 		WHERE id = $10
 	`
-	_, err := r.db.ExecContext(ctx, query,
+	res, err := r.db.ExecContext(ctx, query,
 		u.FirstName, u.LastName, u.Phone, u.City,
 		u.Language, u.SchoolName, u.Whatsapp,
 		u.Telegram, u.AvatarURL, u.ID,
 	)
-	return err
+	if err != nil {
+		return err
+	}
+	if rows, _ := res.RowsAffected(); rows == 0 {
+		return fmt.Errorf("profile with ID %s not found", u.ID)
+	}
+	return nil
 }

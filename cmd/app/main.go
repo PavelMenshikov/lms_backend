@@ -41,15 +41,15 @@ import (
 	scheduleRepo "lms_backend/internal/schedule/repository"
 	scheduleUseCase "lms_backend/internal/schedule/usecase"
 
-	chatHttp "lms_backend/internal/chat/delivery/http"
-	chatRepo "lms_backend/internal/chat/repository"
-	chatUseCase "lms_backend/internal/chat/usecase"
-
 	"lms_backend/internal/domain"
-	dbPkg "lms_backend/pkg/database"
 	storageService "lms_backend/pkg/storage"
 )
 
+// @title Cap Education LMS - API
+// @version 1.0
+// @description API для LMS платформы Cap Education.
+// @host localhost:8000
+// @BasePath /
 func main() {
 	if err := godotenv.Load(); err != nil {
 		log.Println("No .env file found (using system envs)")
@@ -75,10 +75,6 @@ func main() {
 	}
 	defer db.Close()
 	log.Println("Успешное подключение к PostgreSQL")
-
-	if err := dbPkg.RunMigrations(db); err != nil {
-		log.Fatalf("Critical Error running migrations: %v", err)
-	}
 
 	s3Client, err := storageService.NewS3Client(
 		os.Getenv("S3_ENDPOINT_URL"),
@@ -111,6 +107,7 @@ func main() {
 	reviewUC := reviewUseCase.NewReviewUseCase(reviewRepoImpl)
 	reviewHandler := reviewHttp.NewReviewHandler(reviewUC)
 
+	// Инициализация модуля PROFILE
 	profileRepoImpl := profileRepo.NewProfileRepository(db)
 	profileUC := profileUseCase.NewProfileUseCase(profileRepoImpl, s3Client)
 	profileHandler := profileHttp.NewProfileHandler(profileUC)
@@ -118,10 +115,6 @@ func main() {
 	scheduleRepoImpl := scheduleRepo.NewScheduleRepository(db)
 	scheduleUC := scheduleUseCase.NewScheduleUseCase(scheduleRepoImpl)
 	scheduleHandler := scheduleHttp.NewScheduleHandler(scheduleUC)
-
-	chatRepoImpl := chatRepo.NewChatRepository(db)
-	chatUC := chatUseCase.NewChatUseCase(chatRepoImpl)
-	chatHandler := chatHttp.NewChatHandler(chatUC)
 
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
@@ -159,10 +152,6 @@ func main() {
 		r.Get("/admin/streams", adminHandler.GetStreams)
 		r.Post("/admin/groups", adminHandler.CreateGroup)
 		r.Get("/admin/groups", adminHandler.GetGroups)
-
-		r.Get("/teachers", learningHandler.GetTeachers)
-		r.Get("/teachers/{id}", learningHandler.GetTeacherDetails)
-		r.Post("/teachers/{id}/reviews", learningHandler.AddReview)
 
 		r.Get("/staff/submissions", reviewHandler.GetPendingSubmissions)
 		r.Post("/staff/submissions/{id}/evaluate", reviewHandler.EvaluateSubmission)

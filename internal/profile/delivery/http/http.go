@@ -2,10 +2,11 @@ package http
 
 import (
 	"encoding/json"
-	authMiddleware "lms_backend/internal/auth/delivery/middleware"
-	"lms_backend/internal/profile/usecase"
 	"mime/multipart"
 	"net/http"
+
+	authMiddleware "lms_backend/internal/auth/delivery/middleware"
+	"lms_backend/internal/profile/usecase"
 )
 
 type ProfileHandler struct {
@@ -14,6 +15,17 @@ type ProfileHandler struct {
 
 func NewProfileHandler(uc *usecase.ProfileUseCase) *ProfileHandler {
 	return &ProfileHandler{uc: uc}
+}
+
+type UpdateProfileRequest struct {
+	FirstName  string `json:"first_name"`
+	LastName   string `json:"last_name"`
+	Phone      string `json:"phone"`
+	City       string `json:"city"`
+	Language   string `json:"language"`
+	SchoolName string `json:"school_name"`
+	Whatsapp   string `json:"whatsapp"`
+	Telegram   string `json:"telegram"`
 }
 
 // GetProfile godoc
@@ -40,15 +52,23 @@ func (h *ProfileHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 // @Tags Profile
 // @Accept multipart/form-data
 // @Produce json
+// @Param avatar formData file false "Фото профиля"
 // @Param first_name formData string false "Имя"
 // @Param last_name formData string false "Фамилия"
 // @Param phone formData string false "Телефон"
-// @Param avatar formData file false "Фото профиля"
-// @Success 200 {object} map[string]string
+// @Param city formData string false "Населенный пункт"
+// @Param language formData string false "Родной язык"
+// @Param school_name formData string false "Учебное заведение"
+// @Param whatsapp formData string false "WhatsApp ссылка"
+// @Param telegram formData string false "Telegram ссылка"
+// @Success 200 {object} map[string]string "status"
 // @Router /profile [put]
 func (h *ProfileHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	const MAX_SIZE = 5 << 20
-	r.ParseMultipartForm(MAX_SIZE)
+	if err := r.ParseMultipartForm(MAX_SIZE); err != nil {
+		http.Error(w, "File upload size exceeded limit.", http.StatusBadRequest)
+		return
+	}
 
 	userData := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
 
@@ -76,6 +96,6 @@ func (h *ProfileHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"status": "profile updated"})
 }

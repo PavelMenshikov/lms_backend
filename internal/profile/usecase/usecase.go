@@ -50,9 +50,10 @@ func (uc *ProfileUseCase) UpdateProfile(ctx context.Context, input UpdateProfile
 
 		s3Key := fmt.Sprintf("avatars/%s_%s", input.UserID, input.FileHeader.Filename)
 		key, err := uc.s3Storage.UploadFile(ctx, file, s3Key, input.FileHeader.Size, input.FileHeader.Header.Get("Content-Type"))
-		if err == nil {
-			user.AvatarURL, _ = uc.s3Storage.GetPublicURL(ctx, key)
+		if err != nil {
+			return err
 		}
+		user.AvatarURL, _ = uc.s3Storage.GetPublicURL(ctx, key)
 	}
 
 	user.FirstName = input.FirstName
