@@ -6,6 +6,5 @@ import (
 )
 
 type AuthRepository interface {
-	CreateUser(ctx context.Context, u *domain.User) error
 	GetByEmail(ctx context.Context, email string) (*domain.User, error)
 }

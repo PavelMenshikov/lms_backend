@@ -3,6 +3,8 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"fmt"
 
 	"lms_backend/internal/domain"
 )
@@ -17,37 +19,27 @@ func NewAuthRepository(db *sql.DB) *AuthRepositoryImpl {
 	return &AuthRepositoryImpl{db: db}
 }
 
-func (r *AuthRepositoryImpl) CreateUser(ctx context.Context, u *domain.User) error {
-	query := `
-		INSERT INTO users (first_name, last_name, email, password, role)
-		VALUES ($1, $2, $3, $4, $5)
-		RETURNING id, created_at;
-	`
-	return r.db.QueryRowContext(
-		ctx,
-		query,
-		u.FirstName,
-		u.LastName,
-		u.Email,
-		u.Password,
-		u.Role,
-	).Scan(&u.ID, &u.CreatedAt)
-}
-
 func (r *AuthRepositoryImpl) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
 	u := &domain.User{}
+
 	query := `
-		SELECT id, first_name, last_name, email, password, role, created_at, password 
+		SELECT 
+			id, first_name, last_name, email, password_hash, role, created_at
 		FROM users
 		WHERE email = $1;
 	`
+	var passwordHash string
 
 	err := r.db.QueryRowContext(ctx, query, email).
-		Scan(&u.ID, &u.FirstName, &u.LastName, &u.Email, &u.Password, &u.Role, &u.CreatedAt, &u.Password)
+		Scan(&u.ID, &u.FirstName, &u.LastName, &u.Email, &passwordHash, &u.Role, &u.CreatedAt)
 
 	if err != nil {
-		return nil, err
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, errors.New("user not found")
+		}
+		return nil, fmt.Errorf("database query failed: %w", err)
 	}
 
+	u.Password = passwordHash
 	return u, nil
 }
