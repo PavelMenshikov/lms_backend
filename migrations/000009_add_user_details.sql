@@ -1,13 +1,3 @@
-ALTER TABLE users 
-ADD COLUMN phone VARCHAR(20),
-ADD COLUMN city VARCHAR(100),
-ADD COLUMN language VARCHAR(10) DEFAULT 'ru',
-ADD COLUMN gender VARCHAR(10), 
-ADD COLUMN birth_date TIMESTAMP,
-ADD COLUMN school_name VARCHAR(255),
-ADD COLUMN experience_years INTEGER, 
-ADD COLUMN whatsapp_link VARCHAR(255),
-ADD COLUMN telegram_link VARCHAR(255),
-ADD COLUMN avatar_url VARCHAR(500); 
+-- +goose Up
 
-CREATE INDEX idx_users_role ON users(role);
+SELECT 1;

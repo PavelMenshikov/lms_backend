@@ -1,3 +1,4 @@
+-- +goose Up
 CREATE TABLE IF NOT EXISTS streams (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     course_id UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
@@ -15,6 +16,6 @@ CREATE TABLE IF NOT EXISTS groups (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-ALTER TABLE user_courses ADD COLUMN group_id UUID REFERENCES groups(id) ON DELETE SET NULL;
-ALTER TABLE user_courses ADD COLUMN stream_id UUID REFERENCES streams(id) ON DELETE SET NULL;
-ALTER TABLE user_courses ADD COLUMN status VARCHAR(20) DEFAULT 'active'; -- active, frozen, graduated
+ALTER TABLE user_courses ADD COLUMN IF NOT EXISTS group_id UUID REFERENCES groups(id) ON DELETE SET NULL;
+ALTER TABLE user_courses ADD COLUMN IF NOT EXISTS stream_id UUID REFERENCES streams(id) ON DELETE SET NULL;
+ALTER TABLE user_courses ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'active';

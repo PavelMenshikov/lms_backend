@@ -1,3 +1,4 @@
+-- +goose Up
 CREATE TABLE IF NOT EXISTS user_courses (
     user_id UUID NOT NULL,
     course_id UUID NOT NULL,
@@ -9,7 +10,6 @@ CREATE TABLE IF NOT EXISTS user_courses (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE RESTRICT
 );
-
 
 CREATE TABLE IF NOT EXISTS assignments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

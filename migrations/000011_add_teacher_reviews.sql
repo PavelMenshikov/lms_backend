@@ -1,3 +1,4 @@
+-- +goose Up
 CREATE TABLE IF NOT EXISTS teacher_reviews (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     teacher_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -9,4 +10,4 @@ CREATE TABLE IF NOT EXISTS teacher_reviews (
     UNIQUE(teacher_id, student_id, course_id)
 );
 
-CREATE INDEX idx_teacher_reviews_teacher_id ON teacher_reviews(teacher_id);
+CREATE INDEX IF NOT EXISTS idx_teacher_reviews_teacher_id ON teacher_reviews(teacher_id);

@@ -1,3 +1,4 @@
+-- +goose Up
 CREATE TABLE IF NOT EXISTS chat_messages (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     module_id UUID NOT NULL REFERENCES modules(id) ON DELETE CASCADE,
@@ -9,5 +10,5 @@ CREATE TABLE IF NOT EXISTS chat_messages (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE INDEX idx_chat_room ON chat_messages(module_id, student_id);
-CREATE INDEX idx_chat_created_at ON chat_messages(created_at);
+CREATE INDEX IF NOT EXISTS idx_chat_room ON chat_messages(module_id, student_id);
+CREATE INDEX IF NOT EXISTS idx_chat_created_at ON chat_messages(created_at);

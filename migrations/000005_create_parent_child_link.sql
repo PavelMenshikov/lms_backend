@@ -1,3 +1,4 @@
+-- +goose Up
 CREATE TABLE IF NOT EXISTS child_parent_link (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     child_id UUID NOT NULL,

@@ -1,3 +1,4 @@
+-- +goose Up
 CREATE TABLE IF NOT EXISTS teachers (
     id UUID PRIMARY KEY,
     bio TEXT,
@@ -23,7 +24,8 @@ CREATE TABLE IF NOT EXISTS modules (
     title VARCHAR(255) NOT NULL,
     order_num INTEGER NOT NULL,
     description TEXT,
-    FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
+    FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
+    UNIQUE (course_id, order_num)
 );
 
 CREATE TABLE IF NOT EXISTS lessons (
