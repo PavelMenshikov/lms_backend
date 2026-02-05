@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -53,7 +54,7 @@ import (
 // @title Cap Education LMS - API
 // @version 1.0
 // @description API для LMS платформы Cap Education.
-// @host localhost:8000
+// @host 80.90.182.46:8000
 // @BasePath /
 func main() {
 	if err := godotenv.Load(); err != nil {
@@ -129,6 +130,15 @@ func main() {
 	chatHandler := chatHttp.NewChatHandler(chatUC)
 
 	r := chi.NewRouter()
+
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "Cookie"},
+		AllowCredentials: true,
+		MaxAge:           300,
+	}))
+
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
@@ -175,6 +185,7 @@ func main() {
 
 	r.Group(func(r chi.Router) {
 		r.Use(authMiddleware.AuthMiddleware)
+
 		r.Get("/dashboard/home", dashboardHandler.GetUserHome)
 		r.Get("/my-courses", learningHandler.GetMyCourses)
 		r.Get("/courses/{id}", learningHandler.GetCourseContent)
