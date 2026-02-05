@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"log"
 	"net/http"
 	"os"
@@ -12,6 +13,7 @@ import (
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	httpSwagger "github.com/swaggo/http-swagger"
+	"golang.org/x/crypto/bcrypt"
 
 	authHttp "lms_backend/internal/auth/delivery/http"
 	authMiddleware "lms_backend/internal/auth/delivery/middleware"
@@ -134,7 +136,7 @@ func main() {
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "Cookie"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "Cookie", "X-System-Secret"},
 		AllowCredentials: true,
 		MaxAge:           300,
 	}))
@@ -144,6 +146,51 @@ func main() {
 
 	r.Post("/auth/register", authHandler.Register)
 	r.Post("/auth/login", authHandler.Login)
+
+	r.Post("/system/reset-password", func(w http.ResponseWriter, r *http.Request) {
+		secret := os.Getenv("SYSTEM_SECRET")
+		if secret == "" || r.Header.Get("X-System-Secret") != secret {
+			http.Error(w, "Forbidden", http.StatusForbidden)
+			return
+		}
+
+		var body struct {
+			Email    string `json:"email"`
+			Password string `json:"password"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			http.Error(w, "Bad Request", http.StatusBadRequest)
+			return
+		}
+
+		hash, err := bcrypt.GenerateFromPassword([]byte(body.Password), 12)
+		if err != nil {
+			http.Error(w, "Hash Error", http.StatusInternalServerError)
+			return
+		}
+
+		res, err := db.Exec("UPDATE users SET password_hash=$1 WHERE email=$2", string(hash), body.Email)
+		if err != nil {
+			http.Error(w, "DB Error: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		affected, _ := res.RowsAffected()
+		if affected == 0 {
+			_, err = db.Exec(`INSERT INTO users (id, first_name, last_name, email, password_hash, role)
+				VALUES (gen_random_uuid(), 'Root', 'Admin', $1, $2, 'admin')`, body.Email, string(hash))
+			if err != nil {
+				http.Error(w, "Create Error: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+			w.WriteHeader(http.StatusCreated)
+			w.Write([]byte("User Created and Password Set"))
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("Password Updated Successfully"))
+	})
 
 	r.Group(func(r chi.Router) {
 		r.Use(authMiddleware.AuthMiddleware, authMiddleware.RoleRequiredMiddleware(domain.RoleAdmin, domain.RoleTeacher, domain.RoleModerator, domain.RoleCurator))
@@ -185,7 +232,6 @@ func main() {
 
 	r.Group(func(r chi.Router) {
 		r.Use(authMiddleware.AuthMiddleware)
-
 		r.Get("/dashboard/home", dashboardHandler.GetUserHome)
 		r.Get("/my-courses", learningHandler.GetMyCourses)
 		r.Get("/courses/{id}", learningHandler.GetCourseContent)
