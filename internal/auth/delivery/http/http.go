@@ -17,7 +17,7 @@ func NewAuthHandler(uc *usecase.AuthUsecase) *AuthHandler {
 	return &AuthHandler{uc: uc}
 }
 
-// РЕГИСТРАЦИЯ ОТМЕНЕНА: оставляем роут для старых Swagger-клиентов, но он выдаст ошибку 403.
+// РЕГИСТРАЦИЯ ОТМЕНЕНА: выдаст ошибку 403.
 // Register godoc
 // @Summary Регистрация (ЗАБЛОКИРОВАНО)
 // @Description Данный функционал отключен, пользователи создаются только Администратором.
@@ -31,12 +31,12 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 }
 
 type LoginRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Email    string `json:"email" example:"admin@capedu.kz"`
+	Password string `json:"password" example:"password"`
 }
 
 // Login godoc
-// @Summary Вход в систему (Log in student/admin)
+// @Summary Вход в систему
 // @Description Ввод email и пароля, возвращает HTTP-Only Cookie.
 // @Tags Аутентификация
 // @Accept  json
@@ -65,6 +65,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		Name:     "auth_token",
 		Value:    token,
 		Expires:  time.Now().Add(24 * time.Hour * 7),
+		MaxAge:   int(24 * 7 * time.Hour / time.Second),
 		HttpOnly: true,
 		Secure:   r.TLS != nil,
 		SameSite: http.SameSiteLaxMode,
