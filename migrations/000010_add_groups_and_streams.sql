@@ -1,0 +1,20 @@
+CREATE TABLE IF NOT EXISTS streams (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    course_id UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+    title VARCHAR(100) NOT NULL,
+    start_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS groups (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    stream_id UUID NOT NULL REFERENCES streams(id) ON DELETE CASCADE,
+    curator_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    teacher_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    title VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE user_courses ADD COLUMN group_id UUID REFERENCES groups(id) ON DELETE SET NULL;
+ALTER TABLE user_courses ADD COLUMN stream_id UUID REFERENCES streams(id) ON DELETE SET NULL;
+ALTER TABLE user_courses ADD COLUMN status VARCHAR(20) DEFAULT 'active'; -- active, frozen, graduated

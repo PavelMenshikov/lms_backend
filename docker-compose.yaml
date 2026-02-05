@@ -15,12 +15,20 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./migrations:/docker-entrypoint-initdb.d
+
+  redis:
+    image: redis:7-alpine
+    container_name: cap-edu-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    command: redis-server --save 60 1 --loglevel warning
 
   app:
     build:
       context: .
       dockerfile: Dockerfile
+      target: app
     container_name: cap-edu-backend
     restart: always
     ports:
@@ -29,6 +37,19 @@ services:
       - .env
     depends_on:
       - db
+      - redis
+
+  notifier:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: notifier
+    container_name: cap-edu-notifier
+    restart: always
+    env_file:
+      - .env
+    depends_on:
+      - redis
 
 volumes:
   postgres_data:

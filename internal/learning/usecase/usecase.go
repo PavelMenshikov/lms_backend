@@ -45,9 +45,8 @@ type SubmitAssignmentInput struct {
 func (uc *LearningUseCase) SubmitAssignment(ctx context.Context, input SubmitAssignmentInput) error {
 	assignmentID, err := uc.repo.GetAssignmentIDByLesson(ctx, input.LessonID)
 	if err != nil {
-		return fmt.Errorf("assignment not found for this lesson: %w", err)
+		return fmt.Errorf("assignment not found: %w", err)
 	}
-
 	var fileURL string
 	if input.FileHeader != nil {
 		file, err := input.FileHeader.Open()
@@ -55,20 +54,50 @@ func (uc *LearningUseCase) SubmitAssignment(ctx context.Context, input SubmitAss
 			return err
 		}
 		defer file.Close()
-
 		s3Key := fmt.Sprintf("submissions/%s_%s_%s", input.UserID, assignmentID, input.FileHeader.Filename)
-		mimeType := input.FileHeader.Header.Get("Content-Type")
-
-		key, err := uc.s3Storage.UploadFile(ctx, file, s3Key, input.FileHeader.Size, mimeType)
+		key, err := uc.s3Storage.UploadFile(ctx, file, s3Key, input.FileHeader.Size, input.FileHeader.Header.Get("Content-Type"))
 		if err != nil {
 			return err
 		}
 		fileURL, _ = uc.s3Storage.GetPublicURL(ctx, key)
 	}
-
 	return uc.repo.SaveSubmission(ctx, input.UserID, assignmentID, input.TextAnswer, fileURL)
 }
 
 func (uc *LearningUseCase) CompleteLesson(ctx context.Context, lessonID, userID string) error {
 	return uc.repo.MarkLessonComplete(ctx, userID, lessonID)
+}
+
+func (uc *LearningUseCase) GetTeachers(ctx context.Context) ([]*domain.TeacherPublicInfo, error) {
+	return uc.repo.GetTeachersList(ctx)
+}
+
+func (uc *LearningUseCase) GetTeacherDetails(ctx context.Context, id string) (*domain.TeacherPublicInfo, error) {
+	teacher, err := uc.repo.GetTeacherByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	reviews, _ := uc.repo.GetTeacherReviews(ctx, id)
+	teacher.Reviews = reviews
+	return teacher, nil
+}
+
+type AddReviewInput struct {
+	TeacherID string
+	StudentID string
+	Rating    int
+	Comment   string
+}
+
+func (uc *LearningUseCase) AddReview(ctx context.Context, input AddReviewInput) error {
+	if input.Rating < 1 || input.Rating > 5 {
+		return errors.New("invalid rating")
+	}
+	review := &domain.TeacherReview{
+		TeacherID: input.TeacherID,
+		StudentID: input.StudentID,
+		Rating:    input.Rating,
+		Comment:   input.Comment,
+	}
+	return uc.repo.AddTeacherReview(ctx, review)
 }

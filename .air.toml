@@ -9,11 +9,9 @@ exclude_dir = ["vendor", "docs", "tmp", "migrations"]
 include_ext = ["go", "tpl", "html"]
 
 [run]
-# Используем ENV PORT, если он установлен, иначе 8080 (должен совпадать с кодом Go)
 cmds = ["/bin/bash", "-c", "exec $GOPATH/bin/air"] 
 
 [log]
-# log time on and colorizing logs is useful.
 time = false
 
 [color]

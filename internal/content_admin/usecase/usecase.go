@@ -2,6 +2,8 @@ package usecase
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"mime/multipart"
@@ -45,13 +47,6 @@ func (uc *ContentAdminUseCase) UploadMedia(ctx context.Context, fileHeader *mult
 	return uc.s3Storage.GetPublicURL(ctx, key)
 }
 
-type CreateCourseInput struct {
-	Title       string
-	Description string
-	IsMain      bool
-	FileHeader  *multipart.FileHeader
-}
-
 func (uc *ContentAdminUseCase) CreateCourse(ctx context.Context, input CreateCourseInput) (string, error) {
 	if input.Title == "" {
 		return "", errors.New("title is required")
@@ -90,19 +85,11 @@ func (uc *ContentAdminUseCase) CreateCourse(ctx context.Context, input CreateCou
 	return uc.repo.CreateCourse(ctx, course)
 }
 
-type UpdateCourseSettingsInput struct {
-	CourseID            string
-	Title               string
-	Description         string
-	IsMain              bool
-	Status              domain.CourseStatus
-	HasHomework         bool
-	IsHomeworkMandatory bool
-	IsTestMandatory     bool
-	IsProjectMandatory  bool
-	IsDiscordMandatory  bool
-	IsAntiCopyEnabled   bool
-	FileHeader          *multipart.FileHeader
+type CreateCourseInput struct {
+	Title       string
+	Description string
+	IsMain      bool
+	FileHeader  *multipart.FileHeader
 }
 
 func (uc *ContentAdminUseCase) UpdateCourseSettings(ctx context.Context, input UpdateCourseSettingsInput) error {
@@ -141,6 +128,21 @@ func (uc *ContentAdminUseCase) UpdateCourseSettings(ctx context.Context, input U
 	}
 
 	return uc.repo.UpdateCourseSettings(ctx, course)
+}
+
+type UpdateCourseSettingsInput struct {
+	CourseID            string
+	Title               string
+	Description         string
+	IsMain              bool
+	Status              domain.CourseStatus
+	HasHomework         bool
+	IsHomeworkMandatory bool
+	IsTestMandatory     bool
+	IsProjectMandatory  bool
+	IsDiscordMandatory  bool
+	IsAntiCopyEnabled   bool
+	FileHeader          *multipart.FileHeader
 }
 
 func (uc *ContentAdminUseCase) GetAllCourses(ctx context.Context) ([]*domain.Course, error) {
@@ -190,13 +192,6 @@ func (uc *ContentAdminUseCase) GetCourseStructure(ctx context.Context, courseID 
 	}, nil
 }
 
-type CreateModuleInput struct {
-	CourseID    string
-	Title       string
-	Description string
-	OrderNum    int
-}
-
 func (uc *ContentAdminUseCase) CreateModule(ctx context.Context, input CreateModuleInput) (string, error) {
 	module := &domain.Module{
 		CourseID:    input.CourseID,
@@ -207,14 +202,11 @@ func (uc *ContentAdminUseCase) CreateModule(ctx context.Context, input CreateMod
 	return uc.repo.CreateModule(ctx, module)
 }
 
-type CreateLessonInput struct {
-	ModuleID         string
-	TeacherID        string
-	Title            string
-	OrderNum         int
-	VideoFile        *multipart.FileHeader
-	PresentationFile *multipart.FileHeader
-	ContentText      string
+type CreateModuleInput struct {
+	CourseID    string
+	Title       string
+	Description string
+	OrderNum    int
 }
 
 func (uc *ContentAdminUseCase) CreateLesson(ctx context.Context, input CreateLessonInput) (string, error) {
@@ -261,22 +253,14 @@ func (uc *ContentAdminUseCase) CreateLesson(ctx context.Context, input CreateLes
 	return uc.repo.CreateLesson(ctx, lesson)
 }
 
-type ExtendedCreateUserInput struct {
-	FirstName       string
-	LastName        string
-	Email           string
-	Role            domain.Role
-	Password        string
-	Phone           string
-	City            string
-	Language        string
-	Gender          string
-	BirthDate       time.Time
-	ExperienceYears int
-	ParentFirstName string
-	ParentLastName  string
-	ParentPhone     string
-	ParentEmail     string
+type CreateLessonInput struct {
+	ModuleID         string
+	TeacherID        string
+	Title            string
+	OrderNum         int
+	VideoFile        *multipart.FileHeader
+	PresentationFile *multipart.FileHeader
+	ContentText      string
 }
 
 func (uc *ContentAdminUseCase) CreateFullUser(ctx context.Context, input ExtendedCreateUserInput) (map[string]string, error) {
@@ -297,6 +281,8 @@ func (uc *ContentAdminUseCase) CreateFullUser(ctx context.Context, input Extende
 		Gender:          input.Gender,
 		BirthDate:       input.BirthDate,
 		ExperienceYears: input.ExperienceYears,
+		Whatsapp:        input.Whatsapp,
+		Telegram:        input.Telegram,
 	}
 
 	userID, err := uc.repo.CreateUser(ctx, user)
@@ -310,6 +296,9 @@ func (uc *ContentAdminUseCase) CreateFullUser(ctx context.Context, input Extende
 	}
 
 	if input.Role == domain.RoleStudent && input.ParentPhone != "" {
+		parentPassRaw := generateSecurePassword()
+		parentHash, _ := bcrypt.GenerateFromPassword([]byte(parentPassRaw), 12)
+
 		parentEmail := input.ParentEmail
 		if parentEmail == "" {
 			parentEmail = fmt.Sprintf("p_%s", input.Email)
@@ -320,7 +309,7 @@ func (uc *ContentAdminUseCase) CreateFullUser(ctx context.Context, input Extende
 			LastName:  input.ParentLastName,
 			Email:     parentEmail,
 			Phone:     input.ParentPhone,
-			Password:  string(hashedPass),
+			Password:  string(parentHash),
 			Role:      domain.RoleParent,
 			City:      input.City,
 		}
@@ -330,10 +319,31 @@ func (uc *ContentAdminUseCase) CreateFullUser(ctx context.Context, input Extende
 			_ = uc.repo.LinkParentToStudent(ctx, userID, parentID)
 			result["parent_id"] = parentID
 			result["parent_email"] = parentEmail
+			result["parent_password"] = parentPassRaw
 		}
 	}
 
 	return result, nil
+}
+
+type ExtendedCreateUserInput struct {
+	FirstName       string
+	LastName        string
+	Email           string
+	Role            domain.Role
+	Password        string
+	Phone           string
+	City            string
+	Language        string
+	Gender          string
+	BirthDate       time.Time
+	ExperienceYears int
+	Whatsapp        string
+	Telegram        string
+	ParentFirstName string
+	ParentLastName  string
+	ParentPhone     string
+	ParentEmail     string
 }
 
 func (uc *ContentAdminUseCase) EnrollStudent(ctx context.Context, userID, courseID string) error {
@@ -360,6 +370,19 @@ func (uc *ContentAdminUseCase) GetUsersList(ctx context.Context, role domain.Rol
 	return uc.repo.GetUsers(ctx, filter)
 }
 
+func (uc *ContentAdminUseCase) GetDetailedStudents(ctx context.Context, courseID string) ([]*domain.StudentTableItem, error) {
+	filter := domain.UserFilter{CourseID: courseID}
+	return uc.repo.GetDetailedStudentList(ctx, filter)
+}
+
+func (uc *ContentAdminUseCase) GetDetailedTeachers(ctx context.Context) ([]*domain.TeacherTableItem, error) {
+	return uc.repo.GetDetailedTeacherList(ctx)
+}
+
+func (uc *ContentAdminUseCase) GetDetailedCurators(ctx context.Context) ([]*domain.CuratorTableItem, error) {
+	return uc.repo.GetDetailedCuratorList(ctx)
+}
+
 func (uc *ContentAdminUseCase) UpdateUser(ctx context.Context, userID string, input ExtendedCreateUserInput) error {
 	user := &domain.User{
 		ID:              userID,
@@ -372,19 +395,14 @@ func (uc *ContentAdminUseCase) UpdateUser(ctx context.Context, userID string, in
 		Language:        input.Language,
 		Gender:          input.Gender,
 		ExperienceYears: input.ExperienceYears,
+		Whatsapp:        input.Whatsapp,
+		Telegram:        input.Telegram,
 	}
 	return uc.repo.UpdateUser(ctx, user)
 }
 
 func (uc *ContentAdminUseCase) DeleteUser(ctx context.Context, userID string) error {
 	return uc.repo.DeleteUser(ctx, userID)
-}
-
-type CreateTestInput struct {
-	LessonID     string
-	Title        string
-	Description  string
-	PassingScore int
 }
 
 func (uc *ContentAdminUseCase) CreateTest(ctx context.Context, input CreateTestInput) (string, error) {
@@ -397,11 +415,11 @@ func (uc *ContentAdminUseCase) CreateTest(ctx context.Context, input CreateTestI
 	return uc.repo.CreateTest(ctx, test)
 }
 
-type CreateProjectInput struct {
-	LessonID    string
-	Title       string
-	Description string
-	MaxScore    int
+type CreateTestInput struct {
+	LessonID     string
+	Title        string
+	Description  string
+	PassingScore int
 }
 
 func (uc *ContentAdminUseCase) CreateProject(ctx context.Context, input CreateProjectInput) (string, error) {
@@ -412,4 +430,57 @@ func (uc *ContentAdminUseCase) CreateProject(ctx context.Context, input CreatePr
 		MaxScore:    input.MaxScore,
 	}
 	return uc.repo.CreateProject(ctx, project)
+}
+
+type CreateProjectInput struct {
+	LessonID    string
+	Title       string
+	Description string
+	MaxScore    int
+}
+
+func (uc *ContentAdminUseCase) CreateStream(ctx context.Context, input CreateStreamInput) (string, error) {
+	stream := &domain.Stream{
+		CourseID:  input.CourseID,
+		Title:     input.Title,
+		StartDate: input.StartDate,
+	}
+	return uc.repo.CreateStream(ctx, stream)
+}
+
+type CreateStreamInput struct {
+	CourseID  string
+	Title     string
+	StartDate time.Time
+}
+
+func (uc *ContentAdminUseCase) GetStreamsByCourse(ctx context.Context, courseID string) ([]*domain.Stream, error) {
+	return uc.repo.GetStreamsByCourse(ctx, courseID)
+}
+
+func (uc *ContentAdminUseCase) CreateGroup(ctx context.Context, input CreateGroupInput) (string, error) {
+	group := &domain.Group{
+		StreamID:  input.StreamID,
+		CuratorID: input.CuratorID,
+		TeacherID: input.TeacherID,
+		Title:     input.Title,
+	}
+	return uc.repo.CreateGroup(ctx, group)
+}
+
+type CreateGroupInput struct {
+	StreamID  string
+	CuratorID string
+	TeacherID string
+	Title     string
+}
+
+func (uc *ContentAdminUseCase) GetGroupsByStream(ctx context.Context, streamID string) ([]*domain.Group, error) {
+	return uc.repo.GetGroupsByStream(ctx, streamID)
+}
+
+func generateSecurePassword() string {
+	b := make([]byte, 8)
+	rand.Read(b)
+	return hex.EncodeToString(b)
 }

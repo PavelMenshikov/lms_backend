@@ -46,6 +46,25 @@ type Lesson struct {
 	VideoURL        string    `json:"video_url" db:"video_url"`
 	PresentationURL string    `json:"presentation_url" db:"presentation_url"`
 	ContentText     string    `json:"content_text" db:"content_text"`
+	HasHomework     bool      `json:"has_homework" db:"has_homework"`
+	IsInteractive   bool      `json:"is_interactive" db:"is_interactive"`
+}
+
+type Stream struct {
+	ID        string    `json:"id" db:"id"`
+	CourseID  string    `json:"course_id" db:"course_id"`
+	Title     string    `json:"title" db:"title"`
+	StartDate time.Time `json:"start_date" db:"start_date"`
+	CreatedAt time.Time `json:"created_at" db:"created_at"`
+}
+
+type Group struct {
+	ID        string    `json:"id" db:"id"`
+	StreamID  string    `json:"stream_id" db:"stream_id"`
+	CuratorID string    `json:"curator_id" db:"curator_id"`
+	TeacherID string    `json:"teacher_id" db:"teacher_id"`
+	Title     string    `json:"title" db:"title"`
+	CreatedAt time.Time `json:"created_at" db:"created_at"`
 }
 
 type Test struct {
@@ -67,32 +86,11 @@ type Project struct {
 }
 
 type CourseStructure struct {
-	Course  *Course           `json:"course"`
+	Course  *Course            `json:"course"`
 	Modules []*ModuleStructure `json:"modules"`
 }
 
 type ModuleStructure struct {
 	Module  *Module   `json:"module"`
 	Lessons []*Lesson `json:"lessons"`
-}
-
-type AdminStudentProgress struct {
-	UserID          string    `json:"user_id"`
-	FirstName       string    `json:"first_name"`
-	LastName        string    `json:"last_name"`
-	PhotoURL        string    `json:"photo_url"`
-	Status          string    `json:"status"`
-	StartDate       time.Time `json:"start_date"`
-	ProgressPercent int       `json:"progress_percent"`
-	LessonsAttended int       `json:"lessons_attended"`
-	HomeworksDone   int       `json:"homeworks_done"`
-}
-
-type AdminCourseStats struct {
-	TotalStudents        int            `json:"total_students"`
-	NewStudentsMonth     int            `json:"new_students_month"`
-	FrozenStudents       int            `json:"frozen_students"`
-	GraduatedStudents    int            `json:"graduated_students"`
-	AverageScore         float64        `json:"average_score"`
-	SuccessRateBreakdown map[string]int `json:"success_rate_breakdown"`
 }

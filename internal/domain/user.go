@@ -34,7 +34,31 @@ type User struct {
 }
 
 type UserFilter struct {
-	Role   Role
-	Limit  int
-	Offset int
+	Role     Role   `json:"role"`
+	CourseID string `json:"course_id"`
+	GroupID  string `json:"group_id"`
+	Limit    int    `json:"limit"`
+	Offset   int    `json:"offset"`
+}
+
+type StudentTableItem struct {
+	User
+	Status          string `json:"status"`
+	CourseTitle     string `json:"course"`
+	GroupTitle      string `json:"group"`
+	CuratorName     string `json:"curator"`
+	TeacherName     string `json:"teacher"`
+	StreamTitle     string `json:"stream"`
+	ProgressPercent int    `json:"progress"`
+	ParentPhone     string `json:"parent_phone"`
+}
+
+type TeacherTableItem struct {
+	User
+	GroupTitles string `json:"groups"`
+}
+
+type CuratorTableItem struct {
+	User
+	GroupTitles string `json:"groups"`
 }

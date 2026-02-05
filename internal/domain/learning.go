@@ -34,12 +34,21 @@ type StudentLessonRef struct {
 }
 
 type StudentLessonDetail struct {
-	Lesson           *Lesson `json:"lesson"`
-	PreviousLessonID string  `json:"previous_lesson_id,omitempty"`
-	NextLessonID     string  `json:"next_lesson_id,omitempty"`
-	IsCompleted      bool    `json:"is_completed"`
-	AssignmentStatus string  `json:"assignment_status,omitempty"`
-	TeacherComment   string  `json:"teacher_comment,omitempty"`
+	Lesson           *Lesson           `json:"lesson"`
+	Materials        []*LessonMaterial `json:"materials"`
+	PreviousLessonID string            `json:"previous_lesson_id,omitempty"`
+	NextLessonID     string            `json:"next_lesson_id,omitempty"`
+	IsCompleted      bool              `json:"is_completed"`
+	AssignmentStatus string            `json:"assignment_status,omitempty"`
+	TeacherComment   string            `json:"teacher_comment,omitempty"`
+}
+
+type LessonMaterial struct {
+	ID        string `json:"id" db:"id"`
+	LessonID  string `json:"lesson_id" db:"lesson_id"`
+	Title     string `json:"title" db:"title"`
+	S3Path    string `json:"s3_path" db:"s3_path"`
+	PublicURL string `json:"public_url"`
 }
 
 type SubmissionRecord struct {
@@ -51,4 +60,10 @@ type SubmissionRecord struct {
 	Text        string    `json:"submission_text"`
 	Link        string    `json:"submission_link"`
 	SubmittedAt time.Time `json:"submitted_at"`
+}
+
+type StudentSubmissionInput struct {
+	LessonID   string
+	UserID     string
+	TextAnswer string
 }
