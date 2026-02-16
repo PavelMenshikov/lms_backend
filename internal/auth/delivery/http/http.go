@@ -17,7 +17,6 @@ func NewAuthHandler(uc *usecase.AuthUsecase) *AuthHandler {
 	return &AuthHandler{uc: uc}
 }
 
-// РЕГИСТРАЦИЯ ОТМЕНЕНА: выдаст ошибку 403.
 // Register godoc
 // @Summary Регистрация (ЗАБЛОКИРОВАНО)
 // @Description Данный функционал отключен, пользователи создаются только Администратором.
@@ -32,17 +31,17 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 type LoginRequest struct {
 	Email    string `json:"email" example:"admin@capedu.kz"`
-	Password string `json:"password" example:"password"`
+	Password string `json:"password" example:"capedu123"`
 }
 
 // Login godoc
 // @Summary Вход в систему
-// @Description Ввод email и пароля, возвращает HTTP-Only Cookie.
+// @Description Ввод email и пароля. Возвращает токен в Cookie (для Prod) и в Body (для Dev).
 // @Tags Аутентификация
 // @Accept  json
 // @Produce  json
 // @Param   request body LoginRequest true "Данные для входа"
-// @Success 200 {object} map[string]interface{} "message: Login successful, user: {...}"
+// @Success 200 {object} map[string]interface{} "message, user, token"
 // @Failure 401 {object} map[string]string "error: Неправильный логин/пароль"
 // @Router /auth/login [post]
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
@@ -73,7 +72,8 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	})
 
 	response := map[string]interface{}{
-		"message": "Login successful. Token stored in HTTP-only cookie.",
+		"message": "Login successful",
+		"token":   token,
 		"user":    user,
 	}
 

@@ -3,57 +3,65 @@ package middleware
 import (
 	"context"
 	"fmt"
-	"lms_backend/internal/domain"
 	"net/http"
 	"strings"
+
+	"lms_backend/internal/domain"
 )
 
 type UserContextData struct {
-    UserID string
-    Role   domain.Role
+	UserID string
+	Role   domain.Role
 }
 
-const ContextUserDataKey = "userData"
+type contextKey string
+
+const ContextUserDataKey contextKey = "userData"
 
 func extractUserDataFromToken(tokenValue string) *UserContextData {
-   
-    if tokenValue == "mock-jwt-token-for-user-admin@capedu.kz" || strings.Contains(tokenValue, "admin") {
-        return &UserContextData{
-            UserID: "00000000-0000-0000-0000-000000000001", 
-            Role: domain.RoleAdmin,
-        }
-    }
-    if strings.Contains(tokenValue, "student") {
-        return &UserContextData{
-            UserID: "a0000000-0000-0000-0000-000000000001", 
-            Role: domain.RoleStudent,
-        }
-    }
-    
-    return nil 
+	if tokenValue == "mock-jwt-token-for-user-admin@capedu.kz" || strings.Contains(tokenValue, "admin") {
+		return &UserContextData{
+			UserID: "00000000-0000-0000-0000-000000000001",
+			Role:   domain.RoleAdmin,
+		}
+	}
+	if strings.Contains(tokenValue, "student") {
+		return &UserContextData{
+			UserID: "a0000000-0000-0000-0000-000000000001",
+			Role:   domain.RoleStudent,
+		}
+	}
+	return nil
 }
-
 
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        
+		var tokenValue string
+
 		cookie, err := r.Cookie("auth_token")
-		if err != nil {
-			http.Error(w, "Unauthorized: Missing or invalid token in cookie", http.StatusUnauthorized)
+		if err == nil {
+			tokenValue = cookie.Value
+		}
+
+		if tokenValue == "" {
+			authHeader := r.Header.Get("Authorization")
+			if authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") {
+				tokenValue = strings.TrimPrefix(authHeader, "Bearer ")
+			}
+		}
+
+		if tokenValue == "" {
+			http.Error(w, "Unauthorized: No token provided", http.StatusUnauthorized)
 			return
 		}
-		tokenValue := cookie.Value
 
 		userData := extractUserDataFromToken(tokenValue)
-
 		if userData == nil {
-			http.Error(w, "Unauthorized: Invalid or expired token", http.StatusUnauthorized)
+			http.Error(w, "Unauthorized: Invalid token", http.StatusUnauthorized)
 			return
 		}
-        
-        // ПРОКИДЫВАЕМ В CONTEXT
-		ctx := context.WithValue(r.Context(), ContextUserDataKey, userData)
 
+		ctx := context.WithValue(r.Context(), ContextUserDataKey, userData)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -61,29 +69,23 @@ func AuthMiddleware(next http.Handler) http.Handler {
 func RoleRequiredMiddleware(allowedRoles ...domain.Role) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			
-			
 			userCtxData, ok := r.Context().Value(ContextUserDataKey).(*UserContextData)
-            
-			if !ok || userCtxData == nil || userCtxData.UserID == "" {
-				http.Error(w, "Forbidden: Authentication context not set.", http.StatusForbidden)
+			if !ok || userCtxData == nil {
+				http.Error(w, "Forbidden", http.StatusForbidden)
 				return
 			}
-            
-            
-            isAllowed := false
+			isAllowed := false
 			for _, role := range allowedRoles {
 				if userCtxData.Role == role {
 					isAllowed = true
 					break
 				}
 			}
-
 			if !isAllowed {
-				http.Error(w, "Forbidden: Access denied. Required roles: "+strings.Join(strings.Fields(strings.Trim(fmt.Sprintf("%s", allowedRoles), "[]")), ", "), http.StatusForbidden)
+				msg := fmt.Sprintf("Forbidden: access denied for role %s", userCtxData.Role)
+				http.Error(w, msg, http.StatusForbidden)
 				return
 			}
-            
 			next.ServeHTTP(w, r)
 		})
 	}
