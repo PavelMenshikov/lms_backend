@@ -2,10 +2,11 @@ package usecase_test
 
 import (
 	"context"
+	"testing"
+
 	"lms_backend/internal/auth/mocks"
 	"lms_backend/internal/auth/usecase"
 	"lms_backend/internal/domain"
-	"testing"
 )
 
 func TestAuthUsecase_Login(t *testing.T) {
@@ -52,25 +53,10 @@ func TestAuthUsecase_Register(t *testing.T) {
 		Role:      domain.RoleParent,
 	}
 
-	t.Run("Success Register", func(t *testing.T) {
-		err := uc.Register(ctx, newUser, newPassword)
-		if err != nil {
-			t.Fatalf("Ожидалась успешная регистрация, получена ошибка: %v", err)
-		}
-
-		if newUser.Password == newPassword {
-			t.Error("Пароль должен быть захеширован, но он не захеширован.")
-		}
-
-		if _, ok := repoMock.Users["new@lms.ru"]; !ok {
-			t.Error("Пользователь должен быть добавлен в Mock-репозиторий")
-		}
-	})
-
-	t.Run("User Exists", func(t *testing.T) {
+	t.Run("Public Registration Disabled", func(t *testing.T) {
 		err := uc.Register(ctx, newUser, newPassword)
 		if err == nil {
-			t.Error("Ожидалась ошибка 'пользователь уже существует', но ошибок нет")
+			t.Error("Ожидалась ошибка 'Public registration is disabled', но функция вернула nil")
 		}
 	})
 }
