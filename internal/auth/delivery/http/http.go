@@ -36,12 +36,12 @@ type LoginRequest struct {
 
 // Login godoc
 // @Summary Вход в систему
-// @Description Ввод email и пароля. Возвращает токен в Cookie (для Prod) и в Body (для Dev).
+// @Description Ввод email и пароля, возвращает HTTP-Only Cookie.
 // @Tags Аутентификация
 // @Accept  json
 // @Produce  json
 // @Param   request body LoginRequest true "Данные для входа"
-// @Success 200 {object} map[string]interface{} "message, user, token"
+// @Success 200 {object} map[string]interface{} "message: Login successful, user: {...}"
 // @Failure 401 {object} map[string]string "error: Неправильный логин/пароль"
 // @Router /auth/login [post]
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
@@ -66,10 +66,11 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Now().Add(24 * time.Hour * 7),
 		MaxAge:   int(24 * 7 * time.Hour / time.Second),
 		HttpOnly: true,
-		Secure:   r.TLS != nil,
-		SameSite: http.SameSiteLaxMode,
+		Secure:   true,
+		SameSite: http.SameSiteNoneMode,
 		Path:     "/",
 	})
+	// -------------------------------------------------------
 
 	response := map[string]interface{}{
 		"message": "Login successful",

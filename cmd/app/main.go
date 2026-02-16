@@ -56,7 +56,7 @@ import (
 // @title Cap Education LMS - API
 // @version 1.0
 // @description API для LMS платформы Cap Education.
-// @host 80.90.182.46:8000
+// @host test.xcx.cx
 // @BasePath /
 func main() {
 	if err := godotenv.Load(); err != nil {
@@ -136,12 +136,12 @@ func main() {
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins: []string{
 			"http://localhost:3000",
-			"http://localhost:8000",
-			"http://80.90.182.46:8000",
-			"http://80.90.182.46:3000",
+			"https://localhost:3000",
+			"http://test.xcx.cx",
+			"https://test.xcx.cx",
 		},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "Cookie"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "Cookie", "X-System-Secret"},
 		ExposedHeaders:   []string{"Link"},
 		AllowCredentials: true,
 		MaxAge:           300,
@@ -256,7 +256,7 @@ func main() {
 	})
 
 	r.Get("/swagger/*", httpSwagger.Handler(
-		httpSwagger.URL("/docs/swagger.json"),
+		httpSwagger.URL("https://test.xcx.cx/docs/swagger.json"),
 	))
 	r.Get("/docs/*", func(w http.ResponseWriter, r *http.Request) {
 		http.StripPrefix("/docs/", http.FileServer(http.Dir("./docs"))).ServeHTTP(w, r)

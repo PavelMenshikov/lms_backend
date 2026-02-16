@@ -2,7 +2,11 @@ basePath: /
 definitions:
   domain.AdminCourseStats:
     properties:
+      average_lag_lessons:
+        type: number
       average_score:
+        type: number
+      average_watch_time_minutes:
         type: number
       frozen_students:
         type: integer
@@ -16,6 +20,29 @@ definitions:
         type: object
       total_students:
         type: integer
+    type: object
+  domain.AdminHomeDashboard:
+    properties:
+      active_courses:
+        type: integer
+      lesson_activity:
+        items:
+          $ref: '#/definitions/domain.DailyLessonActivity'
+        type: array
+      new_students_delta_percent:
+        type: number
+      new_students_month:
+        type: integer
+      performance_zones:
+        $ref: '#/definitions/domain.PerformanceZones'
+      students_delta_percent:
+        type: number
+      total_students:
+        type: integer
+      total_teachers:
+        type: integer
+      update_period_month:
+        type: string
     type: object
   domain.AdminStudentProgress:
     properties:
@@ -36,6 +63,29 @@ definitions:
       status:
         type: string
       user_id:
+        type: string
+    type: object
+  domain.ChatMessage:
+    properties:
+      created_at:
+        type: string
+      file_url:
+        type: string
+      id:
+        type: string
+      is_read:
+        type: boolean
+      message_text:
+        type: string
+      module_id:
+        type: string
+      sender_id:
+        type: string
+      sender_name:
+        type: string
+      sender_role:
+        $ref: '#/definitions/domain.Role'
+      student_id:
         type: string
     type: object
   domain.Course:
@@ -86,14 +136,78 @@ definitions:
           $ref: '#/definitions/domain.ModuleStructure'
         type: array
     type: object
+  domain.DailyLessonActivity:
+    properties:
+      date:
+        type: string
+      group:
+        type: integer
+      individual:
+        type: integer
+      trial:
+        type: integer
+    type: object
+  domain.Group:
+    properties:
+      created_at:
+        type: string
+      curator_id:
+        type: string
+      id:
+        type: string
+      stream_id:
+        type: string
+      teacher_id:
+        type: string
+      title:
+        type: string
+    type: object
+  domain.HomeDashboard:
+    properties:
+      active_courses_count:
+        type: integer
+      assignment_stats:
+        $ref: '#/definitions/domain.StatisticSummary'
+      attendance_stats:
+        $ref: '#/definitions/domain.StatisticSummary'
+      last_lesson:
+        $ref: '#/definitions/domain.LastLesson'
+      role:
+        $ref: '#/definitions/domain.Role'
+      upcoming_lessons:
+        items:
+          $ref: '#/definitions/domain.UpcomingLesson'
+        type: array
+      user_data:
+        $ref: '#/definitions/domain.User'
+    type: object
+  domain.LastLesson:
+    properties:
+      assignment_status:
+        type: string
+      course_title:
+        type: string
+      homework_id:
+        type: string
+      lesson_id:
+        type: string
+      lesson_title:
+        type: string
+      module_name:
+        type: string
+    type: object
   domain.Lesson:
     properties:
       content_text:
         type: string
       duration_min:
         type: integer
+      has_homework:
+        type: boolean
       id:
         type: string
+      is_interactive:
+        type: boolean
       is_published:
         type: boolean
       lesson_time:
@@ -109,6 +223,19 @@ definitions:
       title:
         type: string
       video_url:
+        type: string
+    type: object
+  domain.LessonMaterial:
+    properties:
+      id:
+        type: string
+      lesson_id:
+        type: string
+      public_url:
+        type: string
+      s3_path:
+        type: string
+      title:
         type: string
     type: object
   domain.Module:
@@ -133,6 +260,36 @@ definitions:
       module:
         $ref: '#/definitions/domain.Module'
     type: object
+  domain.MonthlySchedule:
+    properties:
+      days:
+        additionalProperties:
+          items:
+            $ref: '#/definitions/domain.ScheduleLesson'
+          type: array
+        type: object
+      month:
+        type: integer
+      year:
+        type: integer
+    type: object
+  domain.PerformanceZones:
+    properties:
+      green_count:
+        type: integer
+      green_percent:
+        type: number
+      red_count:
+        type: integer
+      red_percent:
+        type: number
+      total_rated:
+        type: integer
+      yellow_count:
+        type: integer
+      yellow_percent:
+        type: number
+    type: object
   domain.Role:
     enum:
     - student
@@ -149,6 +306,368 @@ definitions:
     - RoleModerator
     - RoleCurator
     - RoleAdmin
+  domain.ScheduleLesson:
+    properties:
+      color:
+        type: string
+      course_name:
+        type: string
+      discord_url:
+        type: string
+      duration_min:
+        type: integer
+      end_time:
+        type: string
+      homework_status:
+        type: string
+      id:
+        type: string
+      start_time:
+        type: string
+      teacher_comment:
+        type: string
+      teacher_email:
+        type: string
+      teacher_name:
+        type: string
+      title:
+        type: string
+    type: object
+  domain.StatisticSummary:
+    properties:
+      breakdown:
+        additionalProperties:
+          type: integer
+        type: object
+      delta_vs_last_month:
+        type: number
+      percentage:
+        type: number
+    type: object
+  domain.Stream:
+    properties:
+      course_id:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      start_date:
+        type: string
+      title:
+        type: string
+    type: object
+  domain.StudentCoursePreview:
+    properties:
+      description:
+        type: string
+      id:
+        type: string
+      image_url:
+        type: string
+      is_main:
+        type: boolean
+      progress_percent:
+        type: integer
+      title:
+        type: string
+    type: object
+  domain.StudentCourseView:
+    properties:
+      course:
+        $ref: '#/definitions/domain.Course'
+      modules:
+        items:
+          $ref: '#/definitions/domain.StudentModuleView'
+        type: array
+    type: object
+  domain.StudentLessonDetail:
+    properties:
+      assignment_status:
+        type: string
+      is_completed:
+        type: boolean
+      lesson:
+        $ref: '#/definitions/domain.Lesson'
+      materials:
+        items:
+          $ref: '#/definitions/domain.LessonMaterial'
+        type: array
+      next_lesson_id:
+        type: string
+      previous_lesson_id:
+        type: string
+      teacher_comment:
+        type: string
+    type: object
+  domain.StudentLessonRef:
+    properties:
+      duration_min:
+        type: integer
+      id:
+        type: string
+      is_completed:
+        type: boolean
+      is_locked:
+        type: boolean
+      order_num:
+        type: integer
+      title:
+        type: string
+    type: object
+  domain.StudentModuleView:
+    properties:
+      description:
+        type: string
+      id:
+        type: string
+      lessons:
+        items:
+          $ref: '#/definitions/domain.StudentLessonRef'
+        type: array
+      order_num:
+        type: integer
+      title:
+        type: string
+    type: object
+  domain.StudentTableItem:
+    properties:
+      avatar_url:
+        type: string
+      birth_date:
+        type: string
+      city:
+        type: string
+      course:
+        type: string
+      created_at:
+        type: string
+      curator:
+        type: string
+      email:
+        type: string
+      experience_years:
+        type: integer
+      first_name:
+        type: string
+      gender:
+        type: string
+      group:
+        type: string
+      id:
+        type: string
+      language:
+        type: string
+      last_name:
+        type: string
+      parent_phone:
+        type: string
+      phone:
+        type: string
+      progress:
+        type: integer
+      role:
+        $ref: '#/definitions/domain.Role'
+      school_name:
+        type: string
+      status:
+        type: string
+      stream:
+        type: string
+      teacher:
+        type: string
+      telegram:
+        type: string
+      whatsapp:
+        type: string
+    type: object
+  domain.SubmissionRecord:
+    properties:
+      course_title:
+        type: string
+      id:
+        type: string
+      lesson_title:
+        type: string
+      student_name:
+        type: string
+      submission_link:
+        type: string
+      submission_text:
+        type: string
+      submitted_at:
+        type: string
+      user_id:
+        type: string
+    type: object
+  domain.TeacherPublicInfo:
+    properties:
+      avatar_url:
+        type: string
+      bio:
+        type: string
+      experience_years:
+        type: integer
+      first_name:
+        type: string
+      id:
+        type: string
+      last_name:
+        type: string
+      rating:
+        type: number
+      reviews:
+        items:
+          $ref: '#/definitions/domain.TeacherReview'
+        type: array
+    type: object
+  domain.TeacherReview:
+    properties:
+      comment:
+        type: string
+      course_title:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      rating:
+        type: integer
+      student_id:
+        type: string
+      student_name:
+        type: string
+      teacher_id:
+        type: string
+    type: object
+  domain.UpcomingLesson:
+    properties:
+      course_title:
+        type: string
+      date:
+        type: string
+      is_homework_due:
+        type: boolean
+      teacher_name:
+        type: string
+      time_range:
+        type: string
+    type: object
+  domain.User:
+    properties:
+      avatar_url:
+        type: string
+      birth_date:
+        type: string
+      city:
+        type: string
+      created_at:
+        type: string
+      email:
+        type: string
+      experience_years:
+        type: integer
+      first_name:
+        type: string
+      gender:
+        type: string
+      id:
+        type: string
+      language:
+        type: string
+      last_name:
+        type: string
+      phone:
+        type: string
+      role:
+        $ref: '#/definitions/domain.Role'
+      school_name:
+        type: string
+      telegram:
+        type: string
+      whatsapp:
+        type: string
+    type: object
+  domain.WeeklySchedule:
+    properties:
+      days:
+        additionalProperties:
+          items:
+            $ref: '#/definitions/domain.ScheduleLesson'
+          type: array
+        type: object
+      end_date:
+        type: string
+      start_date:
+        type: string
+    type: object
+  http.CreateFullUserRequest:
+    properties:
+      birth_date:
+        example: "2000-01-01"
+        type: string
+      city:
+        example: Алматы
+        type: string
+      email:
+        example: student@test.kz
+        type: string
+      first_name:
+        example: Иван
+        type: string
+      gender:
+        example: male
+        type: string
+      language:
+        example: ru
+        type: string
+      last_name:
+        example: Иванов
+        type: string
+      parent_email:
+        example: mom@test.kz
+        type: string
+      parent_first_name:
+        example: Мама
+        type: string
+      parent_last_name:
+        example: Иванова
+        type: string
+      parent_phone:
+        example: "+70001112233"
+        type: string
+      password:
+        example: secret123
+        type: string
+      phone:
+        example: "+79998887766"
+        type: string
+      role:
+        allOf:
+        - $ref: '#/definitions/domain.Role'
+        example: student
+      telegram:
+        example: https://t.me/...
+        type: string
+      whatsapp:
+        example: https://wa.me/...
+        type: string
+    type: object
+  http.CreateGroupRequest:
+    properties:
+      curator_id:
+        example: u4444444-4444-4444-4444-444444444444
+        type: string
+      stream_id:
+        example: s3333333-3333-3333-3333-333333333333
+        type: string
+      teacher_id:
+        example: u5555555-5555-5555-5555-555555555555
+        type: string
+      title:
+        example: Группа А-1
+        type: string
+    type: object
   http.CreateModuleRequest:
     properties:
       course_id:
@@ -179,6 +698,18 @@ definitions:
         example: Финальный проект
         type: string
     type: object
+  http.CreateStreamRequest:
+    properties:
+      course_id:
+        example: c1111111-1111-1111-1111-111111111111
+        type: string
+      start_date:
+        example: "2024-09-01"
+        type: string
+      title:
+        example: Поток Сентябрь 2024
+        type: string
+    type: object
   http.CreateTestRequest:
     properties:
       description:
@@ -194,25 +725,6 @@ definitions:
         example: Итоговый тест по модулю 1
         type: string
     type: object
-  http.CreateUserRequest:
-    properties:
-      email:
-        example: student@test.kz
-        type: string
-      first_name:
-        example: Иван
-        type: string
-      last_name:
-        example: Иванов
-        type: string
-      password:
-        example: secret123
-        type: string
-      role:
-        allOf:
-        - $ref: '#/definitions/domain.Role'
-        example: student
-    type: object
   http.EnrollRequest:
     properties:
       course_id:
@@ -222,14 +734,32 @@ definitions:
         example: a0000000-0000-0000-0000-000000000001
         type: string
     type: object
+  http.EvaluateRequest:
+    properties:
+      comment:
+        type: string
+      grade:
+        type: integer
+      is_accepted:
+        type: boolean
+    type: object
   http.LoginRequest:
     properties:
       email:
+        example: admin@capedu.kz
         type: string
       password:
+        example: capedu123
         type: string
     type: object
-host: localhost:8000
+  http.ReviewRequest:
+    properties:
+      comment:
+        type: string
+      rating:
+        type: integer
+    type: object
+host: test.xcx.cx
 info:
   contact: {}
   description: API для LMS платформы Cap Education.
@@ -238,7 +768,7 @@ info:
 paths:
   /admin/courses:
     get:
-      description: Возвращает полный список курсов со всеми метаданными.
+      description: Получение краткого списка всех существующих курсов.
       produces:
       - application/json
       responses:
@@ -248,20 +778,13 @@ paths:
             items:
               $ref: '#/definitions/domain.Course'
             type: array
-        "500":
-          description: error
-          schema:
-            additionalProperties:
-              type: string
-            type: object
       summary: 'ADMIN: Список всех курсов'
       tags:
       - Admin-Content
     post:
       consumes:
       - multipart/form-data
-      description: Создает карточку курса с загрузкой изображения. Доступно только
-        администратору.
+      description: Создает карточку курса с загрузкой изображения.
       parameters:
       - description: Название курса
         in: formData
@@ -284,13 +807,13 @@ paths:
       - application/json
       responses:
         "200":
-          description: id курса
+          description: id
           schema:
             additionalProperties:
               type: string
             type: object
         "400":
-          description: 'error: Ошибка валидации'
+          description: error
           schema:
             additionalProperties:
               type: string
@@ -302,53 +825,29 @@ paths:
     put:
       consumes:
       - multipart/form-data
-      description: Позволяет изменить параметры курса, обложку и статус.
+      description: Редактирование флагов (ДЗ, Тесты, Discord), статусов и обложки.
       parameters:
       - description: ID курса
         in: path
         name: id
         required: true
         type: string
-      - description: Новое название
+      - description: Название
         in: formData
         name: title
         type: string
-      - description: Новое описание
+      - description: Описание
         in: formData
         name: description
         type: string
-      - description: Тип курса
+      - description: Основной
         in: formData
         name: is_main
         type: boolean
-      - description: 'Статус: draft, active, archived'
+      - description: Статус
         in: formData
         name: status
         type: string
-      - description: Наличие ДЗ
-        in: formData
-        name: has_homework
-        type: boolean
-      - description: Обязательность ДЗ
-        in: formData
-        name: is_homework_mandatory
-        type: boolean
-      - description: Обязательность тестов
-        in: formData
-        name: is_test_mandatory
-        type: boolean
-      - description: Обязательность проектов
-        in: formData
-        name: is_project_mandatory
-        type: boolean
-      - description: Обязательность Discord
-        in: formData
-        name: is_discord_mandatory
-        type: boolean
-      - description: Запрет копирования
-        in: formData
-        name: is_anti_copy_enabled
-        type: boolean
       - description: Новая обложка
         in: formData
         name: cover_image
@@ -357,13 +856,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: 'status: updated'
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "500":
-          description: 'error: internal error'
+          description: status
           schema:
             additionalProperties:
               type: string
@@ -373,8 +866,7 @@ paths:
       - Admin-Content
   /admin/courses/{id}/stats:
     get:
-      description: 'Возвращает агрегированные данные: кол-во учеников, средний балл
-        и т.д.'
+      description: Агрегированные метрики по курсу (кол-во, успеваемость).
       parameters:
       - description: ID курса
         in: path
@@ -393,7 +885,7 @@ paths:
       - Admin-Stats
   /admin/courses/{id}/structure:
     get:
-      description: 'Возвращает иерархическую структуру: Курс -> Модули -> Уроки.'
+      description: Возвращает иерархию Модули -> Уроки для конкретного курса.
       parameters:
       - description: ID курса
         in: path
@@ -407,18 +899,12 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/domain.CourseStructure'
-        "500":
-          description: error
-          schema:
-            additionalProperties:
-              type: string
-            type: object
       summary: 'ADMIN: Содержание курса (Дерево)'
       tags:
       - Admin-Content
   /admin/courses/{id}/students:
     get:
-      description: Возвращает список всех учеников с их текущим прогрессом на курсе.
+      description: Краткий список учеников с их прогрессом.
       parameters:
       - description: ID курса
         in: path
@@ -434,16 +920,30 @@ paths:
             items:
               $ref: '#/definitions/domain.AdminStudentProgress'
             type: array
-      summary: 'ADMIN: Список учеников курса'
+      summary: 'ADMIN: Ученики конкретного курса'
       tags:
       - Admin-Users
+  /admin/dashboard/stats:
+    get:
+      description: Возвращает агрегированные данные для админ-панели (счетчики, графики,
+        успеваемость).
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.AdminHomeDashboard'
+      summary: 'ADMIN: Статистика главной страницы'
+      tags:
+      - Admin-Stats
   /admin/enroll:
     post:
       consumes:
       - application/json
-      description: Привязывает ученика к конкретному курсу.
+      description: Привязка существующего ученика к курсу.
       parameters:
-      - description: Связка UserID и CourseID
+      - description: UserID и CourseID
         in: body
         name: request
         required: true
@@ -453,7 +953,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: 'status: enrolled'
+          description: OK
           schema:
             additionalProperties:
               type: string
@@ -461,18 +961,61 @@ paths:
       summary: 'ADMIN: Запись на курс'
       tags:
       - Admin-Users
+  /admin/groups:
+    get:
+      parameters:
+      - description: ID потока
+        in: query
+        name: stream_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.Group'
+            type: array
+      summary: 'ADMIN: Список групп потока'
+      tags:
+      - Admin-Staff
+    post:
+      consumes:
+      - application/json
+      description: Создание группы внутри потока, назначение куратора и учителя.
+      parameters:
+      - description: Данные группы
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/http.CreateGroupRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: id
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: 'ADMIN: Создать группу'
+      tags:
+      - Admin-Staff
   /admin/lessons:
     post:
       consumes:
       - multipart/form-data
-      description: Создает урок с загрузкой видео и презентации в S3.
+      description: Создает урок с опциональной загрузкой видео и презентации.
       parameters:
       - description: ID модуля
         in: formData
         name: module_id
         required: true
         type: string
-      - description: ID преподавателя
+      - description: ID преподавателя (лектора)
         in: formData
         name: teacher_id
         required: true
@@ -482,16 +1025,16 @@ paths:
         name: title
         required: true
         type: string
-      - description: Порядковый номер
+      - description: Порядковый номер в модуле
         in: formData
         name: order_num
         required: true
         type: integer
-      - description: HTML/JSON контент урока
+      - description: Markdown/HTML конспект
         in: formData
         name: content_text
         type: string
-      - description: Видео файл (до 500MB)
+      - description: Видео файл
         in: formData
         name: video_file
         type: file
@@ -511,11 +1054,41 @@ paths:
       summary: 'ADMIN: Добавление урока'
       tags:
       - Admin-Content
+  /admin/media/upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Загружает произвольный файл в S3 (для использования в редакторе
+        контента).
+      parameters:
+      - description: Файл для загрузки
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: url
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: 'ADMIN: Загрузка медиа-файла'
+      tags:
+      - Admin-Content
   /admin/modules:
     post:
       consumes:
       - application/json
-      description: Добавляет модуль в учебный план курса.
+      description: Добавление нового модуля в учебный план курса.
       parameters:
       - description: Данные модуля
         in: body
@@ -539,7 +1112,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: Создает финальный проект и привязывает его к уроку.
+      description: Создает курсовой проект к уроку/модулю.
       parameters:
       - description: Данные проекта
         in: body
@@ -559,11 +1132,74 @@ paths:
       summary: 'ADMIN: Добавление проекта'
       tags:
       - Admin-Content
+  /admin/streams:
+    get:
+      parameters:
+      - description: ID курса
+        in: query
+        name: course_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.Stream'
+            type: array
+      summary: 'ADMIN: Список потоков курса'
+      tags:
+      - Admin-Staff
+    post:
+      consumes:
+      - application/json
+      description: Создание нового потока для курса.
+      parameters:
+      - description: Данные потока
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/http.CreateStreamRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: id
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: 'ADMIN: Создать поток'
+      tags:
+      - Admin-Staff
+  /admin/students/detailed:
+    get:
+      description: 'Список учеников с расширенной инфо: курс, группа, куратор, прогресс.'
+      parameters:
+      - description: Фильтр по курсу
+        in: query
+        name: course_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.StudentTableItem'
+            type: array
+      summary: 'ADMIN: Детальный список учеников'
+      tags:
+      - Admin-Users
   /admin/tests:
     post:
       consumes:
       - application/json
-      description: Создает тест и привязывает его к уроку.
+      description: Создает проверочный тест к уроку.
       parameters:
       - description: Данные теста
         in: body
@@ -584,27 +1220,94 @@ paths:
       tags:
       - Admin-Content
   /admin/users:
+    get:
+      description: Получение таблицы всех сотрудников или студентов.
+      parameters:
+      - description: 'Фильтр: student, teacher, curator, moderator, admin'
+        in: query
+        name: role
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.User'
+            type: array
+      summary: 'ADMIN: Список пользователей (по ролям)'
+      tags:
+      - Admin-Users
     post:
       consumes:
       - application/json
-      description: Создает аккаунт для ученика, учителя, родителя или куратора.
+      description: Регистрация сотрудника или ученика. Если роль student, автоматически
+        создает связанного родителя.
       parameters:
       - description: Данные пользователя
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/http.CreateUserRequest'
+          $ref: '#/definitions/http.CreateFullUserRequest'
       produces:
       - application/json
       responses:
         "200":
-          description: id
+          description: result mapping
           schema:
             additionalProperties:
               type: string
             type: object
-      summary: 'ADMIN: Создание пользователя'
+      summary: 'ADMIN: Создание пользователя (Полный профиль + Родитель)'
+      tags:
+      - Admin-Users
+  /admin/users/{id}:
+    delete:
+      description: Полное удаление аккаунта из системы.
+      parameters:
+      - description: UserID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: 'ADMIN: Удалить пользователя'
+      tags:
+      - Admin-Users
+    put:
+      consumes:
+      - application/json
+      description: Обновление анкетных данных любого пользователя.
+      parameters:
+      - description: UserID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Новые данные
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/http.CreateFullUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: 'ADMIN: Изменить данные пользователя'
       tags:
       - Admin-Users
   /auth/login:
@@ -633,7 +1336,7 @@ paths:
             additionalProperties:
               type: string
             type: object
-      summary: Вход в систему (Log in student/admin)
+      summary: Вход в систему
       tags:
       - Аутентификация
   /auth/register:
@@ -651,18 +1354,382 @@ paths:
       summary: Регистрация (ЗАБЛОКИРОВАНО)
       tags:
       - Аутентификация
-  /dashboard/home:
+  /chat/history:
     get:
-      description: Returns the home dashboard for the authenticated user
+      description: Получить список сообщений чата модуля.
+      parameters:
+      - description: ID модуля
+        in: query
+        name: module_id
+        required: true
+        type: string
+      - description: ID ученика (для персонала)
+        in: query
+        name: student_id
+        type: string
+      - description: Количество
+        in: query
+        name: limit
+        type: integer
+      - description: Смещение
+        in: query
+        name: offset
+        type: integer
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
-      summary: Get user home dashboard
+            items:
+              $ref: '#/definitions/domain.ChatMessage'
+            type: array
+      summary: 'USER: История чата'
       tags:
-      - dashboard
+      - Chat
+  /chat/ws:
+    get:
+      description: WebSocket соединение для обмена сообщениями.
+      parameters:
+      - description: ID модуля
+        in: query
+        name: module_id
+        required: true
+        type: string
+      - description: ID ученика (для персонала)
+        in: query
+        name: student_id
+        required: true
+        type: string
+      responses: {}
+      summary: 'WS: Подключение к чату модуля'
+      tags:
+      - Chat
+  /courses/{id}:
+    get:
+      description: Получить полную структуру курса (модули, уроки) с отметками о прохождении.
+      parameters:
+      - description: ID курса
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.StudentCourseView'
+      summary: 'УЧЕНИК: Страница курса'
+      tags:
+      - Student-Learning
+  /dashboard/home:
+    get:
+      description: Возвращает данные для дашборда ученика или родителя.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.HomeDashboard'
+      summary: 'УЧЕНИК: Главная страница'
+      tags:
+      - Dashboard
+  /lessons/{id}:
+    get:
+      description: Получить контент конкретного урока (видео, текст).
+      parameters:
+      - description: ID урока
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.StudentLessonDetail'
+      summary: 'УЧЕНИК: Просмотр урока'
+      tags:
+      - Student-Learning
+  /lessons/{id}/assignment:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Отправка текстового ответа или файла.
+      parameters:
+      - description: ID урока
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Текст ответа
+        in: formData
+        name: text_answer
+        type: string
+      - description: Файл с заданием
+        in: formData
+        name: file
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: 'УЧЕНИК: Сдать домашнее задание'
+      tags:
+      - Student-Learning
+  /lessons/{id}/complete:
+    post:
+      description: Отметить урок как пройденный (для уроков без обязательного ДЗ).
+      parameters:
+      - description: ID урока
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: 'УЧЕНИК: Завершить урок (без ДЗ)'
+      tags:
+      - Student-Learning
+  /my-courses:
+    get:
+      description: Получить список курсов, на которые записан текущий пользователь.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.StudentCoursePreview'
+            type: array
+      summary: 'УЧЕНИК: Мои курсы'
+      tags:
+      - Student-Learning
+  /profile:
+    get:
+      description: Получить данные текущего авторизованного пользователя.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.User'
+      summary: 'USER: Мой профиль'
+      tags:
+      - Profile
+    put:
+      consumes:
+      - multipart/form-data
+      description: Изменение личных данных и загрузка аватара.
+      parameters:
+      - description: Фото профиля
+        in: formData
+        name: avatar
+        type: file
+      - description: Имя
+        in: formData
+        name: first_name
+        type: string
+      - description: Фамилия
+        in: formData
+        name: last_name
+        type: string
+      - description: Телефон
+        in: formData
+        name: phone
+        type: string
+      - description: Населенный пункт
+        in: formData
+        name: city
+        type: string
+      - description: Родной язык
+        in: formData
+        name: language
+        type: string
+      - description: Учебное заведение
+        in: formData
+        name: school_name
+        type: string
+      - description: WhatsApp ссылка
+        in: formData
+        name: whatsapp
+        type: string
+      - description: Telegram ссылка
+        in: formData
+        name: telegram
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: status
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: 'USER: Обновить профиль'
+      tags:
+      - Profile
+  /schedule/monthly:
+    get:
+      description: Возвращает список занятий для календарной сетки месяца.
+      parameters:
+      - description: Год
+        in: query
+        name: year
+        type: integer
+      - description: Месяц
+        in: query
+        name: month
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.MonthlySchedule'
+      summary: 'USER: Расписание на месяц'
+      tags:
+      - Schedule
+  /schedule/weekly:
+    get:
+      description: Возвращает уроки, сгруппированные по дням недели.
+      parameters:
+      - description: Дата недели (YYYY-MM-DD), по умолчанию сегодня
+        in: query
+        name: date
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.WeeklySchedule'
+      summary: 'USER: Расписание на неделю'
+      tags:
+      - Schedule
+  /staff/submissions:
+    get:
+      description: Получить список всех работ со статусом pending_check.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.SubmissionRecord'
+            type: array
+      summary: 'STAFF: Список ДЗ на проверку'
+      tags:
+      - Staff-Review
+  /staff/submissions/{id}/evaluate:
+    post:
+      consumes:
+      - application/json
+      description: Выставить оценку, статус и комментарий к работе ученика.
+      parameters:
+      - description: ID задания
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Результат проверки
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/http.EvaluateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: 'STAFF: Проверить ДЗ'
+      tags:
+      - Staff-Review
+  /teachers:
+    get:
+      description: Получить список преподавателей с их рейтингом.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.TeacherPublicInfo'
+            type: array
+      summary: 'УЧЕНИК: Список преподавателей'
+      tags:
+      - Student-Learning
+  /teachers/{id}:
+    get:
+      description: Получить полную инфо о преподавателе и его отзывы.
+      parameters:
+      - description: ID преподавателя
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.TeacherPublicInfo'
+      summary: 'УЧЕНИК: Детали преподавателя'
+      tags:
+      - Student-Learning
+  /teachers/{id}/reviews:
+    post:
+      consumes:
+      - application/json
+      description: Добавить оценку и текстовый отзыв.
+      parameters:
+      - description: ID преподавателя
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Данные отзыва
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/http.ReviewRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+      summary: 'УЧЕНИК: Оставить отзыв преподавателю'
+      tags:
+      - Student-Learning
 swagger: "2.0"
