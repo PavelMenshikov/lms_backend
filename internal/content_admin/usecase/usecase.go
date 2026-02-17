@@ -25,6 +25,93 @@ func NewContentAdminUseCase(repo repository.ContentAdminRepository, s3Storage st
 	return &ContentAdminUseCase{repo: repo, s3Storage: s3Storage}
 }
 
+type CreateCourseInput struct {
+	Title       string
+	Description string
+	IsMain      bool
+	FileHeader  *multipart.FileHeader
+}
+
+type UpdateCourseSettingsInput struct {
+	CourseID            string
+	Title               string
+	Description         string
+	IsMain              bool
+	Status              domain.CourseStatus
+	HasHomework         bool
+	IsHomeworkMandatory bool
+	IsTestMandatory     bool
+	IsProjectMandatory  bool
+	IsDiscordMandatory  bool
+	IsAntiCopyEnabled   bool
+	FileHeader          *multipart.FileHeader
+}
+
+type CreateModuleInput struct {
+	CourseID    string
+	Title       string
+	Description string
+	OrderNum    int
+}
+
+type CreateLessonInput struct {
+	CourseID         string
+	ModuleID         string
+	TeacherID        string
+	Title            string
+	OrderNum         int
+	VideoFile        *multipart.FileHeader
+	PresentationFile *multipart.FileHeader
+	ContentText      string
+}
+
+type ExtendedCreateUserInput struct {
+	FirstName       string
+	LastName        string
+	Email           string
+	Role            domain.Role
+	Password        string
+	Phone           string
+	City            string
+	Language        string
+	Gender          string
+	BirthDate       time.Time
+	ExperienceYears int
+	Whatsapp        string
+	Telegram        string
+	ParentFirstName string
+	ParentLastName  string
+	ParentPhone     string
+	ParentEmail     string
+}
+
+type CreateTestInput struct {
+	LessonID     string
+	Title        string
+	Description  string
+	PassingScore int
+}
+
+type CreateProjectInput struct {
+	LessonID    string
+	Title       string
+	Description string
+	MaxScore    int
+}
+
+type CreateStreamInput struct {
+	CourseID  string
+	Title     string
+	StartDate time.Time
+}
+
+type CreateGroupInput struct {
+	StreamID  string
+	CuratorID string
+	TeacherID string
+	Title     string
+}
+
 func (uc *ContentAdminUseCase) UploadMedia(ctx context.Context, fileHeader *multipart.FileHeader) (string, error) {
 	if fileHeader == nil {
 		return "", errors.New("no file provided")
@@ -85,13 +172,6 @@ func (uc *ContentAdminUseCase) CreateCourse(ctx context.Context, input CreateCou
 	return uc.repo.CreateCourse(ctx, course)
 }
 
-type CreateCourseInput struct {
-	Title       string
-	Description string
-	IsMain      bool
-	FileHeader  *multipart.FileHeader
-}
-
 func (uc *ContentAdminUseCase) UpdateCourseSettings(ctx context.Context, input UpdateCourseSettingsInput) error {
 	var imageURL string
 
@@ -128,21 +208,6 @@ func (uc *ContentAdminUseCase) UpdateCourseSettings(ctx context.Context, input U
 	}
 
 	return uc.repo.UpdateCourseSettings(ctx, course)
-}
-
-type UpdateCourseSettingsInput struct {
-	CourseID            string
-	Title               string
-	Description         string
-	IsMain              bool
-	Status              domain.CourseStatus
-	HasHomework         bool
-	IsHomeworkMandatory bool
-	IsTestMandatory     bool
-	IsProjectMandatory  bool
-	IsDiscordMandatory  bool
-	IsAntiCopyEnabled   bool
-	FileHeader          *multipart.FileHeader
 }
 
 func (uc *ContentAdminUseCase) GetAllCourses(ctx context.Context) ([]*domain.Course, error) {
@@ -263,17 +328,6 @@ func (uc *ContentAdminUseCase) CreateLesson(ctx context.Context, input CreateLes
 	return uc.repo.CreateLesson(ctx, lesson)
 }
 
-type CreateLessonInput struct {
-	CourseID         string
-	ModuleID         string
-	TeacherID        string
-	Title            string
-	OrderNum         int
-	VideoFile        *multipart.FileHeader
-	PresentationFile *multipart.FileHeader
-	ContentText      string
-}
-
 func (uc *ContentAdminUseCase) CreateFullUser(ctx context.Context, input ExtendedCreateUserInput) (map[string]string, error) {
 	hashedPass, err := bcrypt.GenerateFromPassword([]byte(input.Password), 12)
 	if err != nil {
@@ -335,26 +389,6 @@ func (uc *ContentAdminUseCase) CreateFullUser(ctx context.Context, input Extende
 	}
 
 	return result, nil
-}
-
-type ExtendedCreateUserInput struct {
-	FirstName       string
-	LastName        string
-	Email           string
-	Role            domain.Role
-	Password        string
-	Phone           string
-	City            string
-	Language        string
-	Gender          string
-	BirthDate       time.Time
-	ExperienceYears int
-	Whatsapp        string
-	Telegram        string
-	ParentFirstName string
-	ParentLastName  string
-	ParentPhone     string
-	ParentEmail     string
 }
 
 func (uc *ContentAdminUseCase) EnrollStudent(ctx context.Context, userID, courseID string) error {
