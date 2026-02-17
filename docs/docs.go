@@ -478,6 +478,28 @@ const docTemplate = `{
                 }
             }
         },
+        "/admin/lessons/{id}": {
+            "delete": {
+                "tags": [
+                    "Admin-Content"
+                ],
+                "summary": "ADMIN: Удаление урока",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Lesson ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
         "/admin/media/upload": {
             "post": {
                 "description": "Загружает произвольный файл в S3 (для использования в редакторе контента).",
@@ -559,9 +581,31 @@ const docTemplate = `{
                 }
             }
         },
+        "/admin/modules/{id}": {
+            "delete": {
+                "tags": [
+                    "Admin-Content"
+                ],
+                "summary": "ADMIN: Удаление модуля",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Module ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
         "/admin/projects": {
             "post": {
-                "description": "Создает курсовой проект к уроку/модулю.",
+                "description": "Создает курсовой проект. Можно передать либо lesson_id, либо пару course_id + lesson_number.",
                 "consumes": [
                     "application/json"
                 ],
@@ -592,6 +636,28 @@ const docTemplate = `{
                                 "type": "string"
                             }
                         }
+                    }
+                }
+            }
+        },
+        "/admin/projects/{id}": {
+            "delete": {
+                "tags": [
+                    "Admin-Content"
+                ],
+                "summary": "ADMIN: Удаление проекта",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Project ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
                     }
                 }
             }
@@ -717,7 +783,7 @@ const docTemplate = `{
         },
         "/admin/tests": {
             "post": {
-                "description": "Создает проверочный тест к уроку.",
+                "description": "Создает проверочный тест. Можно передать либо lesson_id, либо пару course_id + lesson_number.",
                 "consumes": [
                     "application/json"
                 ],
@@ -748,6 +814,28 @@ const docTemplate = `{
                                 "type": "string"
                             }
                         }
+                    }
+                }
+            }
+        },
+        "/admin/tests/{id}": {
+            "delete": {
+                "tags": [
+                    "Admin-Content"
+                ],
+                "summary": "ADMIN: Удаление теста",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Test ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
                     }
                 }
             }
@@ -2682,6 +2770,10 @@ const docTemplate = `{
         "http.CreateProjectRequest": {
             "type": "object",
             "properties": {
+                "course_id": {
+                    "type": "string",
+                    "example": "uuid"
+                },
                 "description": {
                     "type": "string",
                     "example": "Разработка API на Go"
@@ -2689,6 +2781,10 @@ const docTemplate = `{
                 "lesson_id": {
                     "type": "string",
                     "example": "l2222222-2222-2222-2222-222222222222"
+                },
+                "lesson_number": {
+                    "type": "integer",
+                    "example": 1
                 },
                 "max_score": {
                     "type": "integer",
@@ -2720,6 +2816,10 @@ const docTemplate = `{
         "http.CreateTestRequest": {
             "type": "object",
             "properties": {
+                "course_id": {
+                    "type": "string",
+                    "example": "uuid"
+                },
                 "description": {
                     "type": "string",
                     "example": "Тест на проверку базовых знаний Go"
@@ -2727,6 +2827,10 @@ const docTemplate = `{
                 "lesson_id": {
                     "type": "string",
                     "example": "l2222222-2222-2222-2222-222222222222"
+                },
+                "lesson_number": {
+                    "type": "integer",
+                    "example": 1
                 },
                 "passing_score": {
                     "type": "integer",

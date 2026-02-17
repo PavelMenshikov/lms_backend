@@ -765,12 +765,18 @@ definitions:
     type: object
   http.CreateProjectRequest:
     properties:
+      course_id:
+        example: uuid
+        type: string
       description:
         example: Разработка API на Go
         type: string
       lesson_id:
         example: l2222222-2222-2222-2222-222222222222
         type: string
+      lesson_number:
+        example: 1
+        type: integer
       max_score:
         example: 100
         type: integer
@@ -792,12 +798,18 @@ definitions:
     type: object
   http.CreateTestRequest:
     properties:
+      course_id:
+        example: uuid
+        type: string
       description:
         example: Тест на проверку базовых знаний Go
         type: string
       lesson_id:
         example: l2222222-2222-2222-2222-222222222222
         type: string
+      lesson_number:
+        example: 1
+        type: integer
       passing_score:
         example: 70
         type: integer
@@ -1153,6 +1165,20 @@ paths:
       summary: 'ADMIN: Добавление урока'
       tags:
       - Admin-Content
+  /admin/lessons/{id}:
+    delete:
+      parameters:
+      - description: Lesson ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+      summary: 'ADMIN: Удаление урока'
+      tags:
+      - Admin-Content
   /admin/media/upload:
     post:
       consumes:
@@ -1207,11 +1233,26 @@ paths:
       summary: 'ADMIN: Создание модуля'
       tags:
       - Admin-Content
+  /admin/modules/{id}:
+    delete:
+      parameters:
+      - description: Module ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+      summary: 'ADMIN: Удаление модуля'
+      tags:
+      - Admin-Content
   /admin/projects:
     post:
       consumes:
       - application/json
-      description: Создает курсовой проект к уроку/модулю.
+      description: Создает курсовой проект. Можно передать либо lesson_id, либо пару
+        course_id + lesson_number.
       parameters:
       - description: Данные проекта
         in: body
@@ -1229,6 +1270,20 @@ paths:
               type: string
             type: object
       summary: 'ADMIN: Добавление проекта'
+      tags:
+      - Admin-Content
+  /admin/projects/{id}:
+    delete:
+      parameters:
+      - description: Project ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+      summary: 'ADMIN: Удаление проекта'
       tags:
       - Admin-Content
   /admin/streams:
@@ -1312,7 +1367,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Создает проверочный тест к уроку.
+      description: Создает проверочный тест. Можно передать либо lesson_id, либо пару
+        course_id + lesson_number.
       parameters:
       - description: Данные теста
         in: body
@@ -1330,6 +1386,20 @@ paths:
               type: string
             type: object
       summary: 'ADMIN: Добавление теста'
+      tags:
+      - Admin-Content
+  /admin/tests/{id}:
+    delete:
+      parameters:
+      - description: Test ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+      summary: 'ADMIN: Удаление теста'
       tags:
       - Admin-Content
   /admin/users:
