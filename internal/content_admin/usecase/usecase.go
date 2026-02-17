@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"mime/multipart"
+	"strings"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -23,6 +24,14 @@ type ContentAdminUseCase struct {
 
 func NewContentAdminUseCase(repo repository.ContentAdminRepository, s3Storage storageService.ObjectStorage) *ContentAdminUseCase {
 	return &ContentAdminUseCase{repo: repo, s3Storage: s3Storage}
+}
+
+func splitName(fullName string) (string, string) {
+	parts := strings.SplitN(strings.TrimSpace(fullName), " ", 2)
+	if len(parts) == 2 {
+		return parts[0], parts[1]
+	}
+	return fullName, ""
 }
 
 type CreateCourseInput struct {
@@ -66,8 +75,7 @@ type CreateLessonInput struct {
 }
 
 type ExtendedCreateUserInput struct {
-	FirstName       string
-	LastName        string
+	FullName        string
 	Email           string
 	Role            domain.Role
 	Password        string
@@ -79,10 +87,16 @@ type ExtendedCreateUserInput struct {
 	ExperienceYears int
 	Whatsapp        string
 	Telegram        string
-	ParentFirstName string
-	ParentLastName  string
-	ParentPhone     string
-	ParentEmail     string
+	CourseID        string
+	StreamID        string
+	GroupID         string
+	Parents         []ParentInfo
+}
+
+type ParentInfo struct {
+	FullName string
+	Phone    string
+	Email    string
 }
 
 type CreateTestInput struct {
@@ -302,19 +316,6 @@ func (uc *ContentAdminUseCase) CreateLesson(ctx context.Context, input CreateLes
 		videoURL, _ = uc.s3Storage.GetPublicURL(ctx, key)
 	}
 
-	if input.PresentationFile != nil {
-		file, err := input.PresentationFile.Open()
-		if err != nil {
-			return "", err
-		}
-		defer file.Close()
-		key, err := uc.s3Storage.UploadFile(ctx, file, "lessons/presentations/"+input.PresentationFile.Filename, input.PresentationFile.Size, input.PresentationFile.Header.Get("Content-Type"))
-		if err != nil {
-			return "", err
-		}
-		presentationURL, _ = uc.s3Storage.GetPublicURL(ctx, key)
-	}
-
 	var modID *string
 	if input.ModuleID != "" {
 		modID = &input.ModuleID
@@ -341,14 +342,15 @@ func (uc *ContentAdminUseCase) DeleteLesson(ctx context.Context, id string) erro
 }
 
 func (uc *ContentAdminUseCase) CreateFullUser(ctx context.Context, input ExtendedCreateUserInput) (map[string]string, error) {
+	firstName, lastName := splitName(input.FullName)
 	hashedPass, err := bcrypt.GenerateFromPassword([]byte(input.Password), 12)
 	if err != nil {
-		return nil, fmt.Errorf("failed to hash password: %w", err)
+		return nil, err
 	}
 
 	user := &domain.User{
-		FirstName:       input.FirstName,
-		LastName:        input.LastName,
+		FirstName:       firstName,
+		LastName:        lastName,
 		Email:           input.Email,
 		Password:        string(hashedPass),
 		Role:            input.Role,
@@ -367,47 +369,43 @@ func (uc *ContentAdminUseCase) CreateFullUser(ctx context.Context, input Extende
 		return nil, err
 	}
 
-	result := map[string]string{
-		"user_id": userID,
-		"role":    string(input.Role),
+	if input.Role == domain.RoleStudent {
+		for _, pInfo := range input.Parents {
+			pFirst, pLast := splitName(pInfo.FullName)
+			parentPassRaw := generateSecurePassword()
+			parentHash, _ := bcrypt.GenerateFromPassword([]byte(parentPassRaw), 12)
+
+			pEmail := pInfo.Email
+			if pEmail == "" {
+				pEmail = fmt.Sprintf("p_%s_%s", userID[:8], pInfo.Phone)
+			}
+
+			parent := &domain.User{
+				FirstName: pFirst,
+				LastName:  pLast,
+				Email:     pEmail,
+				Phone:     pInfo.Phone,
+				Password:  string(parentHash),
+				Role:      domain.RoleParent,
+				City:      input.City,
+			}
+
+			parentID, err := uc.repo.CreateUser(ctx, parent)
+			if err == nil {
+				_ = uc.repo.LinkParentToStudent(ctx, userID, parentID)
+			}
+		}
+
+		if input.CourseID != "" {
+			_ = uc.repo.EnrollStudentExtended(ctx, userID, input.CourseID, input.StreamID, input.GroupID)
+		}
 	}
 
-	if input.Role == domain.RoleStudent && input.ParentPhone != "" {
-		parentPassRaw := generateSecurePassword()
-		parentHash, _ := bcrypt.GenerateFromPassword([]byte(parentPassRaw), 12)
-
-		parentEmail := input.ParentEmail
-		if parentEmail == "" {
-			parentEmail = fmt.Sprintf("p_%s", input.Email)
-		}
-
-		parent := &domain.User{
-			FirstName: input.ParentFirstName,
-			LastName:  input.ParentLastName,
-			Email:     parentEmail,
-			Phone:     input.ParentPhone,
-			Password:  string(parentHash),
-			Role:      domain.RoleParent,
-			City:      input.City,
-		}
-
-		parentID, err := uc.repo.CreateUser(ctx, parent)
-		if err == nil {
-			_ = uc.repo.LinkParentToStudent(ctx, userID, parentID)
-			result["parent_id"] = parentID
-			result["parent_email"] = parentEmail
-			result["parent_password"] = parentPassRaw
-		}
-	}
-
-	return result, nil
+	return map[string]string{"user_id": userID}, nil
 }
 
 func (uc *ContentAdminUseCase) EnrollStudent(ctx context.Context, userID, courseID string) error {
-	if userID == "" || courseID == "" {
-		return errors.New("user_id and course_id are required")
-	}
-	return uc.repo.EnrollStudent(ctx, userID, courseID)
+	return uc.repo.EnrollStudentExtended(ctx, userID, courseID, "", "")
 }
 
 func (uc *ContentAdminUseCase) GetCourseStudents(ctx context.Context, courseID string) ([]*domain.AdminStudentProgress, error) {
@@ -420,9 +418,7 @@ func (uc *ContentAdminUseCase) GetCourseStats(ctx context.Context, courseID stri
 
 func (uc *ContentAdminUseCase) GetUsersList(ctx context.Context, role domain.Role) ([]*domain.User, error) {
 	filter := domain.UserFilter{
-		Role:   role,
-		Limit:  100,
-		Offset: 0,
+		Role: role,
 	}
 	return uc.repo.GetUsers(ctx, filter)
 }
@@ -440,11 +436,20 @@ func (uc *ContentAdminUseCase) GetDetailedCurators(ctx context.Context) ([]*doma
 	return uc.repo.GetDetailedCuratorList(ctx)
 }
 
+func (uc *ContentAdminUseCase) GetDetailedModerators(ctx context.Context) ([]*domain.ModeratorTableItem, error) {
+	return uc.repo.GetDetailedModeratorList(ctx)
+}
+
+func (uc *ContentAdminUseCase) GetAllUsersTable(ctx context.Context) ([]*domain.AllUsersTableItem, error) {
+	return uc.repo.GetAllUsersList(ctx)
+}
+
 func (uc *ContentAdminUseCase) UpdateUser(ctx context.Context, userID string, input ExtendedCreateUserInput) error {
+	firstName, lastName := splitName(input.FullName)
 	user := &domain.User{
 		ID:              userID,
-		FirstName:       input.FirstName,
-		LastName:        input.LastName,
+		FirstName:       firstName,
+		LastName:        lastName,
 		Email:           input.Email,
 		Role:            input.Role,
 		Phone:           input.Phone,

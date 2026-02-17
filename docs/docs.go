@@ -17,7 +17,6 @@ const docTemplate = `{
     "paths": {
         "/admin/courses": {
             "get": {
-                "description": "Получение краткого списка всех существующих курсов.",
                 "produces": [
                     "application/json"
                 ],
@@ -38,7 +37,6 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Создает карточку курса с загрузкой изображения.",
                 "consumes": [
                     "multipart/form-data"
                 ],
@@ -85,22 +83,12 @@ const docTemplate = `{
                                 "type": "string"
                             }
                         }
-                    },
-                    "400": {
-                        "description": "error",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
                     }
                 }
             }
         },
         "/admin/courses/{id}/settings": {
             "put": {
-                "description": "Редактирование флагов (ДЗ, Тесты, Discord), статусов и обложки.",
                 "consumes": [
                     "multipart/form-data"
                 ],
@@ -118,36 +106,6 @@ const docTemplate = `{
                         "name": "id",
                         "in": "path",
                         "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Название",
-                        "name": "title",
-                        "in": "formData"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Описание",
-                        "name": "description",
-                        "in": "formData"
-                    },
-                    {
-                        "type": "boolean",
-                        "description": "Основной",
-                        "name": "is_main",
-                        "in": "formData"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Статус",
-                        "name": "status",
-                        "in": "formData"
-                    },
-                    {
-                        "type": "file",
-                        "description": "Новая обложка",
-                        "name": "cover_image",
-                        "in": "formData"
                     }
                 ],
                 "responses": {
@@ -165,7 +123,6 @@ const docTemplate = `{
         },
         "/admin/courses/{id}/stats": {
             "get": {
-                "description": "Агрегированные метрики по курсу (кол-во, успеваемость).",
                 "produces": [
                     "application/json"
                 ],
@@ -194,7 +151,6 @@ const docTemplate = `{
         },
         "/admin/courses/{id}/structure": {
             "get": {
-                "description": "Возвращает иерархию Модули -\u003e Уроки для конкретного курса.",
                 "produces": [
                     "application/json"
                 ],
@@ -223,7 +179,6 @@ const docTemplate = `{
         },
         "/admin/courses/{id}/students": {
             "get": {
-                "description": "Краткий список учеников с их прогрессом.",
                 "produces": [
                     "application/json"
                 ],
@@ -261,7 +216,7 @@ const docTemplate = `{
                 "tags": [
                     "Admin-Users"
                 ],
-                "summary": "ADMIN: Список кураторов с группами",
+                "summary": "ADMIN: Список кураторов (Таблица)",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -297,7 +252,6 @@ const docTemplate = `{
         },
         "/admin/enroll": {
             "post": {
-                "description": "Привязка существующего ученика к курсу.",
                 "consumes": [
                     "application/json"
                 ],
@@ -363,7 +317,6 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Создание группы внутри потока, назначение куратора и учителя.",
                 "consumes": [
                     "application/json"
                 ],
@@ -400,12 +353,8 @@ const docTemplate = `{
         },
         "/admin/lessons": {
             "post": {
-                "description": "Создает урок. Теперь ModuleID не обязателен, если урок привязан напрямую к курсу.",
                 "consumes": [
                     "multipart/form-data"
-                ],
-                "produces": [
-                    "application/json"
                 ],
                 "tags": [
                     "Admin-Content"
@@ -427,10 +376,9 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "ID преподавателя (лектора)",
+                        "description": "ID преподавателя (опционально)",
                         "name": "teacher_id",
-                        "in": "formData",
-                        "required": true
+                        "in": "formData"
                     },
                     {
                         "type": "string",
@@ -445,24 +393,6 @@ const docTemplate = `{
                         "name": "order_num",
                         "in": "formData",
                         "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Markdown/HTML конспект",
-                        "name": "content_text",
-                        "in": "formData"
-                    },
-                    {
-                        "type": "file",
-                        "description": "Видео файл",
-                        "name": "video_file",
-                        "in": "formData"
-                    },
-                    {
-                        "type": "file",
-                        "description": "Файл презентации",
-                        "name": "presentation_file",
-                        "in": "formData"
                     }
                 ],
                 "responses": {
@@ -502,7 +432,6 @@ const docTemplate = `{
         },
         "/admin/media/upload": {
             "post": {
-                "description": "Загружает произвольный файл в S3 (для использования в редакторе контента).",
                 "consumes": [
                     "multipart/form-data"
                 ],
@@ -531,13 +460,26 @@ const docTemplate = `{
                                 "type": "string"
                             }
                         }
-                    },
-                    "400": {
-                        "description": "error",
+                    }
+                }
+            }
+        },
+        "/admin/moderators/detailed": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin-Users"
+                ],
+                "summary": "ADMIN: Список модераторов (Таблица)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/domain.ModeratorTableItem"
                             }
                         }
                     }
@@ -546,7 +488,6 @@ const docTemplate = `{
         },
         "/admin/modules": {
             "post": {
-                "description": "Добавление нового модуля в учебный план курса.",
                 "consumes": [
                     "application/json"
                 ],
@@ -605,7 +546,6 @@ const docTemplate = `{
         },
         "/admin/projects": {
             "post": {
-                "description": "Создает курсовой проект. Можно передать либо lesson_id, либо пару course_id + lesson_number.",
                 "consumes": [
                     "application/json"
                 ],
@@ -693,7 +633,6 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Создание нового потока для курса.",
                 "consumes": [
                     "application/json"
                 ],
@@ -730,14 +669,13 @@ const docTemplate = `{
         },
         "/admin/students/detailed": {
             "get": {
-                "description": "Список учеников с расширенной инфо: курс, группа, куратор, прогресс.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Admin-Users"
                 ],
-                "summary": "ADMIN: Детальный список учеников",
+                "summary": "ADMIN: Детальный список учеников (Таблица)",
                 "parameters": [
                     {
                         "type": "string",
@@ -767,7 +705,7 @@ const docTemplate = `{
                 "tags": [
                     "Admin-Users"
                 ],
-                "summary": "ADMIN: Список учителей с группами",
+                "summary": "ADMIN: Список учителей (Таблица)",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -783,7 +721,6 @@ const docTemplate = `{
         },
         "/admin/tests": {
             "post": {
-                "description": "Создает проверочный тест. Можно передать либо lesson_id, либо пару course_id + lesson_number.",
                 "consumes": [
                     "application/json"
                 ],
@@ -842,7 +779,6 @@ const docTemplate = `{
         },
         "/admin/users": {
             "get": {
-                "description": "Получение таблицы всех сотрудников или студентов.",
                 "produces": [
                     "application/json"
                 ],
@@ -871,7 +807,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Регистрация сотрудника или ученика. Если роль student, автоматически создает связанного родителя.",
+                "description": "Регистрация сотрудника или ученика. Поддерживает несколько родителей и привязку к курсу/группе.",
                 "consumes": [
                     "application/json"
                 ],
@@ -881,7 +817,7 @@ const docTemplate = `{
                 "tags": [
                     "Admin-Users"
                 ],
-                "summary": "ADMIN: Создание пользователя (Полный профиль + Родитель)",
+                "summary": "ADMIN: Создание пользователя (Полный профиль + Родители)",
                 "parameters": [
                     {
                         "description": "Данные пользователя",
@@ -906,9 +842,30 @@ const docTemplate = `{
                 }
             }
         },
+        "/admin/users/all": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin-Users"
+                ],
+                "summary": "ADMIN: Показать всех пользователей (Таблица)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/domain.AllUsersTableItem"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/admin/users/{id}": {
             "put": {
-                "description": "Обновление анкетных данных любого пользователя.",
                 "consumes": [
                     "application/json"
                 ],
@@ -926,31 +883,11 @@ const docTemplate = `{
                         "name": "id",
                         "in": "path",
                         "required": true
-                    },
-                    {
-                        "description": "Новые данные",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/http.CreateFullUserRequest"
-                        }
                     }
                 ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
+                "responses": {}
             },
             "delete": {
-                "description": "Полное удаление аккаунта из системы.",
                 "tags": [
                     "Admin-Users"
                 ],
@@ -1720,6 +1657,26 @@ const docTemplate = `{
                 }
             }
         },
+        "domain.AllUsersTableItem": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "full_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "photo": {
+                    "type": "string"
+                },
+                "role": {
+                    "$ref": "#/definitions/domain.Role"
+                }
+            }
+        },
         "domain.ChatMessage": {
             "type": "object",
             "properties": {
@@ -1835,28 +1792,13 @@ const docTemplate = `{
         "domain.CuratorTableItem": {
             "type": "object",
             "properties": {
-                "avatar_url": {
-                    "type": "string"
-                },
-                "birth_date": {
-                    "type": "string"
-                },
-                "city": {
-                    "type": "string"
-                },
                 "created_at": {
                     "type": "string"
                 },
                 "email": {
                     "type": "string"
                 },
-                "experience_years": {
-                    "type": "integer"
-                },
-                "first_name": {
-                    "type": "string"
-                },
-                "gender": {
+                "full_name": {
                     "type": "string"
                 },
                 "groups": {
@@ -1865,25 +1807,7 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
-                "language": {
-                    "type": "string"
-                },
-                "last_name": {
-                    "type": "string"
-                },
                 "phone": {
-                    "type": "string"
-                },
-                "role": {
-                    "$ref": "#/definitions/domain.Role"
-                },
-                "school_name": {
-                    "type": "string"
-                },
-                "telegram": {
-                    "type": "string"
-                },
-                "whatsapp": {
                     "type": "string"
                 }
             }
@@ -2043,6 +1967,26 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.ModeratorTableItem": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "full_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "phone": {
                     "type": "string"
                 }
             }
@@ -2339,11 +2283,8 @@ const docTemplate = `{
         "domain.StudentTableItem": {
             "type": "object",
             "properties": {
-                "avatar_url": {
-                    "type": "string"
-                },
-                "birth_date": {
-                    "type": "string"
+                "age": {
+                    "type": "integer"
                 },
                 "city": {
                     "type": "string"
@@ -2360,10 +2301,7 @@ const docTemplate = `{
                 "email": {
                     "type": "string"
                 },
-                "experience_years": {
-                    "type": "integer"
-                },
-                "first_name": {
+                "full_name": {
                     "type": "string"
                 },
                 "gender": {
@@ -2378,22 +2316,19 @@ const docTemplate = `{
                 "language": {
                     "type": "string"
                 },
-                "last_name": {
-                    "type": "string"
-                },
                 "parent_phone": {
                     "type": "string"
+                },
+                "performance": {
+                    "type": "integer"
                 },
                 "phone": {
                     "type": "string"
                 },
-                "progress": {
-                    "type": "integer"
+                "photo": {
+                    "type": "string"
                 },
-                "role": {
-                    "$ref": "#/definitions/domain.Role"
-                },
-                "school_name": {
+                "school": {
                     "type": "string"
                 },
                 "status": {
@@ -2403,12 +2338,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "teacher": {
-                    "type": "string"
-                },
-                "telegram": {
-                    "type": "string"
-                },
-                "whatsapp": {
                     "type": "string"
                 }
             }
@@ -2506,12 +2435,6 @@ const docTemplate = `{
         "domain.TeacherTableItem": {
             "type": "object",
             "properties": {
-                "avatar_url": {
-                    "type": "string"
-                },
-                "birth_date": {
-                    "type": "string"
-                },
                 "city": {
                     "type": "string"
                 },
@@ -2524,7 +2447,7 @@ const docTemplate = `{
                 "experience_years": {
                     "type": "integer"
                 },
-                "first_name": {
+                "full_name": {
                     "type": "string"
                 },
                 "gender": {
@@ -2539,22 +2462,10 @@ const docTemplate = `{
                 "language": {
                     "type": "string"
                 },
-                "last_name": {
-                    "type": "string"
-                },
                 "phone": {
                     "type": "string"
                 },
-                "role": {
-                    "$ref": "#/definitions/domain.Role"
-                },
-                "school_name": {
-                    "type": "string"
-                },
-                "telegram": {
-                    "type": "string"
-                },
-                "whatsapp": {
+                "photo": {
                     "type": "string"
                 }
             }
@@ -2663,9 +2574,16 @@ const docTemplate = `{
                     "type": "string",
                     "example": "Алматы"
                 },
+                "course_id": {
+                    "type": "string"
+                },
                 "email": {
                     "type": "string",
                     "example": "student@test.kz"
+                },
+                "experience_years": {
+                    "type": "integer",
+                    "example": 5
                 },
                 "first_name": {
                     "type": "string",
@@ -2674,6 +2592,9 @@ const docTemplate = `{
                 "gender": {
                     "type": "string",
                     "example": "male"
+                },
+                "group_id": {
+                    "type": "string"
                 },
                 "language": {
                     "type": "string",
@@ -2699,6 +2620,12 @@ const docTemplate = `{
                     "type": "string",
                     "example": "+70001112233"
                 },
+                "parents": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/usecase.ParentInfo"
+                    }
+                },
                 "password": {
                     "type": "string",
                     "example": "secret123"
@@ -2714,6 +2641,9 @@ const docTemplate = `{
                         }
                     ],
                     "example": "student"
+                },
+                "stream_id": {
+                    "type": "string"
                 },
                 "telegram": {
                     "type": "string",
@@ -2817,28 +2747,22 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "course_id": {
-                    "type": "string",
-                    "example": "uuid"
+                    "type": "string"
                 },
                 "description": {
-                    "type": "string",
-                    "example": "Тест на проверку базовых знаний Go"
+                    "type": "string"
                 },
                 "lesson_id": {
-                    "type": "string",
-                    "example": "l2222222-2222-2222-2222-222222222222"
+                    "type": "string"
                 },
                 "lesson_number": {
-                    "type": "integer",
-                    "example": 1
+                    "type": "integer"
                 },
                 "passing_score": {
-                    "type": "integer",
-                    "example": 70
+                    "type": "integer"
                 },
                 "title": {
-                    "type": "string",
-                    "example": "Итоговый тест по модулю 1"
+                    "type": "string"
                 }
             }
         },
@@ -2890,6 +2814,20 @@ const docTemplate = `{
                 },
                 "rating": {
                     "type": "integer"
+                }
+            }
+        },
+        "usecase.ParentInfo": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "fullName": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
                 }
             }
         }
