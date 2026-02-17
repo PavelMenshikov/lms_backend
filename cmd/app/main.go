@@ -225,12 +225,14 @@ func main() {
 
 		r.Get("/admin/users", adminHandler.GetUsersList)
 		r.Post("/admin/users", adminHandler.CreateUser)
-		r.Put("/admin/users/{id}", adminHandler.UpdateUser)
 		r.Delete("/admin/users/{id}", adminHandler.DeleteUser)
 		r.Post("/admin/enroll", adminHandler.EnrollUser)
+		
+		r.Get("/admin/users/all", adminHandler.GetAllUsersTable)
 		r.Get("/admin/students/detailed", adminHandler.GetDetailedStudents)
-		r.Get("/admin/teachers/detailed", adminHandler.GetTeachersListDetailed)
-		r.Get("/admin/curators/detailed", adminHandler.GetCuratorsListDetailed)
+		r.Get("/admin/teachers/detailed", adminHandler.GetDetailedTeachers)
+		r.Get("/admin/curators/detailed", adminHandler.GetDetailedCurators)
+		r.Get("/admin/moderators/detailed", adminHandler.GetDetailedModerators)
 
 		r.Post("/admin/streams", adminHandler.CreateStream)
 		r.Get("/admin/streams", adminHandler.GetStreams)
