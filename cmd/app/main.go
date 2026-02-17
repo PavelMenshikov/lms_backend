@@ -210,9 +210,16 @@ func main() {
 		r.Get("/admin/courses/{id}/stats", adminHandler.GetCourseStats)
 
 		r.Post("/admin/modules", adminHandler.CreateModule)
+		r.Delete("/admin/modules/{id}", adminHandler.DeleteModule)
+
 		r.Post("/admin/lessons", adminHandler.CreateLesson)
+		r.Delete("/admin/lessons/{id}", adminHandler.DeleteLesson)
+
 		r.Post("/admin/tests", adminHandler.CreateTest)
+		r.Delete("/admin/tests/{id}", adminHandler.DeleteTest)
+
 		r.Post("/admin/projects", adminHandler.CreateProject)
+		r.Delete("/admin/projects/{id}", adminHandler.DeleteProject)
 
 		r.Post("/admin/media/upload", adminHandler.UploadMedia)
 

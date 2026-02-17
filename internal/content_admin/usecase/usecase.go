@@ -86,6 +86,8 @@ type ExtendedCreateUserInput struct {
 }
 
 type CreateTestInput struct {
+	CourseID     string
+	LessonNumber int
 	LessonID     string
 	Title        string
 	Description  string
@@ -93,10 +95,12 @@ type CreateTestInput struct {
 }
 
 type CreateProjectInput struct {
-	LessonID    string
-	Title       string
-	Description string
-	MaxScore    int
+	CourseID     string
+	LessonNumber int
+	LessonID     string
+	Title        string
+	Description  string
+	MaxScore     int
 }
 
 type CreateStreamInput struct {
@@ -278,6 +282,10 @@ func (uc *ContentAdminUseCase) CreateModule(ctx context.Context, input CreateMod
 	return uc.repo.CreateModule(ctx, module)
 }
 
+func (uc *ContentAdminUseCase) DeleteModule(ctx context.Context, id string) error {
+	return uc.repo.DeleteModule(ctx, id)
+}
+
 func (uc *ContentAdminUseCase) CreateLesson(ctx context.Context, input CreateLessonInput) (string, error) {
 	var videoURL, presentationURL string
 
@@ -326,6 +334,10 @@ func (uc *ContentAdminUseCase) CreateLesson(ctx context.Context, input CreateLes
 	}
 
 	return uc.repo.CreateLesson(ctx, lesson)
+}
+
+func (uc *ContentAdminUseCase) DeleteLesson(ctx context.Context, id string) error {
+	return uc.repo.DeleteLesson(ctx, id)
 }
 
 func (uc *ContentAdminUseCase) CreateFullUser(ctx context.Context, input ExtendedCreateUserInput) (map[string]string, error) {
@@ -451,8 +463,21 @@ func (uc *ContentAdminUseCase) DeleteUser(ctx context.Context, userID string) er
 }
 
 func (uc *ContentAdminUseCase) CreateTest(ctx context.Context, input CreateTestInput) (string, error) {
+	lessonID := input.LessonID
+	if lessonID == "" && input.CourseID != "" && input.LessonNumber > 0 {
+		id, err := uc.repo.GetLessonIDByOrder(ctx, input.CourseID, input.LessonNumber)
+		if err != nil {
+			return "", fmt.Errorf("lesson not found by number: %w", err)
+		}
+		lessonID = id
+	}
+
+	if lessonID == "" {
+		return "", errors.New("either lesson_id or course_id + lesson_number must be provided")
+	}
+
 	test := &domain.Test{
-		LessonID:     input.LessonID,
+		LessonID:     lessonID,
 		Title:        input.Title,
 		Description:  input.Description,
 		PassingScore: input.PassingScore,
@@ -460,14 +485,35 @@ func (uc *ContentAdminUseCase) CreateTest(ctx context.Context, input CreateTestI
 	return uc.repo.CreateTest(ctx, test)
 }
 
+func (uc *ContentAdminUseCase) DeleteTest(ctx context.Context, id string) error {
+	return uc.repo.DeleteTest(ctx, id)
+}
+
 func (uc *ContentAdminUseCase) CreateProject(ctx context.Context, input CreateProjectInput) (string, error) {
+	lessonID := input.LessonID
+	if lessonID == "" && input.CourseID != "" && input.LessonNumber > 0 {
+		id, err := uc.repo.GetLessonIDByOrder(ctx, input.CourseID, input.LessonNumber)
+		if err != nil {
+			return "", fmt.Errorf("lesson not found by number: %w", err)
+		}
+		lessonID = id
+	}
+
+	if lessonID == "" {
+		return "", errors.New("either lesson_id or course_id + lesson_number must be provided")
+	}
+
 	project := &domain.Project{
-		LessonID:    input.LessonID,
+		LessonID:    lessonID,
 		Title:       input.Title,
 		Description: input.Description,
 		MaxScore:    input.MaxScore,
 	}
 	return uc.repo.CreateProject(ctx, project)
+}
+
+func (uc *ContentAdminUseCase) DeleteProject(ctx context.Context, id string) error {
+	return uc.repo.DeleteProject(ctx, id)
 }
 
 func (uc *ContentAdminUseCase) CreateStream(ctx context.Context, input CreateStreamInput) (string, error) {

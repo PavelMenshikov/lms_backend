@@ -47,6 +47,8 @@ type EnrollRequest struct {
 }
 
 type CreateTestRequest struct {
+	CourseID     string `json:"course_id" example:"uuid"`
+	LessonNumber int    `json:"lesson_number" example:"1"`
 	LessonID     string `json:"lesson_id" example:"l2222222-2222-2222-2222-222222222222"`
 	Title        string `json:"title" example:"Итоговый тест по модулю 1"`
 	Description  string `json:"description" example:"Тест на проверку базовых знаний Go"`
@@ -54,8 +56,10 @@ type CreateTestRequest struct {
 }
 
 type CreateProjectRequest struct {
-	LessonID    string `json:"lesson_id" example:"l2222222-2222-2222-2222-222222222222"`
-	Title       string `json:"title" example:"Финальный проект"`
+	CourseID     string `json:"course_id" example:"uuid"`
+	LessonNumber int    `json:"lesson_number" example:"1"`
+	LessonID     string `json:"lesson_id" example:"l2222222-2222-2222-2222-222222222222"`
+	Title        string `json:"title" example:"Финальный проект"`
 	Description string `json:"description" example:"Разработка API на Go"`
 	MaxScore    int    `json:"max_score" example:"100"`
 }
@@ -287,6 +291,21 @@ func (h *ContentAdminHandler) CreateModule(w http.ResponseWriter, r *http.Reques
 	json.NewEncoder(w).Encode(map[string]string{"id": id})
 }
 
+// DeleteModule godoc
+// @Summary ADMIN: Удаление модуля
+// @Tags Admin-Content
+// @Param id path string true "Module ID"
+// @Success 200
+// @Router /admin/modules/{id} [delete]
+func (h *ContentAdminHandler) DeleteModule(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	if err := h.uc.DeleteModule(r.Context(), id); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+}
+
 // CreateLesson godoc
 // @Summary ADMIN: Добавление урока
 // @Description Создает урок. Теперь ModuleID не обязателен, если урок привязан напрямую к курсу.
@@ -341,9 +360,24 @@ func (h *ContentAdminHandler) CreateLesson(w http.ResponseWriter, r *http.Reques
 	json.NewEncoder(w).Encode(map[string]string{"id": id})
 }
 
+// DeleteLesson godoc
+// @Summary ADMIN: Удаление урока
+// @Tags Admin-Content
+// @Param id path string true "Lesson ID"
+// @Success 200
+// @Router /admin/lessons/{id} [delete]
+func (h *ContentAdminHandler) DeleteLesson(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	if err := h.uc.DeleteLesson(r.Context(), id); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+}
+
 // CreateTest godoc
 // @Summary ADMIN: Добавление теста
-// @Description Создает проверочный тест к уроку.
+// @Description Создает проверочный тест. Можно передать либо lesson_id, либо пару course_id + lesson_number.
 // @Tags Admin-Content
 // @Accept json
 // @Produce json
@@ -356,12 +390,7 @@ func (h *ContentAdminHandler) CreateTest(w http.ResponseWriter, r *http.Request)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	input := usecase.CreateTestInput{
-		LessonID:     req.LessonID,
-		Title:        req.Title,
-		Description:  req.Description,
-		PassingScore: req.PassingScore,
-	}
+	input := usecase.CreateTestInput(req)
 	id, err := h.uc.CreateTest(r.Context(), input)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -371,9 +400,24 @@ func (h *ContentAdminHandler) CreateTest(w http.ResponseWriter, r *http.Request)
 	json.NewEncoder(w).Encode(map[string]string{"id": id})
 }
 
+// DeleteTest godoc
+// @Summary ADMIN: Удаление теста
+// @Tags Admin-Content
+// @Param id path string true "Test ID"
+// @Success 200
+// @Router /admin/tests/{id} [delete]
+func (h *ContentAdminHandler) DeleteTest(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	if err := h.uc.DeleteTest(r.Context(), id); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+}
+
 // CreateProject godoc
 // @Summary ADMIN: Добавление проекта
-// @Description Создает курсовой проект к уроку/модулю.
+// @Description Создает курсовой проект. Можно передать либо lesson_id, либо пару course_id + lesson_number.
 // @Tags Admin-Content
 // @Accept json
 // @Produce json
@@ -386,12 +430,7 @@ func (h *ContentAdminHandler) CreateProject(w http.ResponseWriter, r *http.Reque
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	input := usecase.CreateProjectInput{
-		LessonID:    req.LessonID,
-		Title:       req.Title,
-		Description: req.Description,
-		MaxScore:    req.MaxScore,
-	}
+	input := usecase.CreateProjectInput(req)
 	id, err := h.uc.CreateProject(r.Context(), input)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -399,6 +438,21 @@ func (h *ContentAdminHandler) CreateProject(w http.ResponseWriter, r *http.Reque
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"id": id})
+}
+
+// DeleteProject godoc
+// @Summary ADMIN: Удаление проекта
+// @Tags Admin-Content
+// @Param id path string true "Project ID"
+// @Success 200
+// @Router /admin/projects/{id} [delete]
+func (h *ContentAdminHandler) DeleteProject(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	if err := h.uc.DeleteProject(r.Context(), id); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
 }
 
 // CreateUser godoc

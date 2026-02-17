@@ -12,7 +12,10 @@ type ContentAdminRepository interface {
 	CreateCourse(ctx context.Context, course *domain.Course) (string, error)
 	UpdateCourseSettings(ctx context.Context, course *domain.Course) error
 	CreateModule(ctx context.Context, module *domain.Module) (string, error)
+	DeleteModule(ctx context.Context, id string) error
 	CreateLesson(ctx context.Context, lesson *domain.Lesson) (string, error)
+	DeleteLesson(ctx context.Context, id string) error
+	GetLessonIDByOrder(ctx context.Context, courseID string, orderNum int) (string, error)
 	GetAllCourses(ctx context.Context) ([]*domain.Course, error)
 	GetCourseByID(ctx context.Context, id string) (*domain.Course, error)
 	GetModulesByCourseID(ctx context.Context, courseID string) ([]*domain.Module, error)
@@ -24,7 +27,9 @@ type ContentAdminRepository interface {
 	GetCourseStudents(ctx context.Context, courseID string) ([]*domain.AdminStudentProgress, error)
 	GetCourseStats(ctx context.Context, courseID string) (*domain.AdminCourseStats, error)
 	CreateTest(ctx context.Context, test *domain.Test) (string, error)
+	DeleteTest(ctx context.Context, id string) error
 	CreateProject(ctx context.Context, project *domain.Project) (string, error)
+	DeleteProject(ctx context.Context, id string) error
 	UpdateUser(ctx context.Context, user *domain.User) error
 	DeleteUser(ctx context.Context, userID string) error
 	GetDetailedStudentList(ctx context.Context, filter domain.UserFilter) ([]*domain.StudentTableItem, error)
@@ -117,6 +122,12 @@ func (r *ContentAdminRepoImpl) CreateModule(ctx context.Context, module *domain.
 	return newID, nil
 }
 
+func (r *ContentAdminRepoImpl) DeleteModule(ctx context.Context, id string) error {
+	query := `DELETE FROM modules WHERE id = $1`
+	_, err := r.db.ExecContext(ctx, query, id)
+	return err
+}
+
 func (r *ContentAdminRepoImpl) CreateLesson(ctx context.Context, lesson *domain.Lesson) (string, error) {
 	var newID string
 	query := `
@@ -144,6 +155,19 @@ func (r *ContentAdminRepoImpl) CreateLesson(ctx context.Context, lesson *domain.
 		return "", fmt.Errorf("failed to create lesson: %w", err)
 	}
 	return newID, nil
+}
+
+func (r *ContentAdminRepoImpl) DeleteLesson(ctx context.Context, id string) error {
+	query := `DELETE FROM lessons WHERE id = $1`
+	_, err := r.db.ExecContext(ctx, query, id)
+	return err
+}
+
+func (r *ContentAdminRepoImpl) GetLessonIDByOrder(ctx context.Context, courseID string, orderNum int) (string, error) {
+	var id string
+	query := `SELECT id FROM lessons WHERE course_id = $1 AND order_num = $2 LIMIT 1`
+	err := r.db.QueryRowContext(ctx, query, courseID, orderNum).Scan(&id)
+	return id, err
 }
 
 func (r *ContentAdminRepoImpl) GetAllCourses(ctx context.Context) ([]*domain.Course, error) {
@@ -372,6 +396,12 @@ func (r *ContentAdminRepoImpl) CreateTest(ctx context.Context, test *domain.Test
 	return newID, nil
 }
 
+func (r *ContentAdminRepoImpl) DeleteTest(ctx context.Context, id string) error {
+	query := `DELETE FROM tests WHERE id = $1`
+	_, err := r.db.ExecContext(ctx, query, id)
+	return err
+}
+
 func (r *ContentAdminRepoImpl) CreateProject(ctx context.Context, project *domain.Project) (string, error) {
 	var newID string
 	query := `INSERT INTO projects (lesson_id, title, description, max_score) VALUES ($1, $2, $3, $4) RETURNING id`
@@ -380,6 +410,12 @@ func (r *ContentAdminRepoImpl) CreateProject(ctx context.Context, project *domai
 		return "", fmt.Errorf("failed to create project: %w", err)
 	}
 	return newID, nil
+}
+
+func (r *ContentAdminRepoImpl) DeleteProject(ctx context.Context, id string) error {
+	query := `DELETE FROM projects WHERE id = $1`
+	_, err := r.db.ExecContext(ctx, query, id)
+	return err
 }
 
 func (r *ContentAdminRepoImpl) UpdateUser(ctx context.Context, u *domain.User) error {
