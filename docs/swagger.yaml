@@ -135,6 +135,47 @@ definitions:
         items:
           $ref: '#/definitions/domain.ModuleStructure'
         type: array
+      root_lessons:
+        items:
+          $ref: '#/definitions/domain.Lesson'
+        type: array
+    type: object
+  domain.CuratorTableItem:
+    properties:
+      avatar_url:
+        type: string
+      birth_date:
+        type: string
+      city:
+        type: string
+      created_at:
+        type: string
+      email:
+        type: string
+      experience_years:
+        type: integer
+      first_name:
+        type: string
+      gender:
+        type: string
+      groups:
+        type: string
+      id:
+        type: string
+      language:
+        type: string
+      last_name:
+        type: string
+      phone:
+        type: string
+      role:
+        $ref: '#/definitions/domain.Role'
+      school_name:
+        type: string
+      telegram:
+        type: string
+      whatsapp:
+        type: string
     type: object
   domain.DailyLessonActivity:
     properties:
@@ -199,6 +240,8 @@ definitions:
   domain.Lesson:
     properties:
       content_text:
+        type: string
+      course_id:
         type: string
       duration_min:
         type: integer
@@ -538,6 +581,43 @@ definitions:
       student_name:
         type: string
       teacher_id:
+        type: string
+    type: object
+  domain.TeacherTableItem:
+    properties:
+      avatar_url:
+        type: string
+      birth_date:
+        type: string
+      city:
+        type: string
+      created_at:
+        type: string
+      email:
+        type: string
+      experience_years:
+        type: integer
+      first_name:
+        type: string
+      gender:
+        type: string
+      groups:
+        type: string
+      id:
+        type: string
+      language:
+        type: string
+      last_name:
+        type: string
+      phone:
+        type: string
+      role:
+        $ref: '#/definitions/domain.Role'
+      school_name:
+        type: string
+      telegram:
+        type: string
+      whatsapp:
         type: string
     type: object
   domain.UpcomingLesson:
@@ -923,6 +1003,20 @@ paths:
       summary: 'ADMIN: Ученики конкретного курса'
       tags:
       - Admin-Users
+  /admin/curators/detailed:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.CuratorTableItem'
+            type: array
+      summary: 'ADMIN: Список кураторов с группами'
+      tags:
+      - Admin-Users
   /admin/dashboard/stats:
     get:
       description: Возвращает агрегированные данные для админ-панели (счетчики, графики,
@@ -1008,12 +1102,17 @@ paths:
     post:
       consumes:
       - multipart/form-data
-      description: Создает урок с опциональной загрузкой видео и презентации.
+      description: Создает урок. Теперь ModuleID не обязателен, если урок привязан
+        напрямую к курсу.
       parameters:
-      - description: ID модуля
+      - description: ID курса
+        in: formData
+        name: course_id
+        required: true
+        type: string
+      - description: ID модуля (опционально)
         in: formData
         name: module_id
-        required: true
         type: string
       - description: ID преподавателя (лектора)
         in: formData
@@ -1025,7 +1124,7 @@ paths:
         name: title
         required: true
         type: string
-      - description: Порядковый номер в модуле
+      - description: Порядковый номер
         in: formData
         name: order_num
         required: true
@@ -1193,6 +1292,20 @@ paths:
               $ref: '#/definitions/domain.StudentTableItem'
             type: array
       summary: 'ADMIN: Детальный список учеников'
+      tags:
+      - Admin-Users
+  /admin/teachers/detailed:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.TeacherTableItem'
+            type: array
+      summary: 'ADMIN: Список учителей с группами'
       tags:
       - Admin-Users
   /admin/tests:

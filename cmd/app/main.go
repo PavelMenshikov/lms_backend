@@ -222,6 +222,8 @@ func main() {
 		r.Delete("/admin/users/{id}", adminHandler.DeleteUser)
 		r.Post("/admin/enroll", adminHandler.EnrollUser)
 		r.Get("/admin/students/detailed", adminHandler.GetDetailedStudents)
+		r.Get("/admin/teachers/detailed", adminHandler.GetTeachersListDetailed)
+		r.Get("/admin/curators/detailed", adminHandler.GetCuratorsListDetailed)
 
 		r.Post("/admin/streams", adminHandler.CreateStream)
 		r.Get("/admin/streams", adminHandler.GetStreams)

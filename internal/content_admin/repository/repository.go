@@ -121,13 +121,14 @@ func (r *ContentAdminRepoImpl) CreateLesson(ctx context.Context, lesson *domain.
 	var newID string
 	query := `
 		INSERT INTO lessons (
-			module_id, teacher_id, title, lesson_time, order_num, 
+			course_id, module_id, teacher_id, title, lesson_time, order_num, 
 			video_url, presentation_url, content_text, is_published
 		)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 		RETURNING id
 	`
 	err := r.db.QueryRowContext(ctx, query,
+		lesson.CourseID,
 		lesson.ModuleID,
 		lesson.TeacherID,
 		lesson.Title,
@@ -204,11 +205,12 @@ func (r *ContentAdminRepoImpl) GetModulesByCourseID(ctx context.Context, courseI
 
 func (r *ContentAdminRepoImpl) GetLessonsByCourseID(ctx context.Context, courseID string) ([]*domain.Lesson, error) {
 	query := `
-		SELECT l.id, l.module_id, l.teacher_id, l.title, l.lesson_time, l.duration_min, 
-		       l.order_num, l.is_published, l.video_url, l.presentation_url, l.content_text
+		SELECT 
+            l.id, l.course_id, l.module_id, l.teacher_id, l.title, l.lesson_time, 
+            l.duration_min, l.order_num, l.is_published, l.video_url, 
+            l.presentation_url, l.content_text
 		FROM lessons l
-		JOIN modules m ON l.module_id = m.id
-		WHERE m.course_id = $1
+		WHERE l.course_id = $1
 		ORDER BY l.order_num ASC
 	`
 	rows, err := r.db.QueryContext(ctx, query, courseID)
@@ -220,10 +222,19 @@ func (r *ContentAdminRepoImpl) GetLessonsByCourseID(ctx context.Context, courseI
 	var lessons []*domain.Lesson
 	for rows.Next() {
 		l := &domain.Lesson{}
-		if err := rows.Scan(&l.ID, &l.ModuleID, &l.TeacherID, &l.Title, &l.LessonTime,
-			&l.DurationMin, &l.OrderNum, &l.IsPublished, &l.VideoURL, &l.PresentationURL, &l.ContentText); err != nil {
+		var modID sql.NullString
+
+		if err := rows.Scan(&l.ID, &l.CourseID, &modID, &l.TeacherID, &l.Title, &l.LessonTime,
+			&l.DurationMin, &l.OrderNum, &l.IsPublished, &l.VideoURL,
+			&l.PresentationURL, &l.ContentText); err != nil {
 			return nil, err
 		}
+
+		if modID.Valid {
+			val := modID.String
+			l.ModuleID = &val
+		}
+
 		lessons = append(lessons, l)
 	}
 	return lessons, nil
@@ -511,12 +522,14 @@ func (r *ContentAdminRepoImpl) GetDetailedTeacherList(ctx context.Context) ([]*d
 			COALESCE((SELECT STRING_AGG(title, ', ') FROM groups WHERE teacher_id = u.id), '') as group_titles
 		FROM users u
 		WHERE u.role = 'teacher'
+		ORDER BY u.created_at DESC
 	`
 	rows, err := r.db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
+
 	var list []*domain.TeacherTableItem
 	for rows.Next() {
 		item := &domain.TeacherTableItem{}
@@ -540,12 +553,14 @@ func (r *ContentAdminRepoImpl) GetDetailedCuratorList(ctx context.Context) ([]*d
 			COALESCE((SELECT STRING_AGG(title, ', ') FROM groups WHERE curator_id = u.id), '') as group_titles
 		FROM users u
 		WHERE u.role = 'curator'
+		ORDER BY u.created_at DESC
 	`
 	rows, err := r.db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
+
 	var list []*domain.CuratorTableItem
 	for rows.Next() {
 		item := &domain.CuratorTableItem{}

@@ -170,8 +170,14 @@ func (uc *ContentAdminUseCase) GetCourseStructure(ctx context.Context, courseID 
 	}
 
 	lessonsByModule := make(map[string][]*domain.Lesson)
+	var rootLessons []*domain.Lesson
+
 	for _, l := range allLessons {
-		lessonsByModule[l.ModuleID] = append(lessonsByModule[l.ModuleID], l)
+		if l.ModuleID != nil && *l.ModuleID != "" {
+			lessonsByModule[*l.ModuleID] = append(lessonsByModule[*l.ModuleID], l)
+		} else {
+			rootLessons = append(rootLessons, l)
+		}
 	}
 
 	var moduleStructures []*domain.ModuleStructure
@@ -186,9 +192,14 @@ func (uc *ContentAdminUseCase) GetCourseStructure(ctx context.Context, courseID 
 		moduleStructures = append(moduleStructures, ms)
 	}
 
+	if rootLessons == nil {
+		rootLessons = []*domain.Lesson{}
+	}
+
 	return &domain.CourseStructure{
-		Course:  course,
-		Modules: moduleStructures,
+		Course:      course,
+		Modules:     moduleStructures,
+		RootLessons: rootLessons,
 	}, nil
 }
 
@@ -200,13 +211,6 @@ func (uc *ContentAdminUseCase) CreateModule(ctx context.Context, input CreateMod
 		OrderNum:    input.OrderNum,
 	}
 	return uc.repo.CreateModule(ctx, module)
-}
-
-type CreateModuleInput struct {
-	CourseID    string
-	Title       string
-	Description string
-	OrderNum    int
 }
 
 func (uc *ContentAdminUseCase) CreateLesson(ctx context.Context, input CreateLessonInput) (string, error) {
@@ -238,8 +242,14 @@ func (uc *ContentAdminUseCase) CreateLesson(ctx context.Context, input CreateLes
 		presentationURL, _ = uc.s3Storage.GetPublicURL(ctx, key)
 	}
 
+	var modID *string
+	if input.ModuleID != "" {
+		modID = &input.ModuleID
+	}
+
 	lesson := &domain.Lesson{
-		ModuleID:        input.ModuleID,
+		CourseID:        input.CourseID,
+		ModuleID:        modID,
 		TeacherID:       input.TeacherID,
 		Title:           input.Title,
 		LessonTime:      time.Now(),
@@ -254,6 +264,7 @@ func (uc *ContentAdminUseCase) CreateLesson(ctx context.Context, input CreateLes
 }
 
 type CreateLessonInput struct {
+	CourseID         string
 	ModuleID         string
 	TeacherID        string
 	Title            string
@@ -415,13 +426,6 @@ func (uc *ContentAdminUseCase) CreateTest(ctx context.Context, input CreateTestI
 	return uc.repo.CreateTest(ctx, test)
 }
 
-type CreateTestInput struct {
-	LessonID     string
-	Title        string
-	Description  string
-	PassingScore int
-}
-
 func (uc *ContentAdminUseCase) CreateProject(ctx context.Context, input CreateProjectInput) (string, error) {
 	project := &domain.Project{
 		LessonID:    input.LessonID,
@@ -432,13 +436,6 @@ func (uc *ContentAdminUseCase) CreateProject(ctx context.Context, input CreatePr
 	return uc.repo.CreateProject(ctx, project)
 }
 
-type CreateProjectInput struct {
-	LessonID    string
-	Title       string
-	Description string
-	MaxScore    int
-}
-
 func (uc *ContentAdminUseCase) CreateStream(ctx context.Context, input CreateStreamInput) (string, error) {
 	stream := &domain.Stream{
 		CourseID:  input.CourseID,
@@ -446,12 +443,6 @@ func (uc *ContentAdminUseCase) CreateStream(ctx context.Context, input CreateStr
 		StartDate: input.StartDate,
 	}
 	return uc.repo.CreateStream(ctx, stream)
-}
-
-type CreateStreamInput struct {
-	CourseID  string
-	Title     string
-	StartDate time.Time
 }
 
 func (uc *ContentAdminUseCase) GetStreamsByCourse(ctx context.Context, courseID string) ([]*domain.Stream, error) {
@@ -466,13 +457,6 @@ func (uc *ContentAdminUseCase) CreateGroup(ctx context.Context, input CreateGrou
 		Title:     input.Title,
 	}
 	return uc.repo.CreateGroup(ctx, group)
-}
-
-type CreateGroupInput struct {
-	StreamID  string
-	CuratorID string
-	TeacherID string
-	Title     string
 }
 
 func (uc *ContentAdminUseCase) GetGroupsByStream(ctx context.Context, streamID string) ([]*domain.Group, error) {

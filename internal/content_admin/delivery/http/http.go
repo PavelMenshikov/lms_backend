@@ -289,14 +289,15 @@ func (h *ContentAdminHandler) CreateModule(w http.ResponseWriter, r *http.Reques
 
 // CreateLesson godoc
 // @Summary ADMIN: Добавление урока
-// @Description Создает урок с опциональной загрузкой видео и презентации.
+// @Description Создает урок. Теперь ModuleID не обязателен, если урок привязан напрямую к курсу.
 // @Tags Admin-Content
 // @Accept multipart/form-data
 // @Produce json
-// @Param module_id formData string true "ID модуля"
+// @Param course_id formData string true "ID курса"
+// @Param module_id formData string false "ID модуля (опционально)"
 // @Param teacher_id formData string true "ID преподавателя (лектора)"
 // @Param title formData string true "Название урока"
-// @Param order_num formData int true "Порядковый номер в модуле"
+// @Param order_num formData int true "Порядковый номер"
 // @Param content_text formData string false "Markdown/HTML конспект"
 // @Param video_file formData file false "Видео файл"
 // @Param presentation_file formData file false "Файл презентации"
@@ -319,7 +320,9 @@ func (h *ContentAdminHandler) CreateLesson(w http.ResponseWriter, r *http.Reques
 		f.Close()
 		pH = head
 	}
+
 	input := usecase.CreateLessonInput{
+		CourseID:         r.FormValue("course_id"),
 		ModuleID:         r.FormValue("module_id"),
 		TeacherID:        r.FormValue("teacher_id"),
 		Title:            r.FormValue("title"),
@@ -328,6 +331,7 @@ func (h *ContentAdminHandler) CreateLesson(w http.ResponseWriter, r *http.Reques
 		VideoFile:        vH,
 		PresentationFile: pH,
 	}
+
 	id, err := h.uc.CreateLesson(r.Context(), input)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -686,4 +690,36 @@ func (h *ContentAdminHandler) GetGroups(w http.ResponseWriter, r *http.Request) 
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(groups)
+}
+
+// GetTeachersListDetailed godoc
+// @Summary ADMIN: Список учителей с группами
+// @Tags Admin-Users
+// @Produce json
+// @Success 200 {array} domain.TeacherTableItem
+// @Router /admin/teachers/detailed [get]
+func (h *ContentAdminHandler) GetTeachersListDetailed(w http.ResponseWriter, r *http.Request) {
+	list, err := h.uc.GetDetailedTeachers(r.Context())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(list)
+}
+
+// GetCuratorsListDetailed godoc
+// @Summary ADMIN: Список кураторов с группами
+// @Tags Admin-Users
+// @Produce json
+// @Success 200 {array} domain.CuratorTableItem
+// @Router /admin/curators/detailed [get]
+func (h *ContentAdminHandler) GetCuratorsListDetailed(w http.ResponseWriter, r *http.Request) {
+	list, err := h.uc.GetDetailedCurators(r.Context())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(list)
 }

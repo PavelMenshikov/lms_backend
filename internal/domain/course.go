@@ -35,9 +35,10 @@ type Module struct {
 }
 
 type Lesson struct {
-	ID              string    `json:"id" db:"id"`
-	ModuleID        string    `json:"module_id" db:"module_id"`
-	TeacherID       string    `json:"teacher_id" db:"teacher_id"`
+	ID              string    `json:"id" db:"id"`	
+    CourseID        string    `json:"course_id" db:"course_id"`     
+	ModuleID        *string   `json:"module_id" db:"module_id"`    
+    TeacherID       string    `json:"teacher_id" db:"teacher_id"`
 	Title           string    `json:"title" db:"title"`
 	LessonTime      time.Time `json:"lesson_time" db:"lesson_time"`
 	DurationMin     int       `json:"duration_min" db:"duration_min"`
@@ -49,6 +50,7 @@ type Lesson struct {
 	HasHomework     bool      `json:"has_homework" db:"has_homework"`
 	IsInteractive   bool      `json:"is_interactive" db:"is_interactive"`
 }
+
 
 type Stream struct {
 	ID        string    `json:"id" db:"id"`
@@ -86,9 +88,11 @@ type Project struct {
 }
 
 type CourseStructure struct {
-	Course  *Course            `json:"course"`
-	Modules []*ModuleStructure `json:"modules"`
+	Course       *Course            `json:"course"`
+	Modules      []*ModuleStructure `json:"modules"`
+	RootLessons  []*Lesson          `json:"root_lessons"`
 }
+
 
 type ModuleStructure struct {
 	Module  *Module   `json:"module"`

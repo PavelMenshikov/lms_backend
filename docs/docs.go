@@ -253,6 +253,28 @@ const docTemplate = `{
                 }
             }
         },
+        "/admin/curators/detailed": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin-Users"
+                ],
+                "summary": "ADMIN: Список кураторов с группами",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/domain.CuratorTableItem"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/admin/dashboard/stats": {
             "get": {
                 "description": "Возвращает агрегированные данные для админ-панели (счетчики, графики, успеваемость).",
@@ -378,7 +400,7 @@ const docTemplate = `{
         },
         "/admin/lessons": {
             "post": {
-                "description": "Создает урок с опциональной загрузкой видео и презентации.",
+                "description": "Создает урок. Теперь ModuleID не обязателен, если урок привязан напрямую к курсу.",
                 "consumes": [
                     "multipart/form-data"
                 ],
@@ -392,10 +414,16 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "ID модуля",
-                        "name": "module_id",
+                        "description": "ID курса",
+                        "name": "course_id",
                         "in": "formData",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID модуля (опционально)",
+                        "name": "module_id",
+                        "in": "formData"
                     },
                     {
                         "type": "string",
@@ -413,7 +441,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "integer",
-                        "description": "Порядковый номер в модуле",
+                        "description": "Порядковый номер",
                         "name": "order_num",
                         "in": "formData",
                         "required": true
@@ -659,6 +687,28 @@ const docTemplate = `{
                             "type": "array",
                             "items": {
                                 "$ref": "#/definitions/domain.StudentTableItem"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/teachers/detailed": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin-Users"
+                ],
+                "summary": "ADMIN: Список учителей с группами",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/domain.TeacherTableItem"
                             }
                         }
                     }
@@ -1685,6 +1735,68 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/domain.ModuleStructure"
                     }
+                },
+                "root_lessons": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.Lesson"
+                    }
+                }
+            }
+        },
+        "domain.CuratorTableItem": {
+            "type": "object",
+            "properties": {
+                "avatar_url": {
+                    "type": "string"
+                },
+                "birth_date": {
+                    "type": "string"
+                },
+                "city": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "experience_years": {
+                    "type": "integer"
+                },
+                "first_name": {
+                    "type": "string"
+                },
+                "gender": {
+                    "type": "string"
+                },
+                "groups": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "language": {
+                    "type": "string"
+                },
+                "last_name": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "role": {
+                    "$ref": "#/definitions/domain.Role"
+                },
+                "school_name": {
+                    "type": "string"
+                },
+                "telegram": {
+                    "type": "string"
+                },
+                "whatsapp": {
+                    "type": "string"
                 }
             }
         },
@@ -1784,6 +1896,9 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "content_text": {
+                    "type": "string"
+                },
+                "course_id": {
                     "type": "string"
                 },
                 "duration_min": {
@@ -2296,6 +2411,62 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "teacher_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.TeacherTableItem": {
+            "type": "object",
+            "properties": {
+                "avatar_url": {
+                    "type": "string"
+                },
+                "birth_date": {
+                    "type": "string"
+                },
+                "city": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "experience_years": {
+                    "type": "integer"
+                },
+                "first_name": {
+                    "type": "string"
+                },
+                "gender": {
+                    "type": "string"
+                },
+                "groups": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "language": {
+                    "type": "string"
+                },
+                "last_name": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "role": {
+                    "$ref": "#/definitions/domain.Role"
+                },
+                "school_name": {
+                    "type": "string"
+                },
+                "telegram": {
+                    "type": "string"
+                },
+                "whatsapp": {
                     "type": "string"
                 }
             }
