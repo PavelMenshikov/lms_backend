@@ -40,10 +40,6 @@ type CreateFullUserRequest struct {
 	StreamID        string               `json:"stream_id"`
 	GroupID         string               `json:"group_id"`
 	Parents         []usecase.ParentInfo `json:"parents"`
-	ParentFirstName string               `json:"parent_first_name" example:"Мама"`
-	ParentLastName  string               `json:"parent_last_name" example:"Иванова"`
-	ParentPhone     string               `json:"parent_phone" example:"+70001112233"`
-	ParentEmail     string               `json:"parent_email" example:"mom@test.kz"`
 }
 
 type EnrollRequest struct {
@@ -376,7 +372,14 @@ func (h *ContentAdminHandler) CreateTest(w http.ResponseWriter, r *http.Request)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	input := usecase.CreateTestInput(req)
+	input := usecase.CreateTestInput{
+		CourseID:     req.CourseID,
+		LessonNumber: req.LessonNumber,
+		LessonID:     req.LessonID,
+		Title:        req.Title,
+		Description:  req.Description,
+		PassingScore: req.PassingScore,
+	}
 	id, err := h.uc.CreateTest(r.Context(), input)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -415,7 +418,14 @@ func (h *ContentAdminHandler) CreateProject(w http.ResponseWriter, r *http.Reque
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	input := usecase.CreateProjectInput(req)
+	input := usecase.CreateProjectInput{
+		CourseID:     req.CourseID,
+		LessonNumber: req.LessonNumber,
+		LessonID:     req.LessonID,
+		Title:        req.Title,
+		Description:  req.Description,
+		MaxScore:     req.MaxScore,
+	}
 	id, err := h.uc.CreateProject(r.Context(), input)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -458,17 +468,6 @@ func (h *ContentAdminHandler) CreateUser(w http.ResponseWriter, r *http.Request)
 
 	birthDate, _ := time.Parse("2006-01-02", req.BirthDateStr)
 
-	parents := req.Parents
-	if len(parents) == 0 && req.ParentFirstName != "" {
-		parents = []usecase.ParentInfo{
-			{
-				FullName: req.ParentFirstName + " " + req.ParentLastName,
-				Phone:    req.ParentPhone,
-				Email:    req.ParentEmail,
-			},
-		}
-	}
-
 	input := usecase.ExtendedCreateUserInput{
 		FullName:        req.FullName,
 		Email:           req.Email,
@@ -486,7 +485,7 @@ func (h *ContentAdminHandler) CreateUser(w http.ResponseWriter, r *http.Request)
 		CourseID:        req.CourseID,
 		StreamID:        req.StreamID,
 		GroupID:         req.GroupID,
-		Parents:         parents,
+		Parents:         req.Parents,
 	}
 
 	result, err := h.uc.CreateFullUser(r.Context(), input)
@@ -552,6 +551,24 @@ func (h *ContentAdminHandler) DeleteUser(w http.ResponseWriter, r *http.Request)
 	json.NewEncoder(w).Encode(map[string]string{"status": "deleted"})
 }
 
+// GetUserInfo godoc
+// @Summary ADMIN: Информация о конкретном пользователе
+// @Tags Admin-Users
+// @Produce json
+// @Param id path string true "UserID"
+// @Success 200 {object} map[string]interface{}
+// @Router /admin/user/{id} [get]
+func (h *ContentAdminHandler) GetUserInfo(w http.ResponseWriter, r *http.Request) {
+	userID := chi.URLParam(r, "id")
+	res, err := h.uc.GetUserInfo(r.Context(), userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(res)
+}
+
 // GetUsersList godoc
 // @Summary ADMIN: Список пользователей (по ролям)
 // @Tags Admin-Users
@@ -561,12 +578,7 @@ func (h *ContentAdminHandler) DeleteUser(w http.ResponseWriter, r *http.Request)
 // @Router /admin/users [get]
 func (h *ContentAdminHandler) GetUsersList(w http.ResponseWriter, r *http.Request) {
 	role := r.URL.Query().Get("role")
-	users, err := h.uc.GetUsersList(r.Context(), domain.Role(role))
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
+	users, _ := h.uc.GetUsersList(r.Context(), domain.Role(role))
 	json.NewEncoder(w).Encode(users)
 }
 
@@ -747,12 +759,7 @@ func (h *ContentAdminHandler) CreateStream(w http.ResponseWriter, r *http.Reques
 // @Router /admin/streams [get]
 func (h *ContentAdminHandler) GetStreams(w http.ResponseWriter, r *http.Request) {
 	courseID := r.URL.Query().Get("course_id")
-	streams, err := h.uc.GetStreamsByCourse(r.Context(), courseID)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
+	streams, _ := h.uc.GetStreamsByCourse(r.Context(), courseID)
 	json.NewEncoder(w).Encode(streams)
 }
 
@@ -765,22 +772,9 @@ func (h *ContentAdminHandler) GetStreams(w http.ResponseWriter, r *http.Request)
 // @Success 200 {object} map[string]string "id"
 // @Router /admin/groups [post]
 func (h *ContentAdminHandler) CreateGroup(w http.ResponseWriter, r *http.Request) {
-	var req CreateGroupRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	id, err := h.uc.CreateGroup(r.Context(), usecase.CreateGroupInput{
-		StreamID:  req.StreamID,
-		CuratorID: req.CuratorID,
-		TeacherID: req.TeacherID,
-		Title:     req.Title,
-	})
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
+	var req usecase.CreateGroupInput
+	json.NewDecoder(r.Body).Decode(&req)
+	id, _ := h.uc.CreateGroup(r.Context(), req)
 	json.NewEncoder(w).Encode(map[string]string{"id": id})
 }
 
@@ -793,11 +787,6 @@ func (h *ContentAdminHandler) CreateGroup(w http.ResponseWriter, r *http.Request
 // @Router /admin/groups [get]
 func (h *ContentAdminHandler) GetGroups(w http.ResponseWriter, r *http.Request) {
 	streamID := r.URL.Query().Get("stream_id")
-	groups, err := h.uc.GetGroupsByStream(r.Context(), streamID)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
+	groups, _ := h.uc.GetGroupsByStream(r.Context(), streamID)
 	json.NewEncoder(w).Encode(groups)
 }

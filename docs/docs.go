@@ -775,6 +775,35 @@ const docTemplate = `{
                 }
             }
         },
+        "/admin/user/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin-Users"
+                ],
+                "summary": "ADMIN: Информация о конкретном пользователе",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "UserID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/admin/users": {
             "get": {
                 "produces": [
@@ -2509,6 +2538,9 @@ const docTemplate = `{
                 "first_name": {
                     "type": "string"
                 },
+                "full_name": {
+                    "type": "string"
+                },
                 "gender": {
                     "type": "string"
                 },
@@ -2594,22 +2626,6 @@ const docTemplate = `{
                 "language": {
                     "type": "string",
                     "example": "ru"
-                },
-                "parent_email": {
-                    "type": "string",
-                    "example": "mom@test.kz"
-                },
-                "parent_first_name": {
-                    "type": "string",
-                    "example": "Мама"
-                },
-                "parent_last_name": {
-                    "type": "string",
-                    "example": "Иванова"
-                },
-                "parent_phone": {
-                    "type": "string",
-                    "example": "+70001112233"
                 },
                 "parents": {
                     "type": "array",

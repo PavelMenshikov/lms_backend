@@ -398,8 +398,16 @@ func (uc *ContentAdminUseCase) CreateFullUser(ctx context.Context, input Extende
 			}
 		}
 
-		if input.CourseID != "" {
-			_ = uc.repo.EnrollStudentExtended(ctx, userID, input.CourseID, input.StreamID, input.GroupID)
+		courseID := input.CourseID
+		if courseID == "" && input.StreamID != "" {
+			derivedCourseID, err := uc.repo.GetCourseIDByStream(ctx, input.StreamID)
+			if err == nil {
+				courseID = derivedCourseID
+			}
+		}
+
+		if courseID != "" || input.StreamID != "" || input.GroupID != "" {
+			_ = uc.repo.EnrollStudentExtended(ctx, userID, courseID, input.StreamID, input.GroupID)
 		}
 	}
 
@@ -420,8 +428,7 @@ func (uc *ContentAdminUseCase) GetCourseStats(ctx context.Context, courseID stri
 
 func (uc *ContentAdminUseCase) GetUsersList(ctx context.Context, role domain.Role) ([]*domain.User, error) {
 	filter := domain.UserFilter{
-		Role:  role,
-		Limit: 100,
+		Role: role,
 	}
 	return uc.repo.GetUsers(ctx, filter)
 }
@@ -445,6 +452,32 @@ func (uc *ContentAdminUseCase) GetDetailedModerators(ctx context.Context) ([]*do
 
 func (uc *ContentAdminUseCase) GetAllUsersTable(ctx context.Context) ([]*domain.AllUsersTableItem, error) {
 	return uc.repo.GetAllUsersList(ctx)
+}
+
+func (uc *ContentAdminUseCase) GetUserInfo(ctx context.Context, userID string) (map[string]interface{}, error) {
+	filter := domain.UserFilter{Limit: 1}
+	users, err := uc.repo.GetUsers(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	var targetUser *domain.User
+	for _, u := range users {
+		if u.ID == userID {
+			targetUser = u
+			break
+		}
+	}
+
+	if targetUser == nil {
+		return nil, errors.New("user not found")
+	}
+
+	res := map[string]interface{}{
+		"user": targetUser,
+	}
+
+	return res, nil
 }
 
 func (uc *ContentAdminUseCase) UpdateUser(ctx context.Context, userID string, input ExtendedCreateUserInput) error {
@@ -503,7 +536,7 @@ func (uc *ContentAdminUseCase) CreateProject(ctx context.Context, input CreatePr
 	if lessonID == "" && input.CourseID != "" && input.LessonNumber > 0 {
 		id, err := uc.repo.GetLessonIDByOrder(ctx, input.CourseID, input.LessonNumber)
 		if err != nil {
-			return "", fmt.Errorf("lesson not found by order: %w", err)
+			return "", fmt.Errorf("lesson not found by number: %w", err)
 		}
 		lessonID = id
 	}

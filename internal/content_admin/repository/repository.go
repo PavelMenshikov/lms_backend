@@ -306,7 +306,7 @@ func (r *ContentAdminRepoImpl) CreateUser(ctx context.Context, user *domain.User
 
 func (r *ContentAdminRepoImpl) GetUsers(ctx context.Context, filter domain.UserFilter) ([]*domain.User, error) {
 	query := `
-        SELECT id, first_name, last_name, email, role, created_at, 
+        SELECT id, first_name, last_name, first_name || ' ' || last_name as full_name, email, role, created_at, 
                COALESCE(phone, ''), COALESCE(city, ''), COALESCE(school_name, ''), COALESCE(avatar_url, '')
         FROM users WHERE 1=1 
     `
@@ -330,7 +330,7 @@ func (r *ContentAdminRepoImpl) GetUsers(ctx context.Context, filter domain.UserF
 	var users []*domain.User
 	for rows.Next() {
 		u := &domain.User{}
-		if err := rows.Scan(&u.ID, &u.FirstName, &u.LastName, &u.Email, &u.Role, &u.CreatedAt,
+		if err := rows.Scan(&u.ID, &u.FirstName, &u.LastName, &u.FullName, &u.Email, &u.Role, &u.CreatedAt,
 			&u.Phone, &u.City, &u.SchoolName, &u.AvatarURL); err != nil {
 			return nil, err
 		}
@@ -433,6 +433,166 @@ func (r *ContentAdminRepoImpl) DeleteProject(ctx context.Context, id string) err
 	query := `DELETE FROM projects WHERE id = $1`
 	_, err := r.db.ExecContext(ctx, query, id)
 	return err
+}
+
+func (r *ContentAdminRepoImpl) GetDetailedStudentList(ctx context.Context, filter domain.UserFilter) ([]*domain.StudentTableItem, error) {
+	query := `
+		SELECT 
+			u.id, COALESCE(u.avatar_url, ''), u.first_name || ' ' || u.last_name, u.created_at, u.gender,
+			COALESCE(EXTRACT(YEAR FROM AGE(u.birth_date)), 0) as age,
+			COALESCE(uc.status, 'inactive'), 
+			COALESCE(c.title, ''), 
+			COALESCE(g.title, ''), 
+			COALESCE(cur.first_name || ' ' || cur.last_name, ''),
+			COALESCE(teach.first_name || ' ' || teach.last_name, ''),
+			COALESCE(s.title, ''),
+			COALESCE(uc.progress_percent, 0),
+			COALESCE((SELECT phone FROM users pu JOIN child_parent_link cpl ON pu.id = cpl.parent_id WHERE cpl.child_id = u.id LIMIT 1), '') as parent_phone,
+			COALESCE(u.city, ''), COALESCE(u.school_name, ''), COALESCE(u.language, ''),
+			COALESCE(u.phone, ''), u.email
+		FROM users u
+		LEFT JOIN user_courses uc ON u.id = uc.user_id
+		LEFT JOIN courses c ON uc.course_id = c.id
+		LEFT JOIN groups g ON uc.group_id = g.id
+		LEFT JOIN users cur ON g.curator_id = cur.id
+		LEFT JOIN users teach ON g.teacher_id = teach.id
+		LEFT JOIN streams s ON uc.stream_id = s.id
+		WHERE u.role = 'student'`
+
+	args := []interface{}{}
+	if filter.CourseID != "" {
+		query += " AND uc.course_id = $1"
+		args = append(args, filter.CourseID)
+	}
+	query += " ORDER BY u.created_at DESC"
+
+	rows, err := r.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var list []*domain.StudentTableItem
+	for rows.Next() {
+		item := &domain.StudentTableItem{}
+		err := rows.Scan(
+			&item.ID, &item.Photo, &item.FullName, &item.CreatedAt, &item.Gender, &item.Age,
+			&item.Status, &item.Course, &item.Group, &item.Curator, &item.Teacher, &item.Stream,
+			&item.Performance, &item.ParentPhone, &item.City, &item.School, &item.Language,
+			&item.Phone, &item.Email,
+		)
+		if err != nil {
+			return nil, err
+		}
+		list = append(list, item)
+	}
+	return list, nil
+}
+
+func (r *ContentAdminRepoImpl) GetDetailedTeacherList(ctx context.Context) ([]*domain.TeacherTableItem, error) {
+	query := `
+		SELECT 
+			u.id, COALESCE(u.avatar_url, ''), u.first_name || ' ' || u.last_name, u.created_at, u.gender,
+			u.phone, 
+			COALESCE((SELECT STRING_AGG(title, ', ') FROM groups WHERE teacher_id = u.id), '') as group_titles,
+			COALESCE(u.city, ''), u.email, COALESCE(u.experience_years, 0), COALESCE(u.language, '')
+		FROM users u
+		WHERE u.role = 'teacher'
+		ORDER BY u.created_at DESC
+	`
+	rows, err := r.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var list []*domain.TeacherTableItem
+	for rows.Next() {
+		item := &domain.TeacherTableItem{}
+		err := rows.Scan(
+			&item.ID, &item.Photo, &item.FullName, &item.CreatedAt, &item.Gender,
+			&item.Phone, &item.Groups, &item.City, &item.Email, &item.ExperienceYears, &item.Language,
+		)
+		if err != nil {
+			return nil, err
+		}
+		list = append(list, item)
+	}
+	return list, nil
+}
+
+func (r *ContentAdminRepoImpl) GetDetailedCuratorList(ctx context.Context) ([]*domain.CuratorTableItem, error) {
+	query := `
+		SELECT 
+			u.id, u.first_name || ' ' || u.last_name, u.created_at,
+			COALESCE((SELECT STRING_AGG(title, ', ') FROM groups WHERE curator_id = u.id), ''),
+			u.phone, u.email
+		FROM users u
+		WHERE u.role = 'curator'
+		ORDER BY u.created_at DESC
+	`
+	rows, err := r.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var list []*domain.CuratorTableItem
+	for rows.Next() {
+		item := &domain.CuratorTableItem{}
+		err := rows.Scan(&item.ID, &item.FullName, &item.CreatedAt, &item.Groups, &item.Phone, &item.Email)
+		if err != nil {
+			return nil, err
+		}
+		list = append(list, item)
+	}
+	return list, nil
+}
+
+func (r *ContentAdminRepoImpl) GetDetailedModeratorList(ctx context.Context) ([]*domain.ModeratorTableItem, error) {
+	query := `SELECT id, first_name || ' ' || last_name, created_at, phone, email FROM users WHERE role = 'moderator' ORDER BY created_at DESC`
+	rows, err := r.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var list []*domain.ModeratorTableItem
+	for rows.Next() {
+		item := &domain.ModeratorTableItem{}
+		err := rows.Scan(&item.ID, &item.FullName, &item.CreatedAt, &item.Phone, &item.Email)
+		if err != nil {
+			return nil, err
+		}
+		list = append(list, item)
+	}
+	return list, nil
+}
+
+func (r *ContentAdminRepoImpl) GetAllUsersList(ctx context.Context) ([]*domain.AllUsersTableItem, error) {
+	query := `SELECT id, COALESCE(avatar_url, ''), first_name || ' ' || last_name, role, created_at FROM users ORDER BY created_at DESC`
+	rows, err := r.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var list []*domain.AllUsersTableItem
+	for rows.Next() {
+		item := &domain.AllUsersTableItem{}
+		err := rows.Scan(&item.ID, &item.Photo, &item.FullName, &item.Role, &item.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+		list = append(list, item)
+	}
+	return list, nil
+}
+
+func (r *ContentAdminRepoImpl) GetCourseIDByStream(ctx context.Context, streamID string) (string, error) {
+	var id string
+	err := r.db.QueryRowContext(ctx, "SELECT course_id FROM streams WHERE id = $1", streamID).Scan(&id)
+	return id, err
 }
 
 func (r *ContentAdminRepoImpl) UpdateUser(ctx context.Context, u *domain.User) error {

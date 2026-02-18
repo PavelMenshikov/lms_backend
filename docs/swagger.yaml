@@ -629,6 +629,8 @@ definitions:
         type: integer
       first_name:
         type: string
+      full_name:
+        type: string
       gender:
         type: string
       id:
@@ -687,18 +689,6 @@ definitions:
         type: string
       language:
         example: ru
-        type: string
-      parent_email:
-        example: mom@test.kz
-        type: string
-      parent_first_name:
-        example: Мама
-        type: string
-      parent_last_name:
-        example: Иванова
-        type: string
-      parent_phone:
-        example: "+70001112233"
         type: string
       parents:
         items:
@@ -1344,6 +1334,25 @@ paths:
       summary: 'ADMIN: Удаление теста'
       tags:
       - Admin-Content
+  /admin/user/{id}:
+    get:
+      parameters:
+      - description: UserID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 'ADMIN: Информация о конкретном пользователе'
+      tags:
+      - Admin-Users
   /admin/users:
     get:
       parameters:
