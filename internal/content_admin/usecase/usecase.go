@@ -450,35 +450,33 @@ func (uc *ContentAdminUseCase) GetDetailedModerators(ctx context.Context) ([]*do
 	return uc.repo.GetDetailedModeratorList(ctx)
 }
 
+
 func (uc *ContentAdminUseCase) GetAllUsersTable(ctx context.Context) ([]*domain.AllUsersTableItem, error) {
 	return uc.repo.GetAllUsersList(ctx)
 }
 
 func (uc *ContentAdminUseCase) GetUserInfo(ctx context.Context, userID string) (map[string]interface{}, error) {
-	filter := domain.UserFilter{Limit: 1}
-	users, err := uc.repo.GetUsers(ctx, filter)
+	user, err := uc.repo.GetByID(ctx, userID)
 	if err != nil {
-		return nil, err
-	}
-
-	var targetUser *domain.User
-	for _, u := range users {
-		if u.ID == userID {
-			targetUser = u
-			break
-		}
-	}
-
-	if targetUser == nil {
-		return nil, errors.New("user not found")
+		return nil, fmt.Errorf("usecase: user not found: %w", err)
 	}
 
 	res := map[string]interface{}{
-		"user": targetUser,
+		"user": user,
+	}
+
+	if user.Role == domain.RoleStudent {
+		parents, err := uc.repo.GetParentsByStudentID(ctx, userID)
+		if err == nil {
+			res["parents"] = parents
+		} else {
+			res["parents"] = []domain.User{}
+		}
 	}
 
 	return res, nil
 }
+
 
 func (uc *ContentAdminUseCase) UpdateUser(ctx context.Context, userID string, input ExtendedCreateUserInput) error {
 	firstName, lastName := splitName(input.FullName)

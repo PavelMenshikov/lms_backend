@@ -498,6 +498,25 @@ func (h *ContentAdminHandler) CreateUser(w http.ResponseWriter, r *http.Request)
 	json.NewEncoder(w).Encode(result)
 }
 
+
+// GetUserInfo godoc
+// @Summary ADMIN: Информация о конкретном пользователе (Карточка)
+// @Tags Admin-Users
+// @Produce json
+// @Param id path string true "UserID"
+// @Success 200 {object} map[string]interface{}
+// @Router /admin/user/{id} [get]
+func (h *ContentAdminHandler) GetUserInfo(w http.ResponseWriter, r *http.Request) {
+	userID := chi.URLParam(r, "id")
+	res, err := h.uc.GetUserInfo(r.Context(), userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(res)
+}
+
 // UpdateUser godoc
 // @Summary ADMIN: Изменить данные пользователя
 // @Tags Admin-Users
