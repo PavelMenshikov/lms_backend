@@ -23,13 +23,13 @@ func NewContentAdminHandler(uc *usecase.ContentAdminUseCase) *ContentAdminHandle
 }
 
 type CreateFullUserRequest struct {
-	FirstName       string               `json:"first_name" example:"Иван"`
-	LastName        string               `json:"last_name" example:"Иванов"`
+	FullName        string               `json:"full_name" example:"Иван Иванов"`
 	Email           string               `json:"email" example:"student@test.kz"`
 	Password        string               `json:"password" example:"secret123"`
 	Role            domain.Role          `json:"role" example:"student"`
 	Phone           string               `json:"phone" example:"+79998887766"`
 	City            string               `json:"city" example:"Алматы"`
+	SchoolName      string               `json:"school_name" example:"Школа №123"`
 	Language        string               `json:"language" example:"ru"`
 	Gender          string               `json:"gender" example:"male"`
 	BirthDateStr    string               `json:"birth_date" example:"2000-01-01"`
@@ -484,12 +484,13 @@ func (h *ContentAdminHandler) CreateUser(w http.ResponseWriter, r *http.Request)
 	}
 
 	input := usecase.ExtendedCreateUserInput{
-		FullName:        req.FirstName + " " + req.LastName,
+		FullName:        req.FullName,
 		Email:           req.Email,
 		Password:        req.Password,
 		Role:            req.Role,
 		Phone:           req.Phone,
 		City:            req.City,
+		SchoolName:      req.SchoolName,
 		Language:        req.Language,
 		Gender:          req.Gender,
 		BirthDate:       birthDate,
@@ -528,11 +529,12 @@ func (h *ContentAdminHandler) UpdateUser(w http.ResponseWriter, r *http.Request)
 	}
 
 	input := usecase.ExtendedCreateUserInput{
-		FullName:        req.FirstName + " " + req.LastName,
+		FullName:        req.FullName,
 		Email:           req.Email,
 		Role:            req.Role,
 		Phone:           req.Phone,
 		City:            req.City,
+		SchoolName:      req.SchoolName,
 		Language:        req.Language,
 		Gender:          req.Gender,
 		Whatsapp:        req.Whatsapp,

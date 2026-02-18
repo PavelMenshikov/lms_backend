@@ -2579,9 +2579,9 @@
                     "type": "integer",
                     "example": 5
                 },
-                "first_name": {
+                "full_name": {
                     "type": "string",
-                    "example": "Иван"
+                    "example": "Иван Иванов"
                 },
                 "gender": {
                     "type": "string",
@@ -2593,10 +2593,6 @@
                 "language": {
                     "type": "string",
                     "example": "ru"
-                },
-                "last_name": {
-                    "type": "string",
-                    "example": "Иванов"
                 },
                 "parent_email": {
                     "type": "string",
@@ -2635,6 +2631,10 @@
                         }
                     ],
                     "example": "student"
+                },
+                "school_name": {
+                    "type": "string",
+                    "example": "Школа №123"
                 },
                 "stream_id": {
                     "type": "string"

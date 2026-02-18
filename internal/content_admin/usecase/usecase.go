@@ -81,6 +81,7 @@ type ExtendedCreateUserInput struct {
 	Password        string
 	Phone           string
 	City            string
+	SchoolName      string
 	Language        string
 	Gender          string
 	BirthDate       time.Time
@@ -345,7 +346,7 @@ func (uc *ContentAdminUseCase) CreateFullUser(ctx context.Context, input Extende
 	firstName, lastName := splitName(input.FullName)
 	hashedPass, err := bcrypt.GenerateFromPassword([]byte(input.Password), 12)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to hash password: %w", err)
 	}
 
 	user := &domain.User{
@@ -356,6 +357,7 @@ func (uc *ContentAdminUseCase) CreateFullUser(ctx context.Context, input Extende
 		Role:            input.Role,
 		Phone:           input.Phone,
 		City:            input.City,
+		SchoolName:      input.SchoolName,
 		Language:        input.Language,
 		Gender:          input.Gender,
 		BirthDate:       input.BirthDate,
@@ -418,7 +420,8 @@ func (uc *ContentAdminUseCase) GetCourseStats(ctx context.Context, courseID stri
 
 func (uc *ContentAdminUseCase) GetUsersList(ctx context.Context, role domain.Role) ([]*domain.User, error) {
 	filter := domain.UserFilter{
-		Role: role,
+		Role:  role,
+		Limit: 100,
 	}
 	return uc.repo.GetUsers(ctx, filter)
 }
@@ -454,6 +457,7 @@ func (uc *ContentAdminUseCase) UpdateUser(ctx context.Context, userID string, in
 		Role:            input.Role,
 		Phone:           input.Phone,
 		City:            input.City,
+		SchoolName:      input.SchoolName,
 		Language:        input.Language,
 		Gender:          input.Gender,
 		ExperienceYears: input.ExperienceYears,
@@ -472,13 +476,13 @@ func (uc *ContentAdminUseCase) CreateTest(ctx context.Context, input CreateTestI
 	if lessonID == "" && input.CourseID != "" && input.LessonNumber > 0 {
 		id, err := uc.repo.GetLessonIDByOrder(ctx, input.CourseID, input.LessonNumber)
 		if err != nil {
-			return "", fmt.Errorf("lesson not found by number: %w", err)
+			return "", fmt.Errorf("lesson not found by order: %w", err)
 		}
 		lessonID = id
 	}
 
 	if lessonID == "" {
-		return "", errors.New("either lesson_id or course_id + lesson_number must be provided")
+		return "", errors.New("lesson_id or (course_id + lesson_number) required")
 	}
 
 	test := &domain.Test{
@@ -499,7 +503,7 @@ func (uc *ContentAdminUseCase) CreateProject(ctx context.Context, input CreatePr
 	if lessonID == "" && input.CourseID != "" && input.LessonNumber > 0 {
 		id, err := uc.repo.GetLessonIDByOrder(ctx, input.CourseID, input.LessonNumber)
 		if err != nil {
-			return "", fmt.Errorf("lesson not found by number: %w", err)
+			return "", fmt.Errorf("lesson not found by order: %w", err)
 		}
 		lessonID = id
 	}

@@ -2585,9 +2585,9 @@ const docTemplate = `{
                     "type": "integer",
                     "example": 5
                 },
-                "first_name": {
+                "full_name": {
                     "type": "string",
-                    "example": "Иван"
+                    "example": "Иван Иванов"
                 },
                 "gender": {
                     "type": "string",
@@ -2599,10 +2599,6 @@ const docTemplate = `{
                 "language": {
                     "type": "string",
                     "example": "ru"
-                },
-                "last_name": {
-                    "type": "string",
-                    "example": "Иванов"
                 },
                 "parent_email": {
                     "type": "string",
@@ -2641,6 +2637,10 @@ const docTemplate = `{
                         }
                     ],
                     "example": "student"
+                },
+                "school_name": {
+                    "type": "string",
+                    "example": "Школа №123"
                 },
                 "stream_id": {
                     "type": "string"
