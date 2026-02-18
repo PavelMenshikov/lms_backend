@@ -1334,25 +1334,6 @@ paths:
       summary: 'ADMIN: Удаление теста'
       tags:
       - Admin-Content
-  /admin/user/{id}:
-    get:
-      parameters:
-      - description: UserID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties: true
-            type: object
-      summary: 'ADMIN: Информация о конкретном пользователе (Карточка)'
-      tags:
-      - Admin-Users
   /admin/users:
     get:
       parameters:
@@ -1412,6 +1393,24 @@ paths:
               type: string
             type: object
       summary: 'ADMIN: Удалить пользователя'
+      tags:
+      - Admin-Users
+    get:
+      parameters:
+      - description: UserID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 'ADMIN: Информация о конкретном пользователе (Карточка)'
       tags:
       - Admin-Users
     put:

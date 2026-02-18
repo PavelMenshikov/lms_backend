@@ -224,6 +224,7 @@ func main() {
 		r.Post("/admin/media/upload", adminHandler.UploadMedia)
 
 		r.Get("/admin/users", adminHandler.GetUsersList)
+		r.Get("/admin/users/{id}", adminHandler.GetUserInfo)
 		r.Post("/admin/users", adminHandler.CreateUser)
 		r.Put("/admin/users/{id}", adminHandler.UpdateUser)
 		r.Delete("/admin/users/{id}", adminHandler.DeleteUser)

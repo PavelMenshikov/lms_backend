@@ -775,35 +775,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/admin/user/{id}": {
-            "get": {
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Admin-Users"
-                ],
-                "summary": "ADMIN: Информация о конкретном пользователе (Карточка)",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "UserID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
-            }
-        },
         "/admin/users": {
             "get": {
                 "produces": [
@@ -892,6 +863,33 @@ const docTemplate = `{
             }
         },
         "/admin/users/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin-Users"
+                ],
+                "summary": "ADMIN: Информация о конкретном пользователе (Карточка)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "UserID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
             "put": {
                 "consumes": [
                     "application/json"
