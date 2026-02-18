@@ -783,7 +783,7 @@ const docTemplate = `{
                 "tags": [
                     "Admin-Users"
                 ],
-                "summary": "ADMIN: Информация о конкретном пользователе",
+                "summary": "ADMIN: Информация о конкретном пользователе (Карточка)",
                 "parameters": [
                     {
                         "type": "string",

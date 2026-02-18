@@ -1350,7 +1350,7 @@ paths:
           schema:
             additionalProperties: true
             type: object
-      summary: 'ADMIN: Информация о конкретном пользователе'
+      summary: 'ADMIN: Информация о конкретном пользователе (Карточка)'
       tags:
       - Admin-Users
   /admin/users:
