@@ -376,14 +376,7 @@ func (h *ContentAdminHandler) CreateTest(w http.ResponseWriter, r *http.Request)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	input := usecase.CreateTestInput{
-		CourseID:     req.CourseID,
-		LessonNumber: req.LessonNumber,
-		LessonID:     req.LessonID,
-		Title:        req.Title,
-		Description:  req.Description,
-		PassingScore: req.PassingScore,
-	}
+	input := usecase.CreateTestInput(req)
 	id, err := h.uc.CreateTest(r.Context(), input)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -422,14 +415,7 @@ func (h *ContentAdminHandler) CreateProject(w http.ResponseWriter, r *http.Reque
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	input := usecase.CreateProjectInput{
-		CourseID:     req.CourseID,
-		LessonNumber: req.LessonNumber,
-		LessonID:     req.LessonID,
-		Title:        req.Title,
-		Description:  req.Description,
-		MaxScore:     req.MaxScore,
-	}
+	input := usecase.CreateProjectInput(req)
 	id, err := h.uc.CreateProject(r.Context(), input)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -756,7 +742,7 @@ func (h *ContentAdminHandler) CreateStream(w http.ResponseWriter, r *http.Reques
 // @Summary ADMIN: Список потоков курса
 // @Tags Admin-Staff
 // @Produce json
-// @Param course_id query string true "ID курса"
+// @Param course_id query string false "ID курса (опционально)"
 // @Success 200 {array} domain.Stream
 // @Router /admin/streams [get]
 func (h *ContentAdminHandler) GetStreams(w http.ResponseWriter, r *http.Request) {
@@ -802,7 +788,7 @@ func (h *ContentAdminHandler) CreateGroup(w http.ResponseWriter, r *http.Request
 // @Summary ADMIN: Список групп потока
 // @Tags Admin-Staff
 // @Produce json
-// @Param stream_id query string true "ID потока"
+// @Param stream_id query string false "ID потока (опционально)"
 // @Success 200 {array} domain.Group
 // @Router /admin/groups [get]
 func (h *ContentAdminHandler) GetGroups(w http.ResponseWriter, r *http.Request) {

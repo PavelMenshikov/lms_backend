@@ -46,12 +46,10 @@ definitions:
     type: object
   domain.AdminStudentProgress:
     properties:
-      first_name:
+      full_name:
         type: string
       homeworks_done:
         type: integer
-      last_name:
-        type: string
       lessons_attended:
         type: integer
       photo_url:
@@ -1035,10 +1033,9 @@ paths:
   /admin/groups:
     get:
       parameters:
-      - description: ID потока
+      - description: ID потока (опционально)
         in: query
         name: stream_id
-        required: true
         type: string
       produces:
       - application/json
@@ -1239,10 +1236,9 @@ paths:
   /admin/streams:
     get:
       parameters:
-      - description: ID курса
+      - description: ID курса (опционально)
         in: query
         name: course_id
-        required: true
         type: string
       produces:
       - application/json

@@ -298,10 +298,9 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "ID потока",
+                        "description": "ID потока (опционально)",
                         "name": "stream_id",
-                        "in": "query",
-                        "required": true
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -614,10 +613,9 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "ID курса",
+                        "description": "ID курса (опционально)",
                         "name": "course_id",
-                        "in": "query",
-                        "required": true
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -1628,14 +1626,11 @@ const docTemplate = `{
         "domain.AdminStudentProgress": {
             "type": "object",
             "properties": {
-                "first_name": {
+                "full_name": {
                     "type": "string"
                 },
                 "homeworks_done": {
                     "type": "integer"
-                },
-                "last_name": {
-                    "type": "string"
                 },
                 "lessons_attended": {
                     "type": "integer"

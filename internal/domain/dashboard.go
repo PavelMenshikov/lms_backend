@@ -75,10 +75,10 @@ type AdminCourseStats struct {
 	SuccessRateBreakdown map[string]int `json:"success_rate_breakdown"`
 }
 
+
 type AdminStudentProgress struct {
 	UserID          string    `json:"user_id"`
-	FirstName       string    `json:"first_name"`
-	LastName        string    `json:"last_name"`
+	FullName        string    `json:"full_name"`
 	PhotoURL        string    `json:"photo_url"`
 	Status          string    `json:"status"`
 	StartDate       time.Time `json:"start_date"`

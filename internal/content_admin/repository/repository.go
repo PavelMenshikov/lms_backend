@@ -170,6 +170,12 @@ func (r *ContentAdminRepoImpl) DeleteLesson(ctx context.Context, id string) erro
 	return err
 }
 
+func (r *ContentAdminRepoImpl) AssignTeacherToLesson(ctx context.Context, lessonID, teacherID string) error {
+	query := `UPDATE lessons SET teacher_id = $1 WHERE id = $2`
+	_, err := r.db.ExecContext(ctx, query, teacherID, lessonID)
+	return err
+}
+
 func (r *ContentAdminRepoImpl) GetLessonIDByOrder(ctx context.Context, courseID string, orderNum int) (string, error) {
 	var id string
 	query := `SELECT id FROM lessons WHERE course_id = $1 AND order_num = $2 LIMIT 1`
@@ -359,7 +365,7 @@ func (r *ContentAdminRepoImpl) EnrollStudentExtended(ctx context.Context, userID
 func (r *ContentAdminRepoImpl) GetCourseStudents(ctx context.Context, courseID string) ([]*domain.AdminStudentProgress, error) {
 	query := `
 		SELECT 
-			u.id, u.first_name, u.last_name, uc.progress_percent,
+			u.id, u.first_name || ' ' || u.last_name as full_name, uc.progress_percent,
 			(SELECT COUNT(*) FROM user_lesson_attendance WHERE user_id = u.id AND is_attended = true) as lessons_attended,
 			(SELECT COUNT(*) FROM user_assignments_submission WHERE user_id = u.id AND status = 'accepted') as homeworks_done
 		FROM users u
@@ -374,7 +380,7 @@ func (r *ContentAdminRepoImpl) GetCourseStudents(ctx context.Context, courseID s
 	var students []*domain.AdminStudentProgress
 	for rows.Next() {
 		s := &domain.AdminStudentProgress{}
-		if err := rows.Scan(&s.UserID, &s.FirstName, &s.LastName, &s.ProgressPercent, &s.LessonsAttended, &s.HomeworksDone); err != nil {
+		if err := rows.Scan(&s.UserID, &s.FullName, &s.ProgressPercent, &s.LessonsAttended, &s.HomeworksDone); err != nil {
 			return nil, err
 		}
 		students = append(students, s)
@@ -465,7 +471,7 @@ func (r *ContentAdminRepoImpl) GetDetailedStudentList(ctx context.Context, filte
 			COALESCE(teach.first_name || ' ' || teach.last_name, ''),
 			COALESCE(s.title, ''),
 			COALESCE(uc.progress_percent, 0),
-			COALESCE((SELECT phone FROM users pu JOIN child_parent_link cpl ON pu.id = cpl.parent_id WHERE cpl.child_id = u.id LIMIT 1), ''),
+			COALESCE((SELECT phone FROM users pu JOIN child_parent_link cpl ON pu.id = cpl.parent_id WHERE cpl.child_id = u.id LIMIT 1), '') as parent_phone,
 			COALESCE(u.city, ''), COALESCE(u.school_name, ''), COALESCE(u.language, ''),
 			COALESCE(u.phone, ''), u.email
 		FROM users u
@@ -475,14 +481,18 @@ func (r *ContentAdminRepoImpl) GetDetailedStudentList(ctx context.Context, filte
 		LEFT JOIN users cur ON g.curator_id = cur.id
 		LEFT JOIN users teach ON g.teacher_id = teach.id
 		LEFT JOIN streams s ON uc.stream_id = s.id
-		WHERE u.role = 'student'`
-
+		WHERE u.role = 'student'
+	`
+	args := []interface{}{}
+	argID := 1
 	if filter.CourseID != "" {
-		query += " AND uc.course_id = '" + filter.CourseID + "'"
+		query += fmt.Sprintf(" AND uc.course_id = $%d", argID)
+		args = append(args, filter.CourseID)
+		argID++
 	}
 	query += " ORDER BY u.created_at DESC"
 
-	rows, err := r.db.QueryContext(ctx, query)
+	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -505,12 +515,84 @@ func (r *ContentAdminRepoImpl) GetDetailedStudentList(ctx context.Context, filte
 	return list, nil
 }
 
+func (r *ContentAdminRepoImpl) CreateStream(ctx context.Context, stream *domain.Stream) (string, error) {
+	var newID string
+	query := `INSERT INTO streams (course_id, title, start_date) VALUES ($1, $2, $3) RETURNING id`
+	err := r.db.QueryRowContext(ctx, query, stream.CourseID, stream.Title, stream.StartDate).Scan(&newID)
+	if err != nil {
+		return "", fmt.Errorf("failed to create stream: %w", err)
+	}
+	return newID, nil
+}
+
+func (r *ContentAdminRepoImpl) GetStreamsByCourse(ctx context.Context, courseID string) ([]*domain.Stream, error) {
+	query := `SELECT id, course_id, title, start_date, created_at FROM streams`
+	args := []interface{}{}
+	
+	if courseID != "" {
+		query += " WHERE course_id = $1"
+		args = append(args, courseID)
+	}
+	query += " ORDER BY created_at DESC"
+
+	rows, err := r.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var streams []*domain.Stream
+	for rows.Next() {
+		s := &domain.Stream{}
+		if err := rows.Scan(&s.ID, &s.CourseID, &s.Title, &s.StartDate, &s.CreatedAt); err != nil {
+			return nil, err
+		}
+		streams = append(streams, s)
+	}
+	return streams, nil
+}
+
+func (r *ContentAdminRepoImpl) CreateGroup(ctx context.Context, group *domain.Group) (string, error) {
+	var newID string
+	query := `INSERT INTO groups (stream_id, curator_id, teacher_id, title) VALUES ($1, $2, $3, $4) RETURNING id`
+	err := r.db.QueryRowContext(ctx, query, group.StreamID, group.CuratorID, group.TeacherID, group.Title).Scan(&newID)
+	if err != nil {
+		return "", fmt.Errorf("failed to create group: %w", err)
+	}
+	return newID, nil
+}
+
+func (r *ContentAdminRepoImpl) GetGroupsByStream(ctx context.Context, streamID string) ([]*domain.Group, error) {
+	query := `SELECT id, stream_id, curator_id, teacher_id, title, created_at FROM groups`
+	args := []interface{}{}
+
+	if streamID != "" {
+		query += " WHERE stream_id = $1"
+		args = append(args, streamID)
+	}
+	query += " ORDER BY created_at DESC"
+
+	rows, err := r.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var groups []*domain.Group
+	for rows.Next() {
+		g := &domain.Group{}
+		if err := rows.Scan(&g.ID, &g.StreamID, &g.CuratorID, &g.TeacherID, &g.Title, &g.CreatedAt); err != nil {
+			return nil, err
+		}
+		groups = append(groups, g)
+	}
+	return groups, nil
+}
+
 func (r *ContentAdminRepoImpl) GetDetailedTeacherList(ctx context.Context) ([]*domain.TeacherTableItem, error) {
 	query := `
 		SELECT 
 			u.id, COALESCE(u.avatar_url, ''), u.first_name || ' ' || u.last_name, u.created_at, u.gender,
 			u.phone, 
-			COALESCE((SELECT STRING_AGG(title, ', ') FROM groups WHERE teacher_id = u.id), ''),
+			COALESCE((SELECT STRING_AGG(title, ', ') FROM groups WHERE teacher_id = u.id), '') as group_titles,
 			COALESCE(u.city, ''), u.email, COALESCE(u.experience_years, 0), COALESCE(u.language, '')
 		FROM users u
 		WHERE u.role = 'teacher'
@@ -614,64 +696,15 @@ func (r *ContentAdminRepoImpl) GetAllUsersList(ctx context.Context) ([]*domain.A
 	return list, nil
 }
 
-func (r *ContentAdminRepoImpl) CreateStream(ctx context.Context, stream *domain.Stream) (string, error) {
-	var newID string
-	query := `INSERT INTO streams (course_id, title, start_date) VALUES ($1, $2, $3) RETURNING id`
-	err := r.db.QueryRowContext(ctx, query, stream.CourseID, stream.Title, stream.StartDate).Scan(&newID)
+func (r *ContentAdminRepoImpl) EnrollStudent(ctx context.Context, userID, courseID string) error {
+	query := `
+        INSERT INTO user_courses (user_id, course_id, progress_percent)
+        VALUES ($1, $2, 0)
+        ON CONFLICT (user_id, course_id) DO NOTHING
+    `
+	_, err := r.db.ExecContext(ctx, query, userID, courseID)
 	if err != nil {
-		return "", fmt.Errorf("failed to create stream: %w", err)
+		return fmt.Errorf("failed to enroll student: %w", err)
 	}
-	return newID, nil
-}
-
-func (r *ContentAdminRepoImpl) GetStreamsByCourse(ctx context.Context, courseID string) ([]*domain.Stream, error) {
-	query := `SELECT id, course_id, title, start_date, created_at FROM streams WHERE course_id = $1`
-	rows, err := r.db.QueryContext(ctx, query, courseID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var streams []*domain.Stream
-	for rows.Next() {
-		s := &domain.Stream{}
-		if err := rows.Scan(&s.ID, &s.CourseID, &s.Title, &s.StartDate, &s.CreatedAt); err != nil {
-			return nil, err
-		}
-		streams = append(streams, s)
-	}
-	return streams, nil
-}
-
-func (r *ContentAdminRepoImpl) CreateGroup(ctx context.Context, group *domain.Group) (string, error) {
-	var newID string
-	query := `INSERT INTO groups (stream_id, curator_id, teacher_id, title) VALUES ($1, $2, $3, $4) RETURNING id`
-	err := r.db.QueryRowContext(ctx, query, group.StreamID, group.CuratorID, group.TeacherID, group.Title).Scan(&newID)
-	if err != nil {
-		return "", fmt.Errorf("failed to create group: %w", err)
-	}
-	return newID, nil
-}
-
-func (r *ContentAdminRepoImpl) GetGroupsByStream(ctx context.Context, streamID string) ([]*domain.Group, error) {
-	query := `SELECT id, stream_id, curator_id, teacher_id, title, created_at FROM groups WHERE stream_id = $1`
-	rows, err := r.db.QueryContext(ctx, query, streamID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var groups []*domain.Group
-	for rows.Next() {
-		g := &domain.Group{}
-		if err := rows.Scan(&g.ID, &g.StreamID, &g.CuratorID, &g.TeacherID, &g.Title, &g.CreatedAt); err != nil {
-			return nil, err
-		}
-		groups = append(groups, g)
-	}
-	return groups, nil
-}
-
-func (r *ContentAdminRepoImpl) AssignTeacherToLesson(ctx context.Context, lessonID, teacherID string) error {
-	query := `UPDATE lessons SET teacher_id = $1 WHERE id = $2`
-	_, err := r.db.ExecContext(ctx, query, teacherID, lessonID)
-	return err
+	return nil
 }
