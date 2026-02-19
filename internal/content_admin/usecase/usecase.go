@@ -373,11 +373,17 @@ func (uc *ContentAdminUseCase) CreateFullUser(ctx context.Context, input Extende
 
 	if input.Role == domain.RoleStudent {
 		for _, pInfo := range input.Parents {
-			if pInfo.Phone == "" { continue }
-			
-			existingParent, err := uc.repo.GetByPhone(ctx, pInfo.Phone)
-			var parentID string
+			targetEmail := pInfo.Email
+			if targetEmail == "" && pInfo.Phone != "" {
+				cleanPhone := strings.ReplaceAll(strings.ReplaceAll(pInfo.Phone, " ", ""), "+", "")
+				targetEmail = fmt.Sprintf("p_%s_%s@capedu.local", userID[:5], cleanPhone)
+			} else if targetEmail == "" {
+				continue 
+			}
 
+			var parentID string
+			existingParent, err := uc.repo.GetByEmail(ctx, targetEmail)
+			
 			if err == nil {
 				parentID = existingParent.ID
 			} else {
@@ -385,13 +391,10 @@ func (uc *ContentAdminUseCase) CreateFullUser(ctx context.Context, input Extende
 				pPass := generateSecurePassword()
 				hash, _ := bcrypt.GenerateFromPassword([]byte(pPass), 12)
 				
-				cleanPhone := strings.ReplaceAll(strings.ReplaceAll(pInfo.Phone, " ", ""), "+", "")
-				pEmail := fmt.Sprintf("%s@parent.capedu", cleanPhone)
-
 				newParent := &domain.User{
 					FirstName: pFirst,
 					LastName:  pLast,
-					Email:     pEmail,
+					Email:     targetEmail,
 					Phone:     pInfo.Phone,
 					Password:  string(hash),
 					Role:      domain.RoleParent,
@@ -517,13 +520,18 @@ func (uc *ContentAdminUseCase) UpdateUser(ctx context.Context, userID string, in
 	}
 
 	if input.Role == domain.RoleStudent {
-		_ = uc.repo.UnlinkAllParents(ctx, userID)
-
+		
 		for _, pInfo := range input.Parents {
-			if pInfo.Phone == "" { continue }
+			targetEmail := pInfo.Email
+			if targetEmail == "" && pInfo.Phone != "" {
+				cleanPhone := strings.ReplaceAll(strings.ReplaceAll(pInfo.Phone, " ", ""), "+", "")
+				targetEmail = fmt.Sprintf("p_%s_%s@capedu.local", userID[:5], cleanPhone)
+			} else if targetEmail == "" {
+				continue
+			}
 
-			existingParent, err := uc.repo.GetByPhone(ctx, pInfo.Phone)
 			var parentID string
+			existingParent, err := uc.repo.GetByEmail(ctx, targetEmail)
 
 			if err == nil {
 				parentID = existingParent.ID
@@ -531,14 +539,11 @@ func (uc *ContentAdminUseCase) UpdateUser(ctx context.Context, userID string, in
 				pFirst, pLast := splitName(pInfo.FullName)
 				pPass := generateSecurePassword()
 				hash, _ := bcrypt.GenerateFromPassword([]byte(pPass), 12)
-				
-				cleanPhone := strings.ReplaceAll(strings.ReplaceAll(pInfo.Phone, " ", ""), "+", "")
-				pEmail := fmt.Sprintf("%s@parent.capedu", cleanPhone)
 
 				newParent := &domain.User{
 					FirstName: pFirst,
 					LastName:  pLast,
-					Email:     pEmail,
+					Email:     targetEmail,
 					Phone:     pInfo.Phone,
 					Password:  string(hash),
 					Role:      domain.RoleParent,
@@ -555,7 +560,6 @@ func (uc *ContentAdminUseCase) UpdateUser(ctx context.Context, userID string, in
 
 	return nil
 }
-
 func (uc *ContentAdminUseCase) DeleteUser(ctx context.Context, userID string) error {
 	return uc.repo.DeleteUser(ctx, userID)
 }

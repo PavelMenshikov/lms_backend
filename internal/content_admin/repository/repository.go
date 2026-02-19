@@ -533,8 +533,8 @@ func (r *ContentAdminRepoImpl) GetStudentEnrollment(ctx context.Context, userID 
 
 func (r *ContentAdminRepoImpl) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
 	u := &domain.User{}
-	query := `SELECT id, first_name, last_name, email FROM users WHERE email = $1`
-	err := r.db.QueryRowContext(ctx, query, email).Scan(&u.ID, &u.FirstName, &u.LastName, &u.Email)
+	query := `SELECT id, first_name, last_name, email, role, phone FROM users WHERE email = $1`
+	err := r.db.QueryRowContext(ctx, query, email).Scan(&u.ID, &u.FirstName, &u.LastName, &u.Email, &u.Role, &u.Phone)
 	return u, err
 }
 
