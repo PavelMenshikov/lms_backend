@@ -490,7 +490,6 @@ func (uc *ContentAdminUseCase) GetUserInfo(ctx context.Context, userID string) (
 
 func (uc *ContentAdminUseCase) UpdateUser(ctx context.Context, userID string, input ExtendedCreateUserInput) error {
 	firstName, lastName := splitName(input.FullName)
-	
 	user := &domain.User{
 		ID:              userID,
 		FirstName:       firstName,
@@ -502,12 +501,10 @@ func (uc *ContentAdminUseCase) UpdateUser(ctx context.Context, userID string, in
 		SchoolName:      input.SchoolName,
 		Language:        input.Language,
 		Gender:          input.Gender,
-		BirthDate:       input.BirthDate,
 		ExperienceYears: input.ExperienceYears,
 		Whatsapp:        input.Whatsapp,
 		Telegram:        input.Telegram,
 	}
-
 	if err := uc.repo.UpdateUser(ctx, user); err != nil {
 		return err
 	}
@@ -515,29 +512,41 @@ func (uc *ContentAdminUseCase) UpdateUser(ctx context.Context, userID string, in
 	if input.Role == domain.RoleStudent && len(input.Parents) > 0 {
 		for _, pInfo := range input.Parents {
 			pFirst, pLast := splitName(pInfo.FullName)
-			parentPassRaw := generateSecurePassword()
-			parentHash, _ := bcrypt.GenerateFromPassword([]byte(parentPassRaw), 12)
 			
 			pEmail := pInfo.Email
 			if pEmail == "" {
-				pEmail = fmt.Sprintf("p_%s_%d", userID[:5], time.Now().UnixNano())
+				cleanPhone := strings.ReplaceAll(strings.ReplaceAll(pInfo.Phone, " ", ""), "+", "")
+				pEmail = fmt.Sprintf("p_%s_%s@capedu.local", userID[:5], cleanPhone)
 			}
 
-			parent := &domain.User{
-				FirstName: pFirst,
-				LastName:  pLast,
-				Email:     pEmail,
-				Phone:     pInfo.Phone,
-				Password:  string(parentHash),
-				Role:      domain.RoleParent,
-				City:      input.City,
-			}
-
-			parentID, err := uc.repo.CreateUser(ctx, parent)
+			existingParent, err := uc.repo.GetByEmail(ctx, pEmail)
+			
+			var parentID string
 			
 			if err == nil {
-				_ = uc.repo.LinkParentToStudent(ctx, userID, parentID)
+				parentID = existingParent.ID
+			} else {
+				parentPassRaw := generateSecurePassword()
+				parentHash, _ := bcrypt.GenerateFromPassword([]byte(parentPassRaw), 12)
+
+				newParent := &domain.User{
+					FirstName: pFirst,
+					LastName:  pLast,
+					Email:     pEmail,
+					Phone:     pInfo.Phone,
+					Password:  string(parentHash),
+					Role:      domain.RoleParent,
+					City:      input.City, 
+				}
+				
+				id, createErr := uc.repo.CreateUser(ctx, newParent)
+				if createErr != nil {
+					continue
+				}
+				parentID = id
 			}
+
+			_ = uc.repo.LinkParentToStudent(ctx, userID, parentID)
 		}
 	}
 

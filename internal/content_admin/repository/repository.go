@@ -46,6 +46,7 @@ type ContentAdminRepository interface {
 	CreateGroup(ctx context.Context, group *domain.Group) (string, error)
 	GetGroupsByStream(ctx context.Context, streamID string) ([]*domain.Group, error)
 	GetStudentEnrollment(ctx context.Context, userID string) (map[string]string, error)
+	GetByEmail(ctx context.Context, email string) (*domain.User, error)
 }
 
 type ContentAdminRepoImpl struct {
@@ -526,4 +527,11 @@ func (r *ContentAdminRepoImpl) GetStudentEnrollment(ctx context.Context, userID 
 	if gid.Valid { res["group_id"] = gid.String }
 
 	return res, nil
+}
+
+func (r *ContentAdminRepoImpl) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
+	u := &domain.User{}
+	query := `SELECT id, first_name, last_name, email FROM users WHERE email = $1`
+	err := r.db.QueryRowContext(ctx, query, email).Scan(&u.ID, &u.FirstName, &u.LastName, &u.Email)
+	return u, err
 }
