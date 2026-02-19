@@ -45,6 +45,7 @@ type ContentAdminRepository interface {
 	GetStreamsByCourse(ctx context.Context, courseID string) ([]*domain.Stream, error)
 	CreateGroup(ctx context.Context, group *domain.Group) (string, error)
 	GetGroupsByStream(ctx context.Context, streamID string) ([]*domain.Group, error)
+	GetStudentEnrollment(ctx context.Context, userID string) (map[string]string, error)
 }
 
 type ContentAdminRepoImpl struct {
@@ -492,4 +493,23 @@ func (r *ContentAdminRepoImpl) GetGroupsByStream(ctx context.Context, streamID s
 		groups = append(groups, g)
 	}
 	return groups, nil
+}
+
+func (r *ContentAdminRepoImpl) GetStudentEnrollment(ctx context.Context, userID string) (map[string]string, error) {
+	var cid, sid, gid sql.NullString
+	query := `SELECT course_id, stream_id, group_id FROM user_courses WHERE user_id = $1 LIMIT 1`
+	err := r.db.QueryRowContext(ctx, query, userID).Scan(&cid, &sid, &gid)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	res := make(map[string]string)
+	if cid.Valid { res["course_id"] = cid.String }
+	if sid.Valid { res["stream_id"] = sid.String }
+	if gid.Valid { res["group_id"] = gid.String }
+
+	return res, nil
 }

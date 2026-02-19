@@ -466,6 +466,13 @@ func (uc *ContentAdminUseCase) GetUserInfo(ctx context.Context, userID string) (
 	}
 
 	if user.Role == domain.RoleStudent {
+		enrollment, err := uc.repo.GetStudentEnrollment(ctx, userID)
+		if err == nil && enrollment != nil {
+			res["course_id"] = enrollment["course_id"]
+			res["stream_id"] = enrollment["stream_id"]
+			res["group_id"] = enrollment["group_id"]
+		}
+
 		parents, err := uc.repo.GetParentsByStudentID(ctx, userID)
 		if err == nil {
 			res["parents"] = parents
