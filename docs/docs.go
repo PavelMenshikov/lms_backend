@@ -2593,7 +2593,7 @@ const docTemplate = `{
             "properties": {
                 "birth_date": {
                     "type": "string",
-                    "example": "2000-01-01"
+                    "example": "20.01.2000"
                 },
                 "city": {
                     "type": "string",

@@ -32,7 +32,7 @@ type CreateFullUserRequest struct {
 	SchoolName      string               `json:"school_name" example:"Школа №123"`
 	Language        string               `json:"language" example:"ru"`
 	Gender          string               `json:"gender" example:"male"`
-	BirthDateStr    string               `json:"birth_date" example:"2000-01-01"`
+	BirthDateStr    string               `json:"birth_date" example:"20.01.2000"`
 	Whatsapp        string               `json:"whatsapp" example:"https://wa.me/..."`
 	Telegram        string               `json:"telegram" example:"https://t.me/..."`
 	ExperienceYears int                  `json:"experience_years" example:"5"`
@@ -466,7 +466,16 @@ func (h *ContentAdminHandler) CreateUser(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	birthDate, _ := time.Parse("2006-01-02", req.BirthDateStr)
+	var birthDate time.Time
+	if req.BirthDateStr != "" {
+		formats := []string{"02.01.2006", "2006-01-02"}
+		for _, f := range formats {
+			if t, err := time.Parse(f, req.BirthDateStr); err == nil {
+				birthDate = t
+				break
+			}
+		}
+	}
 
 	input := usecase.ExtendedCreateUserInput{
 		FullName:        req.FullName,
@@ -568,7 +577,6 @@ func (h *ContentAdminHandler) DeleteUser(w http.ResponseWriter, r *http.Request)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"status": "deleted"})
 }
-
 
 // GetUsersList godoc
 // @Summary ADMIN: Список пользователей (по ролям)

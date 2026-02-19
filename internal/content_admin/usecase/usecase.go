@@ -400,20 +400,19 @@ func (uc *ContentAdminUseCase) CreateFullUser(ctx context.Context, input Extende
 
 		courseID := input.CourseID
 		if courseID == "" && input.StreamID != "" {
-			derivedCourseID, err := uc.repo.GetCourseIDByStream(ctx, input.StreamID)
+			derivedID, err := uc.repo.GetCourseIDByStream(ctx, input.StreamID)
 			if err == nil {
-				courseID = derivedCourseID
+				courseID = derivedID
 			}
 		}
 
-		if courseID != "" || input.StreamID != "" || input.GroupID != "" {
+		if courseID != "" {
 			_ = uc.repo.EnrollStudentExtended(ctx, userID, courseID, input.StreamID, input.GroupID)
 		}
 	}
 
 	return map[string]string{"user_id": userID}, nil
 }
-
 func (uc *ContentAdminUseCase) EnrollStudent(ctx context.Context, userID, courseID string) error {
 	return uc.repo.EnrollStudentExtended(ctx, userID, courseID, "", "")
 }
@@ -466,15 +465,19 @@ func (uc *ContentAdminUseCase) GetUserInfo(ctx context.Context, userID string) (
 	}
 
 	if user.Role == domain.RoleStudent {
+		res["course_id"] = ""
+		res["stream_id"] = ""
+		res["group_id"] = ""
+
 		enrollment, err := uc.repo.GetStudentEnrollment(ctx, userID)
 		if err == nil && enrollment != nil {
-			res["course_id"] = enrollment["course_id"]
-			res["stream_id"] = enrollment["stream_id"]
-			res["group_id"] = enrollment["group_id"]
+			if val, ok := enrollment["course_id"]; ok { res["course_id"] = val }
+			if val, ok := enrollment["stream_id"]; ok { res["stream_id"] = val }
+			if val, ok := enrollment["group_id"]; ok { res["group_id"] = val }
 		}
 
 		parents, err := uc.repo.GetParentsByStudentID(ctx, userID)
-		if err == nil {
+		if err == nil && parents != nil {
 			res["parents"] = parents
 		} else {
 			res["parents"] = []domain.User{}
