@@ -373,40 +373,47 @@ func (uc *ContentAdminUseCase) CreateFullUser(ctx context.Context, input Extende
 
 	if input.Role == domain.RoleStudent {
 		for _, pInfo := range input.Parents {
-			pFirst, pLast := splitName(pInfo.FullName)
-			parentPassRaw := generateSecurePassword()
-			parentHash, _ := bcrypt.GenerateFromPassword([]byte(parentPassRaw), 12)
+			if pInfo.Phone == "" { continue }
+			
+			existingParent, err := uc.repo.GetByPhone(ctx, pInfo.Phone)
+			var parentID string
 
-			pEmail := pInfo.Email
-			if pEmail == "" {
-				pEmail = fmt.Sprintf("p_%s_%s", userID[:8], pInfo.Phone)
-			}
-
-			parent := &domain.User{
-				FirstName: pFirst,
-				LastName:  pLast,
-				Email:     pEmail,
-				Phone:     pInfo.Phone,
-				Password:  string(parentHash),
-				Role:      domain.RoleParent,
-				City:      input.City,
-			}
-
-			parentID, err := uc.repo.CreateUser(ctx, parent)
 			if err == nil {
+				parentID = existingParent.ID
+			} else {
+				pFirst, pLast := splitName(pInfo.FullName)
+				pPass := generateSecurePassword()
+				hash, _ := bcrypt.GenerateFromPassword([]byte(pPass), 12)
+				
+				cleanPhone := strings.ReplaceAll(strings.ReplaceAll(pInfo.Phone, " ", ""), "+", "")
+				pEmail := fmt.Sprintf("%s@parent.capedu", cleanPhone)
+
+				newParent := &domain.User{
+					FirstName: pFirst,
+					LastName:  pLast,
+					Email:     pEmail,
+					Phone:     pInfo.Phone,
+					Password:  string(hash),
+					Role:      domain.RoleParent,
+					City:      input.City,
+				}
+				parentID, _ = uc.repo.CreateUser(ctx, newParent)
+			}
+
+			if parentID != "" {
 				_ = uc.repo.LinkParentToStudent(ctx, userID, parentID)
 			}
 		}
 
 		courseID := input.CourseID
 		if courseID == "" && input.StreamID != "" {
-			derivedID, err := uc.repo.GetCourseIDByStream(ctx, input.StreamID)
+			derivedCourseID, err := uc.repo.GetCourseIDByStream(ctx, input.StreamID)
 			if err == nil {
-				courseID = derivedID
+				courseID = derivedCourseID
 			}
 		}
 
-		if courseID != "" {
+		if courseID != "" || input.StreamID != "" || input.GroupID != "" {
 			_ = uc.repo.EnrollStudentExtended(ctx, userID, courseID, input.StreamID, input.GroupID)
 		}
 	}
@@ -509,44 +516,40 @@ func (uc *ContentAdminUseCase) UpdateUser(ctx context.Context, userID string, in
 		return err
 	}
 
-	if input.Role == domain.RoleStudent && len(input.Parents) > 0 {
-		for _, pInfo := range input.Parents {
-			pFirst, pLast := splitName(pInfo.FullName)
-			
-			pEmail := pInfo.Email
-			if pEmail == "" {
-				cleanPhone := strings.ReplaceAll(strings.ReplaceAll(pInfo.Phone, " ", ""), "+", "")
-				pEmail = fmt.Sprintf("p_%s_%s@capedu.local", userID[:5], cleanPhone)
-			}
+	if input.Role == domain.RoleStudent {
+		_ = uc.repo.UnlinkAllParents(ctx, userID)
 
-			existingParent, err := uc.repo.GetByEmail(ctx, pEmail)
-			
+		for _, pInfo := range input.Parents {
+			if pInfo.Phone == "" { continue }
+
+			existingParent, err := uc.repo.GetByPhone(ctx, pInfo.Phone)
 			var parentID string
-			
+
 			if err == nil {
 				parentID = existingParent.ID
 			} else {
-				parentPassRaw := generateSecurePassword()
-				parentHash, _ := bcrypt.GenerateFromPassword([]byte(parentPassRaw), 12)
+				pFirst, pLast := splitName(pInfo.FullName)
+				pPass := generateSecurePassword()
+				hash, _ := bcrypt.GenerateFromPassword([]byte(pPass), 12)
+				
+				cleanPhone := strings.ReplaceAll(strings.ReplaceAll(pInfo.Phone, " ", ""), "+", "")
+				pEmail := fmt.Sprintf("%s@parent.capedu", cleanPhone)
 
 				newParent := &domain.User{
 					FirstName: pFirst,
 					LastName:  pLast,
 					Email:     pEmail,
 					Phone:     pInfo.Phone,
-					Password:  string(parentHash),
+					Password:  string(hash),
 					Role:      domain.RoleParent,
-					City:      input.City, 
+					City:      input.City,
 				}
-				
-				id, createErr := uc.repo.CreateUser(ctx, newParent)
-				if createErr != nil {
-					continue
-				}
-				parentID = id
+				parentID, _ = uc.repo.CreateUser(ctx, newParent)
 			}
 
-			_ = uc.repo.LinkParentToStudent(ctx, userID, parentID)
+			if parentID != "" {
+				_ = uc.repo.LinkParentToStudent(ctx, userID, parentID)
+			}
 		}
 	}
 

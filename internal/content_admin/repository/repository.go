@@ -47,6 +47,8 @@ type ContentAdminRepository interface {
 	GetGroupsByStream(ctx context.Context, streamID string) ([]*domain.Group, error)
 	GetStudentEnrollment(ctx context.Context, userID string) (map[string]string, error)
 	GetByEmail(ctx context.Context, email string) (*domain.User, error)
+	GetByPhone(ctx context.Context, phone string) (*domain.User, error)
+	UnlinkAllParents(ctx context.Context, studentID string) error
 }
 
 type ContentAdminRepoImpl struct {
@@ -534,4 +536,16 @@ func (r *ContentAdminRepoImpl) GetByEmail(ctx context.Context, email string) (*d
 	query := `SELECT id, first_name, last_name, email FROM users WHERE email = $1`
 	err := r.db.QueryRowContext(ctx, query, email).Scan(&u.ID, &u.FirstName, &u.LastName, &u.Email)
 	return u, err
+}
+
+func (r *ContentAdminRepoImpl) GetByPhone(ctx context.Context, phone string) (*domain.User, error) {
+	u := &domain.User{}
+	query := `SELECT id, first_name, last_name, email, phone FROM users WHERE phone = $1`
+	err := r.db.QueryRowContext(ctx, query, phone).Scan(&u.ID, &u.FirstName, &u.LastName, &u.Email, &u.Phone)
+	return u, err
+}
+
+func (r *ContentAdminRepoImpl) UnlinkAllParents(ctx context.Context, studentID string) error {
+	_, err := r.db.ExecContext(ctx, "DELETE FROM child_parent_link WHERE child_id = $1", studentID)
+	return err
 }
