@@ -540,6 +540,17 @@ func (h *ContentAdminHandler) UpdateUser(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	var birthDate time.Time
+	if req.BirthDateStr != "" {
+		formats := []string{"02.01.2006", "2006-01-02"}
+		for _, f := range formats {
+			if t, err := time.Parse(f, req.BirthDateStr); err == nil {
+				birthDate = t
+				break
+			}
+		}
+	}
+
 	input := usecase.ExtendedCreateUserInput{
 		FullName:        req.FullName,
 		Email:           req.Email,
@@ -552,9 +563,12 @@ func (h *ContentAdminHandler) UpdateUser(w http.ResponseWriter, r *http.Request)
 		Whatsapp:        req.Whatsapp,
 		Telegram:        req.Telegram,
 		ExperienceYears: req.ExperienceYears,
+		BirthDate:       birthDate,
+		Parents:         req.Parents,
 	}
 
 	if err := h.uc.UpdateUser(r.Context(), userID, input); err != nil {
+		log.Printf("ERROR updating user: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

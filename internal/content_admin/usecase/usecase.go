@@ -95,9 +95,9 @@ type ExtendedCreateUserInput struct {
 }
 
 type ParentInfo struct {
-	FullName string
-	Phone    string
-	Email    string
+	FullName string `json:"full_name" example:"Иван Петров"`
+	Phone    string `json:"phone" example:"+77001112233"`
+	Email    string `json:"email" example:"parent@test.kz"`
 }
 
 type CreateTestInput struct {
@@ -490,6 +490,7 @@ func (uc *ContentAdminUseCase) GetUserInfo(ctx context.Context, userID string) (
 
 func (uc *ContentAdminUseCase) UpdateUser(ctx context.Context, userID string, input ExtendedCreateUserInput) error {
 	firstName, lastName := splitName(input.FullName)
+	
 	user := &domain.User{
 		ID:              userID,
 		FirstName:       firstName,
@@ -501,11 +502,46 @@ func (uc *ContentAdminUseCase) UpdateUser(ctx context.Context, userID string, in
 		SchoolName:      input.SchoolName,
 		Language:        input.Language,
 		Gender:          input.Gender,
+		BirthDate:       input.BirthDate,
 		ExperienceYears: input.ExperienceYears,
 		Whatsapp:        input.Whatsapp,
 		Telegram:        input.Telegram,
 	}
-	return uc.repo.UpdateUser(ctx, user)
+
+	if err := uc.repo.UpdateUser(ctx, user); err != nil {
+		return err
+	}
+
+	if input.Role == domain.RoleStudent && len(input.Parents) > 0 {
+		for _, pInfo := range input.Parents {
+			pFirst, pLast := splitName(pInfo.FullName)
+			parentPassRaw := generateSecurePassword()
+			parentHash, _ := bcrypt.GenerateFromPassword([]byte(parentPassRaw), 12)
+			
+			pEmail := pInfo.Email
+			if pEmail == "" {
+				pEmail = fmt.Sprintf("p_%s_%d", userID[:5], time.Now().UnixNano())
+			}
+
+			parent := &domain.User{
+				FirstName: pFirst,
+				LastName:  pLast,
+				Email:     pEmail,
+				Phone:     pInfo.Phone,
+				Password:  string(parentHash),
+				Role:      domain.RoleParent,
+				City:      input.City,
+			}
+
+			parentID, err := uc.repo.CreateUser(ctx, parent)
+			
+			if err == nil {
+				_ = uc.repo.LinkParentToStudent(ctx, userID, parentID)
+			}
+		}
+	}
+
+	return nil
 }
 
 func (uc *ContentAdminUseCase) DeleteUser(ctx context.Context, userID string) error {

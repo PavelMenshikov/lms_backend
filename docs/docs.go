@@ -2830,13 +2830,16 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "email": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "parent@test.kz"
                 },
-                "fullName": {
-                    "type": "string"
+                "full_name": {
+                    "type": "string",
+                    "example": "Иван Петров"
                 },
                 "phone": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "+77001112233"
                 }
             }
         }

@@ -831,10 +831,13 @@ definitions:
   usecase.ParentInfo:
     properties:
       email:
+        example: parent@test.kz
         type: string
-      fullName:
+      full_name:
+        example: Иван Петров
         type: string
       phone:
+        example: "+77001112233"
         type: string
     type: object
 host: test.xcx.cx

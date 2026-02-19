@@ -324,8 +324,22 @@ func (r *ContentAdminRepoImpl) DeleteProject(ctx context.Context, id string) err
 }
 
 func (r *ContentAdminRepoImpl) UpdateUser(ctx context.Context, u *domain.User) error {
-	query := `UPDATE users SET first_name = $1, last_name = $2, email = $3, role = $4, phone = $5, city = $6, school_name = $7, experience_years = $8, whatsapp_link = $9, telegram_link = $10 WHERE id = $11`
-	_, err := r.db.ExecContext(ctx, query, u.FirstName, u.LastName, u.Email, u.Role, u.Phone, u.City, u.SchoolName, u.ExperienceYears, u.Whatsapp, u.Telegram, u.ID)
+	query := `
+		UPDATE users SET
+			first_name = $1, last_name = $2, email = $3, role = $4,
+			phone = $5, city = $6, language = $7, gender = $8,
+			school_name = $9, experience_years = $10, 
+			whatsapp_link = $11, telegram_link = $12,
+			birth_date = $13
+		WHERE id = $14
+	`
+	_, err := r.db.ExecContext(ctx, query,
+		u.FirstName, u.LastName, u.Email, u.Role,
+		u.Phone, u.City, u.Language, u.Gender,
+		u.SchoolName, u.ExperienceYears,
+		u.Whatsapp, u.Telegram, u.BirthDate,
+		u.ID,
+	)
 	return err
 }
 
