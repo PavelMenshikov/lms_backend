@@ -520,14 +520,14 @@ func (uc *ContentAdminUseCase) GetUserInfo(ctx context.Context, userID string) (
 	}
 
 	res := map[string]interface{}{
-		"user": user,
+		"user":      user,
+		"parents":   []domain.User{},
+		"course_id": "",
+		"stream_id": "",
+		"group_id":  "",
 	}
 
 	if user.Role == domain.RoleStudent {
-		res["course_id"] = ""
-		res["stream_id"] = ""
-		res["group_id"] = ""
-
 		enrollment, err := uc.repo.GetStudentEnrollment(ctx, userID)
 		if err == nil && enrollment != nil {
 			if val, ok := enrollment["course_id"]; ok { res["course_id"] = val }
@@ -538,8 +538,6 @@ func (uc *ContentAdminUseCase) GetUserInfo(ctx context.Context, userID string) (
 		parents, err := uc.repo.GetParentsByStudentID(ctx, userID)
 		if err == nil && parents != nil {
 			res["parents"] = parents
-		} else {
-			res["parents"] = []domain.User{}
 		}
 	}
 
@@ -548,7 +546,20 @@ func (uc *ContentAdminUseCase) GetUserInfo(ctx context.Context, userID string) (
 
 
 func (uc *ContentAdminUseCase) UpdateUser(ctx context.Context, userID string, input ExtendedCreateUserInput) error {
+	// 1. Получаем текущего пользователя из базы, чтобы не затереть пустые поля
+	existingUser, err := uc.repo.GetByID(ctx, userID)
+	if err != nil {
+		return err
+	}
+
 	firstName, lastName := splitName(input.FullName)
+	
+	// Если дата в запросе нулевая, оставляем ту, что была в базе
+	finalBirthDate := input.BirthDate
+	if finalBirthDate.IsZero() {
+		finalBirthDate = existingUser.BirthDate
+	}
+
 	user := &domain.User{
 		ID:              userID,
 		FirstName:       firstName,
@@ -560,53 +571,50 @@ func (uc *ContentAdminUseCase) UpdateUser(ctx context.Context, userID string, in
 		SchoolName:      input.SchoolName,
 		Language:        input.Language,
 		Gender:          input.Gender,
+		BirthDate:       finalBirthDate,
 		ExperienceYears: input.ExperienceYears,
 		Whatsapp:        input.Whatsapp,
 		Telegram:        input.Telegram,
 	}
+
 	if err := uc.repo.UpdateUser(ctx, user); err != nil {
 		return err
 	}
 
-	if input.Role == domain.RoleStudent {
-		
+	if input.Role == domain.RoleStudent && len(input.Parents) > 0 {
 		for _, pInfo := range input.Parents {
-			targetEmail := pInfo.Email
-			if targetEmail == "" && pInfo.Phone != "" {
-				cleanPhone := strings.ReplaceAll(strings.ReplaceAll(pInfo.Phone, " ", ""), "+", "")
-				targetEmail = fmt.Sprintf("p_%s_%s@capedu.local", userID[:5], cleanPhone)
-			} else if targetEmail == "" {
-				continue
+			if pInfo.Phone == "" && pInfo.Email == "" { continue }
+			
+			// Пытаемся найти родителя, чтобы не плодить дубли
+			var parentID string
+			existingParent, pErr := uc.repo.GetByEmail(ctx, pInfo.Email)
+			if pErr != nil && pInfo.Phone != "" {
+				// Если по email не нашли, ищем по телефону
+				existingParent, pErr = uc.repo.GetByPhone(ctx, pInfo.Phone)
 			}
 
-			var parentID string
-			existingParent, err := uc.repo.GetByEmail(ctx, targetEmail)
-
-			if err == nil {
+			if pErr == nil {
 				parentID = existingParent.ID
 			} else {
+				// Создаем нового, если не нашли
 				pFirst, pLast := splitName(pInfo.FullName)
 				pPass := generateSecurePassword()
 				hash, _ := bcrypt.GenerateFromPassword([]byte(pPass), 12)
-
-				newParent := &domain.User{
-					FirstName: pFirst,
-					LastName:  pLast,
-					Email:     targetEmail,
-					Phone:     pInfo.Phone,
-					Password:  string(hash),
-					Role:      domain.RoleParent,
-					City:      input.City,
+				pEmail := pInfo.Email
+				if pEmail == "" {
+					pEmail = fmt.Sprintf("p_%s_%s@capedu.local", userID[:5], time.Now().Format("05.999"))
 				}
-				parentID, _ = uc.repo.CreateUser(ctx, newParent)
+				newP := &domain.User{
+					FirstName: pFirst, LastName: pLast, Email: pEmail, Phone: pInfo.Phone,
+					Password: string(hash), Role: domain.RoleParent, City: input.City,
+				}
+				parentID, _ = uc.repo.CreateUser(ctx, newP)
 			}
-
 			if parentID != "" {
 				_ = uc.repo.LinkParentToStudent(ctx, userID, parentID)
 			}
 		}
 	}
-
 	return nil
 }
 func (uc *ContentAdminUseCase) DeleteUser(ctx context.Context, userID string) error {
