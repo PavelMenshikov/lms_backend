@@ -851,6 +851,10 @@ definitions:
         type: string
       description:
         type: string
+      lessonIDs:
+        items:
+          type: string
+        type: array
       orderNum:
         type: integer
       title:

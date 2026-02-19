@@ -258,17 +258,24 @@ func (h *ContentAdminHandler) GetCourseStructure(w http.ResponseWriter, r *http.
 // @Success 200 {object} map[string]string "id"
 // @Router /admin/modules [post]
 func (h *ContentAdminHandler) CreateModule(w http.ResponseWriter, r *http.Request) {
-	var req CreateModuleRequest
+	var req struct {
+		CourseID    string   `json:"course_id"`
+		Title       string   `json:"title"`
+		Description string   `json:"description"`
+		OrderNum    int      `json:"order_num"`
+		LessonIDs   []string `json:"lesson_ids"`
+	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
+	
 	input := usecase.CreateModuleInput{
 		CourseID:    req.CourseID,
 		Title:       req.Title,
 		Description: req.Description,
 		OrderNum:    req.OrderNum,
+		LessonIDs:   req.LessonIDs,
 	}
 
 	id, err := h.uc.CreateModule(r.Context(), input)

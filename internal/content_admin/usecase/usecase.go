@@ -61,6 +61,7 @@ type CreateModuleInput struct {
 	Title       string
 	Description string
 	OrderNum    int
+	LessonIDs   []string
 }
 
 type CreateLessonInput struct {
@@ -316,7 +317,16 @@ func (uc *ContentAdminUseCase) CreateModule(ctx context.Context, input CreateMod
 		Description: input.Description,
 		OrderNum:    input.OrderNum,
 	}
-	return uc.repo.CreateModule(ctx, module)
+	moduleID, err := uc.repo.CreateModule(ctx, module)
+	if err != nil {
+		return "", err
+	}
+
+	for _, lessonID := range input.LessonIDs {
+		_ = uc.repo.SetLessonModule(ctx, lessonID, moduleID)
+	}
+
+	return moduleID, nil
 }
 
 func (uc *ContentAdminUseCase) DeleteModule(ctx context.Context, id string) error {

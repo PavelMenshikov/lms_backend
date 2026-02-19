@@ -49,6 +49,7 @@ type ContentAdminRepository interface {
 	GetByEmail(ctx context.Context, email string) (*domain.User, error)
 	GetByPhone(ctx context.Context, phone string) (*domain.User, error)
 	UnlinkAllParents(ctx context.Context, studentID string) error
+	SetLessonModule(ctx context.Context, lessonID, moduleID string) error
 }
 
 type ContentAdminRepoImpl struct {
@@ -546,5 +547,11 @@ func (r *ContentAdminRepoImpl) GetByPhone(ctx context.Context, phone string) (*d
 
 func (r *ContentAdminRepoImpl) UnlinkAllParents(ctx context.Context, studentID string) error {
 	_, err := r.db.ExecContext(ctx, "DELETE FROM child_parent_link WHERE child_id = $1", studentID)
+	return err
+}
+
+func (r *ContentAdminRepoImpl) SetLessonModule(ctx context.Context, lessonID, moduleID string) error {
+	query := `UPDATE lessons SET module_id = $1 WHERE id = $2`
+	_, err := r.db.ExecContext(ctx, query, moduleID, lessonID)
 	return err
 }

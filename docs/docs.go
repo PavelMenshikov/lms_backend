@@ -2955,6 +2955,12 @@ const docTemplate = `{
                 "description": {
                     "type": "string"
                 },
+                "lessonIDs": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "orderNum": {
                     "type": "integer"
                 },
