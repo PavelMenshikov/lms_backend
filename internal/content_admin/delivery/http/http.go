@@ -466,17 +466,6 @@ func (h *ContentAdminHandler) CreateUser(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	var birthDate time.Time
-	if req.BirthDateStr != "" {
-		formats := []string{"2006-01-02", "02.01.2006"}
-		for _, f := range formats {
-			if t, err := time.Parse(f, req.BirthDateStr); err == nil {
-				birthDate = t
-				break
-			}
-		}
-	}
-
 	input := usecase.ExtendedCreateUserInput{
 		FullName:        req.FullName,
 		Email:           req.Email,
@@ -487,7 +476,7 @@ func (h *ContentAdminHandler) CreateUser(w http.ResponseWriter, r *http.Request)
 		SchoolName:      req.SchoolName,
 		Language:        req.Language,
 		Gender:          req.Gender,
-		BirthDate:       birthDate,
+		BirthDate:       parseFlexibleDate(req.BirthDateStr),
 		Whatsapp:        req.Whatsapp,
 		Telegram:        req.Telegram,
 		ExperienceYears: req.ExperienceYears,
@@ -540,17 +529,6 @@ func (h *ContentAdminHandler) UpdateUser(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	var birthDate time.Time
-	if req.BirthDateStr != "" {
-		formats := []string{"2006-01-02", "02.01.2006"}
-		for _, f := range formats {
-			if t, err := time.Parse(f, req.BirthDateStr); err == nil {
-				birthDate = t
-				break
-			}
-		}
-	}
-
 	input := usecase.ExtendedCreateUserInput{
 		FullName:        req.FullName,
 		Email:           req.Email,
@@ -560,11 +538,10 @@ func (h *ContentAdminHandler) UpdateUser(w http.ResponseWriter, r *http.Request)
 		SchoolName:      req.SchoolName,
 		Language:        req.Language,
 		Gender:          req.Gender,
-		BirthDate:       birthDate,
+		BirthDate:       parseFlexibleDate(req.BirthDateStr),
 		Whatsapp:        req.Whatsapp,
 		Telegram:        req.Telegram,
 		ExperienceYears: req.ExperienceYears,
-		Parents:         req.Parents,
 	}
 
 	if err := h.uc.UpdateUser(r.Context(), userID, input); err != nil {
@@ -811,4 +788,22 @@ func (h *ContentAdminHandler) GetGroups(w http.ResponseWriter, r *http.Request) 
 	streamID := r.URL.Query().Get("stream_id")
 	groups, _ := h.uc.GetGroupsByStream(r.Context(), streamID)
 	json.NewEncoder(w).Encode(groups)
+}
+
+func parseFlexibleDate(dateStr string) time.Time {
+	if dateStr == "" {
+		return time.Time{}
+	}
+	formats := []string{
+		"02.01.2006",
+		"02-01-2006",
+		"2006-01-02", 
+		"02/01/2006",
+	}
+	for _, f := range formats {
+		if t, err := time.Parse(f, dateStr); err == nil {
+			return t
+		}
+	}
+	return time.Time{}
 }

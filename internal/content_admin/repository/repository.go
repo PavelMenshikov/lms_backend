@@ -330,17 +330,16 @@ func (r *ContentAdminRepoImpl) UpdateUser(ctx context.Context, u *domain.User) e
 	query := `
 		UPDATE users SET
 			first_name = $1, last_name = $2, email = $3, role = $4,
-			phone = $5, city = $6, language = $7, gender = $8,
-			school_name = $9, experience_years = $10, 
-			whatsapp_link = $11, telegram_link = $12,
-			birth_date = $13
+			phone = $5, city = $6, school_name = $7, experience_years = $8, 
+			whatsapp_link = $9, telegram_link = $10,
+			gender = $11, language = $12, birth_date = $13
 		WHERE id = $14
 	`
 	_, err := r.db.ExecContext(ctx, query,
 		u.FirstName, u.LastName, u.Email, u.Role,
-		u.Phone, u.City, u.Language, u.Gender,
-		u.SchoolName, u.ExperienceYears,
-		u.Whatsapp, u.Telegram, u.BirthDate,
+		u.Phone, u.City, u.SchoolName, u.ExperienceYears,
+		u.Whatsapp, u.Telegram,
+		u.Gender, u.Language, u.BirthDate,
 		u.ID,
 	)
 	return err
