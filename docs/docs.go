@@ -87,6 +87,42 @@ const docTemplate = `{
                 }
             }
         },
+        "/admin/courses/bulk": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin-Content"
+                ],
+                "summary": "ADMIN: Создание курса со всей структурой (Модули + Уроки)",
+                "parameters": [
+                    {
+                        "description": "Структура курса",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/usecase.CreateBulkCourseInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/admin/courses/{id}/settings": {
             "put": {
                 "consumes": [
@@ -407,6 +443,35 @@ const docTemplate = `{
                 }
             }
         },
+        "/admin/lessons/bulk": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin-Content"
+                ],
+                "summary": "ADMIN: Массовое создание уроков",
+                "parameters": [
+                    {
+                        "description": "Массив уроков",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/usecase.CreateLessonInput"
+                            }
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/admin/lessons/{id}": {
             "delete": {
                 "tags": [
@@ -519,6 +584,35 @@ const docTemplate = `{
                         }
                     }
                 }
+            }
+        },
+        "/admin/modules/bulk": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin-Content"
+                ],
+                "summary": "ADMIN: Массовое создание модулей",
+                "parameters": [
+                    {
+                        "description": "Массив модулей",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/usecase.CreateModuleInput"
+                            }
+                        }
+                    }
+                ],
+                "responses": {}
             }
         },
         "/admin/modules/{id}": {
@@ -2823,6 +2917,86 @@ const docTemplate = `{
                 },
                 "rating": {
                     "type": "integer"
+                }
+            }
+        },
+        "usecase.CreateBulkCourseInput": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "imageURL": {
+                    "type": "string"
+                },
+                "isMain": {
+                    "type": "boolean"
+                },
+                "modules": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/usecase.ModuleBulkInput"
+                    }
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "usecase.CreateLessonInput": {
+            "type": "object"
+        },
+        "usecase.CreateModuleInput": {
+            "type": "object",
+            "properties": {
+                "courseID": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "orderNum": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "usecase.LessonBulkInput": {
+            "type": "object",
+            "properties": {
+                "contentText": {
+                    "type": "string"
+                },
+                "orderNum": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "videoURL": {
+                    "type": "string"
+                }
+            }
+        },
+        "usecase.ModuleBulkInput": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "lessons": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/usecase.LessonBulkInput"
+                    }
+                },
+                "orderNum": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
                 }
             }
         },

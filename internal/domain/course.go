@@ -71,7 +71,7 @@ type Group struct {
 
 type Test struct {
 	ID           string    `json:"id" db:"id"`
-	LessonID     string    `json:"lesson_id" db:"lesson_id"`
+	LessonID     *string   `json:"lesson_id" db:"lesson_id"`
 	Title        string    `json:"title" db:"title"`
 	Description  string    `json:"description" db:"description"`
 	PassingScore int       `json:"passing_score" db:"passing_score"`
@@ -80,7 +80,7 @@ type Test struct {
 
 type Project struct {
 	ID          string    `json:"id" db:"id"`
-	LessonID    string    `json:"lesson_id" db:"lesson_id"`
+	LessonID    *string   `json:"lesson_id" db:"lesson_id"`
 	Title       string    `json:"title" db:"title"`
 	Description string    `json:"description" db:"description"`
 	MaxScore    int       `json:"max_score" db:"max_score"`

@@ -435,6 +435,40 @@ func (h *ContentAdminHandler) CreateProject(w http.ResponseWriter, r *http.Reque
 	json.NewEncoder(w).Encode(map[string]string{"id": id})
 }
 
+// CreateModulesBulk godoc
+// @Summary ADMIN: Массовое создание модулей
+// @Tags Admin-Content
+// @Accept json
+// @Produce json
+// @Param request body []usecase.CreateModuleInput true "Массив модулей"
+// @Router /admin/modules/bulk [post]
+func (h *ContentAdminHandler) CreateModulesBulk(w http.ResponseWriter, r *http.Request) {
+	var req []usecase.CreateModuleInput
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid array", http.StatusBadRequest)
+		return
+	}
+	ids, _ := h.uc.CreateModulesBulk(r.Context(), req)
+	json.NewEncoder(w).Encode(map[string]interface{}{"ids": ids})
+}
+
+// CreateLessonsBulk godoc
+// @Summary ADMIN: Массовое создание уроков
+// @Tags Admin-Content
+// @Accept json
+// @Produce json
+// @Param request body []usecase.CreateLessonInput true "Массив уроков"
+// @Router /admin/lessons/bulk [post]
+func (h *ContentAdminHandler) CreateLessonsBulk(w http.ResponseWriter, r *http.Request) {
+	var req []usecase.CreateLessonInput
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid array", http.StatusBadRequest)
+		return
+	}
+	ids, _ := h.uc.CreateLessonsBulk(r.Context(), req)
+	json.NewEncoder(w).Encode(map[string]interface{}{"ids": ids})
+}
+
 // DeleteProject godoc
 // @Summary ADMIN: Удаление проекта
 // @Tags Admin-Content
@@ -449,6 +483,32 @@ func (h *ContentAdminHandler) DeleteProject(w http.ResponseWriter, r *http.Reque
 	}
 	w.WriteHeader(http.StatusOK)
 }
+
+// CreateFullCourse godoc
+// @Summary ADMIN: Создание курса со всей структурой (Модули + Уроки)
+// @Tags Admin-Content
+// @Accept json
+// @Produce json
+// @Param request body usecase.CreateBulkCourseInput true "Структура курса"
+// @Success 200 {object} map[string]string
+// @Router /admin/courses/bulk [post]
+func (h *ContentAdminHandler) CreateFullCourse(w http.ResponseWriter, r *http.Request) {
+	var req usecase.CreateBulkCourseInput
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid JSON structure", http.StatusBadRequest)
+		return
+	}
+
+	id, err := h.uc.CreateFullCourse(r.Context(), req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"id": id})
+}
+
 
 // CreateUser godoc
 // @Summary ADMIN: Создание пользователя (Полный профиль + Родители)
@@ -794,9 +854,11 @@ func parseFlexibleDate(dateStr string) time.Time {
 	if dateStr == "" {
 		return time.Time{}
 	}
+	dateStr = strings.TrimSpace(dateStr)
+	
 	formats := []string{
-		"02.01.2006",
-		"02-01-2006",
+		"02.01.2006", 
+		"02-01-2006", 
 		"2006-01-02", 
 		"02/01/2006",
 	}
@@ -805,5 +867,6 @@ func parseFlexibleDate(dateStr string) time.Time {
 			return t
 		}
 	}
+	log.Printf("[DEBUG] Failed to parse date: %s", dateStr)
 	return time.Time{}
 }

@@ -131,6 +131,28 @@ type CreateGroupInput struct {
 	Title     string
 }
 
+type CreateBulkCourseInput struct {
+	Title       string
+	Description string
+	IsMain      bool
+	ImageURL    string
+	Modules     []ModuleBulkInput
+}
+
+type ModuleBulkInput struct {
+	Title       string
+	Description string
+	OrderNum    int
+	Lessons     []LessonBulkInput
+}
+
+type LessonBulkInput struct {
+	Title       string
+	OrderNum    int
+	ContentText string
+	VideoURL    string
+}
+
 func (uc *ContentAdminUseCase) UploadMedia(ctx context.Context, fileHeader *multipart.FileHeader) (string, error) {
 	if fileHeader == nil {
 		return "", errors.New("no file provided")
@@ -340,6 +362,33 @@ func (uc *ContentAdminUseCase) CreateLesson(ctx context.Context, input CreateLes
 
 func (uc *ContentAdminUseCase) DeleteLesson(ctx context.Context, id string) error {
 	return uc.repo.DeleteLesson(ctx, id)
+}
+
+func (uc *ContentAdminUseCase) CreateModulesBulk(ctx context.Context, input []CreateModuleInput) ([]string, error) {
+	var ids []string
+	for _, m := range input {
+		id, err := uc.repo.CreateModule(ctx, &domain.Module{
+			CourseID:    m.CourseID,
+			Title:       m.Title,
+			Description: m.Description,
+			OrderNum:    m.OrderNum,
+		})
+		if err == nil {
+			ids = append(ids, id)
+		}
+	}
+	return ids, nil
+}
+
+func (uc *ContentAdminUseCase) CreateLessonsBulk(ctx context.Context, input []CreateLessonInput) ([]string, error) {
+	var ids []string
+	for _, l := range input {
+		id, err := uc.CreateLesson(ctx, l)
+		if err == nil {
+			ids = append(ids, id)
+		}
+	}
+	return ids, nil
 }
 
 func (uc *ContentAdminUseCase) CreateFullUser(ctx context.Context, input ExtendedCreateUserInput) (map[string]string, error) {
@@ -565,21 +614,18 @@ func (uc *ContentAdminUseCase) DeleteUser(ctx context.Context, userID string) er
 }
 
 func (uc *ContentAdminUseCase) CreateTest(ctx context.Context, input CreateTestInput) (string, error) {
-	lessonID := input.LessonID
-	if lessonID == "" && input.CourseID != "" && input.LessonNumber > 0 {
+	var lid *string
+	if input.LessonID != "" {
+		lid = &input.LessonID
+	} else if input.CourseID != "" && input.LessonNumber > 0 {
 		id, err := uc.repo.GetLessonIDByOrder(ctx, input.CourseID, input.LessonNumber)
-		if err != nil {
-			return "", fmt.Errorf("lesson not found by order: %w", err)
+		if err == nil {
+			lid = &id
 		}
-		lessonID = id
-	}
-
-	if lessonID == "" {
-		return "", errors.New("lesson_id or (course_id + lesson_number) required")
 	}
 
 	test := &domain.Test{
-		LessonID:     lessonID,
+		LessonID:     lid,
 		Title:        input.Title,
 		Description:  input.Description,
 		PassingScore: input.PassingScore,
@@ -592,21 +638,18 @@ func (uc *ContentAdminUseCase) DeleteTest(ctx context.Context, id string) error 
 }
 
 func (uc *ContentAdminUseCase) CreateProject(ctx context.Context, input CreateProjectInput) (string, error) {
-	lessonID := input.LessonID
-	if lessonID == "" && input.CourseID != "" && input.LessonNumber > 0 {
+	var lid *string
+	if input.LessonID != "" {
+		lid = &input.LessonID
+	} else if input.CourseID != "" && input.LessonNumber > 0 {
 		id, err := uc.repo.GetLessonIDByOrder(ctx, input.CourseID, input.LessonNumber)
-		if err != nil {
-			return "", fmt.Errorf("lesson not found by number: %w", err)
+		if err == nil {
+			lid = &id
 		}
-		lessonID = id
-	}
-
-	if lessonID == "" {
-		return "", errors.New("either lesson_id or course_id + lesson_number must be provided")
 	}
 
 	project := &domain.Project{
-		LessonID:    lessonID,
+		LessonID:    lid,
 		Title:       input.Title,
 		Description: input.Description,
 		MaxScore:    input.MaxScore,
@@ -649,4 +692,46 @@ func generateSecurePassword() string {
 	b := make([]byte, 8)
 	rand.Read(b)
 	return hex.EncodeToString(b)
+}
+func (uc *ContentAdminUseCase) CreateFullCourse(ctx context.Context, input CreateBulkCourseInput) (string, error) {
+	course := &domain.Course{
+		Title:       input.Title,
+		Description: input.Description,
+		IsMain:      input.IsMain,
+		ImageURL:    input.ImageURL,
+		Status:      domain.CourseStatusActive,
+	}
+	courseID, err := uc.repo.CreateCourse(ctx, course)
+	if err != nil {
+		return "", err
+	}
+
+	for _, mInput := range input.Modules {
+		module := &domain.Module{
+			CourseID:    courseID,
+			Title:       mInput.Title,
+			Description: mInput.Description,
+			OrderNum:    mInput.OrderNum,
+		}
+		moduleID, err := uc.repo.CreateModule(ctx, module)
+		if err != nil {
+			continue 
+		}
+
+		for _, lInput := range mInput.Lessons {
+			lesson := &domain.Lesson{
+				CourseID:    courseID,
+				ModuleID:    &moduleID,
+				Title:       lInput.Title,
+				OrderNum:    lInput.OrderNum,
+				ContentText: lInput.ContentText,
+				VideoURL:    lInput.VideoURL,
+				IsPublished: true,
+				LessonTime:  time.Now(),
+			}
+			_, _ = uc.repo.CreateLesson(ctx, lesson)
+		}
+	}
+
+	return courseID, nil
 }

@@ -214,7 +214,8 @@ func main() {
 
 		r.Post("/admin/lessons", adminHandler.CreateLesson)
 		r.Delete("/admin/lessons/{id}", adminHandler.DeleteLesson)
-
+		r.Post("/admin/modules/bulk", adminHandler.CreateModulesBulk)
+		r.Post("/admin/lessons/bulk", adminHandler.CreateLessonsBulk)
 		r.Post("/admin/tests", adminHandler.CreateTest)
 		r.Delete("/admin/tests/{id}", adminHandler.DeleteTest)
 
@@ -258,6 +259,7 @@ func main() {
 		r.Get("/lessons/{id}", learningHandler.GetLessonDetail)
 		r.Post("/lessons/{id}/assignment", learningHandler.SubmitAssignment)
 		r.Post("/lessons/{id}/complete", learningHandler.CompleteLesson)
+		r.Post("/admin/courses/bulk", adminHandler.CreateFullCourse)
 
 		r.Get("/profile", profileHandler.GetProfile)
 		r.Put("/profile", profileHandler.UpdateProfile)

@@ -828,6 +828,58 @@ definitions:
       rating:
         type: integer
     type: object
+  usecase.CreateBulkCourseInput:
+    properties:
+      description:
+        type: string
+      imageURL:
+        type: string
+      isMain:
+        type: boolean
+      modules:
+        items:
+          $ref: '#/definitions/usecase.ModuleBulkInput'
+        type: array
+      title:
+        type: string
+    type: object
+  usecase.CreateLessonInput:
+    type: object
+  usecase.CreateModuleInput:
+    properties:
+      courseID:
+        type: string
+      description:
+        type: string
+      orderNum:
+        type: integer
+      title:
+        type: string
+    type: object
+  usecase.LessonBulkInput:
+    properties:
+      contentText:
+        type: string
+      orderNum:
+        type: integer
+      title:
+        type: string
+      videoURL:
+        type: string
+    type: object
+  usecase.ModuleBulkInput:
+    properties:
+      description:
+        type: string
+      lessons:
+        items:
+          $ref: '#/definitions/usecase.LessonBulkInput'
+        type: array
+      orderNum:
+        type: integer
+      title:
+        type: string
+    type: object
   usecase.ParentInfo:
     properties:
       email:
@@ -972,6 +1024,29 @@ paths:
       summary: 'ADMIN: Ученики конкретного курса'
       tags:
       - Admin-Users
+  /admin/courses/bulk:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Структура курса
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/usecase.CreateBulkCourseInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: 'ADMIN: Создание курса со всей структурой (Модули + Уроки)'
+      tags:
+      - Admin-Content
   /admin/curators/detailed:
     get:
       produces:
@@ -1116,6 +1191,25 @@ paths:
       summary: 'ADMIN: Удаление урока'
       tags:
       - Admin-Content
+  /admin/lessons/bulk:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Массив уроков
+        in: body
+        name: request
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/usecase.CreateLessonInput'
+          type: array
+      produces:
+      - application/json
+      responses: {}
+      summary: 'ADMIN: Массовое создание уроков'
+      tags:
+      - Admin-Content
   /admin/media/upload:
     post:
       consumes:
@@ -1187,6 +1281,25 @@ paths:
         "200":
           description: OK
       summary: 'ADMIN: Удаление модуля'
+      tags:
+      - Admin-Content
+  /admin/modules/bulk:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Массив модулей
+        in: body
+        name: request
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/usecase.CreateModuleInput'
+          type: array
+      produces:
+      - application/json
+      responses: {}
+      summary: 'ADMIN: Массовое создание модулей'
       tags:
       - Admin-Content
   /admin/projects:
