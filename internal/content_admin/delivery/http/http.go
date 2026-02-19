@@ -6,6 +6,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -855,7 +856,6 @@ func parseFlexibleDate(dateStr string) time.Time {
 		return time.Time{}
 	}
 	dateStr = strings.TrimSpace(dateStr)
-	
 	formats := []string{
 		"02.01.2006", 
 		"02-01-2006", 
@@ -867,6 +867,6 @@ func parseFlexibleDate(dateStr string) time.Time {
 			return t
 		}
 	}
-	log.Printf("[DEBUG] Failed to parse date: %s", dateStr)
+	log.Printf("[DEBUG_DATE_FAIL] Input: '%s'", dateStr)
 	return time.Time{}
 }
