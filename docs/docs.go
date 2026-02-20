@@ -1902,6 +1902,18 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/domain.Lesson"
                     }
+                },
+                "root_projects": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.Project"
+                    }
+                },
+                "root_tests": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.Test"
+                    }
                 }
             }
         },

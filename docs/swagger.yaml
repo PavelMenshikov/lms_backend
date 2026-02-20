@@ -150,6 +150,14 @@ definitions:
         items:
           $ref: '#/definitions/domain.Lesson'
         type: array
+      root_projects:
+        items:
+          $ref: '#/definitions/domain.Project'
+        type: array
+      root_tests:
+        items:
+          $ref: '#/definitions/domain.Test'
+        type: array
     type: object
   domain.CuratorTableItem:
     properties:

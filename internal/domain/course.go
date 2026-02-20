@@ -89,9 +89,11 @@ type Project struct {
 }
 
 type CourseStructure struct {
-	Course      *Course            `json:"course"`
-	Modules     []*ModuleStructure `json:"modules"`
-	RootLessons []*Lesson          `json:"root_lessons"`
+	Course       *Course            `json:"course"`
+	Modules      []*ModuleStructure `json:"modules"`
+	RootLessons  []*Lesson          `json:"root_lessons"`
+	RootTests    []Test             `json:"root_tests"`
+	RootProjects []Project          `json:"root_projects"`
 }
 
 type ModuleStructure struct {
