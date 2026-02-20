@@ -2949,19 +2949,19 @@ const docTemplate = `{
         "usecase.CreateModuleInput": {
             "type": "object",
             "properties": {
-                "courseID": {
+                "course_id": {
                     "type": "string"
                 },
                 "description": {
                     "type": "string"
                 },
-                "lessonIDs": {
+                "lesson_ids": {
                     "type": "array",
                     "items": {
                         "type": "string"
                     }
                 },
-                "orderNum": {
+                "order_num": {
                     "type": "integer"
                 },
                 "title": {

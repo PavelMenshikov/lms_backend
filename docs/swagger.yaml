@@ -847,15 +847,15 @@ definitions:
     type: object
   usecase.CreateModuleInput:
     properties:
-      courseID:
+      course_id:
         type: string
       description:
         type: string
-      lessonIDs:
+      lesson_ids:
         items:
           type: string
         type: array
-      orderNum:
+      order_num:
         type: integer
       title:
         type: string

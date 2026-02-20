@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"log"
 	"mime/multipart"
 	"strings"
 	"time"
@@ -57,11 +58,11 @@ type UpdateCourseSettingsInput struct {
 }
 
 type CreateModuleInput struct {
-	CourseID    string
-	Title       string
-	Description string
-	OrderNum    int
-	LessonIDs   []string
+	CourseID    string   `json:"course_id"`
+	Title       string   `json:"title"`
+	Description string   `json:"description"`
+	OrderNum    int      `json:"order_num"`
+	LessonIDs   []string `json:"lesson_ids"`
 }
 
 type CreateLessonInput struct {
@@ -375,17 +376,14 @@ func (uc *ContentAdminUseCase) DeleteLesson(ctx context.Context, id string) erro
 }
 
 func (uc *ContentAdminUseCase) CreateModulesBulk(ctx context.Context, input []CreateModuleInput) ([]string, error) {
-	var ids []string
-	for _, m := range input {
-		id, err := uc.repo.CreateModule(ctx, &domain.Module{
-			CourseID:    m.CourseID,
-			Title:       m.Title,
-			Description: m.Description,
-			OrderNum:    m.OrderNum,
-		})
-		if err == nil {
-			ids = append(ids, id)
+	ids := make([]string, 0)
+	for _, mInput := range input {
+		id, err := uc.CreateModule(ctx, mInput)
+		if err != nil {
+			log.Printf("[BULK_MODULE_ERROR] title: %s, err: %v", mInput.Title, err)
+			continue
 		}
+		ids = append(ids, id)
 	}
 	return ids, nil
 }
@@ -437,19 +435,19 @@ func (uc *ContentAdminUseCase) CreateFullUser(ctx context.Context, input Extende
 				cleanPhone := strings.ReplaceAll(strings.ReplaceAll(pInfo.Phone, " ", ""), "+", "")
 				targetEmail = fmt.Sprintf("p_%s_%s@capedu.local", userID[:5], cleanPhone)
 			} else if targetEmail == "" {
-				continue 
+				continue
 			}
 
 			var parentID string
 			existingParent, err := uc.repo.GetByEmail(ctx, targetEmail)
-			
+
 			if err == nil {
 				parentID = existingParent.ID
 			} else {
 				pFirst, pLast := splitName(pInfo.FullName)
 				pPass := generateSecurePassword()
 				hash, _ := bcrypt.GenerateFromPassword([]byte(pPass), 12)
-				
+
 				newParent := &domain.User{
 					FirstName: pFirst,
 					LastName:  pLast,
@@ -518,7 +516,6 @@ func (uc *ContentAdminUseCase) GetDetailedModerators(ctx context.Context) ([]*do
 	return uc.repo.GetDetailedModeratorList(ctx)
 }
 
-
 func (uc *ContentAdminUseCase) GetAllUsersTable(ctx context.Context) ([]*domain.AllUsersTableItem, error) {
 	return uc.repo.GetAllUsersList(ctx)
 }
@@ -540,9 +537,15 @@ func (uc *ContentAdminUseCase) GetUserInfo(ctx context.Context, userID string) (
 	if user.Role == domain.RoleStudent {
 		enrollment, err := uc.repo.GetStudentEnrollment(ctx, userID)
 		if err == nil && enrollment != nil {
-			if val, ok := enrollment["course_id"]; ok { res["course_id"] = val }
-			if val, ok := enrollment["stream_id"]; ok { res["stream_id"] = val }
-			if val, ok := enrollment["group_id"]; ok { res["group_id"] = val }
+			if val, ok := enrollment["course_id"]; ok {
+				res["course_id"] = val
+			}
+			if val, ok := enrollment["stream_id"]; ok {
+				res["stream_id"] = val
+			}
+			if val, ok := enrollment["group_id"]; ok {
+				res["group_id"] = val
+			}
 		}
 
 		parents, err := uc.repo.GetParentsByStudentID(ctx, userID)
@@ -554,17 +557,14 @@ func (uc *ContentAdminUseCase) GetUserInfo(ctx context.Context, userID string) (
 	return res, nil
 }
 
-
 func (uc *ContentAdminUseCase) UpdateUser(ctx context.Context, userID string, input ExtendedCreateUserInput) error {
-	// 1. Получаем текущего пользователя из базы, чтобы не затереть пустые поля
 	existingUser, err := uc.repo.GetByID(ctx, userID)
 	if err != nil {
 		return err
 	}
 
 	firstName, lastName := splitName(input.FullName)
-	
-	// Если дата в запросе нулевая, оставляем ту, что была в базе
+
 	finalBirthDate := input.BirthDate
 	if finalBirthDate.IsZero() {
 		finalBirthDate = existingUser.BirthDate
@@ -593,20 +593,19 @@ func (uc *ContentAdminUseCase) UpdateUser(ctx context.Context, userID string, in
 
 	if input.Role == domain.RoleStudent && len(input.Parents) > 0 {
 		for _, pInfo := range input.Parents {
-			if pInfo.Phone == "" && pInfo.Email == "" { continue }
-			
-			// Пытаемся найти родителя, чтобы не плодить дубли
+			if pInfo.Phone == "" && pInfo.Email == "" {
+				continue
+			}
+
 			var parentID string
 			existingParent, pErr := uc.repo.GetByEmail(ctx, pInfo.Email)
 			if pErr != nil && pInfo.Phone != "" {
-				// Если по email не нашли, ищем по телефону
 				existingParent, pErr = uc.repo.GetByPhone(ctx, pInfo.Phone)
 			}
 
 			if pErr == nil {
 				parentID = existingParent.ID
 			} else {
-				// Создаем нового, если не нашли
 				pFirst, pLast := splitName(pInfo.FullName)
 				pPass := generateSecurePassword()
 				hash, _ := bcrypt.GenerateFromPassword([]byte(pPass), 12)
@@ -733,7 +732,7 @@ func (uc *ContentAdminUseCase) CreateFullCourse(ctx context.Context, input Creat
 		}
 		moduleID, err := uc.repo.CreateModule(ctx, module)
 		if err != nil {
-			continue 
+			continue
 		}
 
 		for _, lInput := range mInput.Lessons {

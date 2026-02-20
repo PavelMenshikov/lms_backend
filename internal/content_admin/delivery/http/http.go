@@ -269,7 +269,7 @@ func (h *ContentAdminHandler) CreateModule(w http.ResponseWriter, r *http.Reques
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	
+
 	input := usecase.CreateModuleInput{
 		CourseID:    req.CourseID,
 		Title:       req.Title,
@@ -453,10 +453,13 @@ func (h *ContentAdminHandler) CreateProject(w http.ResponseWriter, r *http.Reque
 func (h *ContentAdminHandler) CreateModulesBulk(w http.ResponseWriter, r *http.Request) {
 	var req []usecase.CreateModuleInput
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid array", http.StatusBadRequest)
+		log.Printf("[HTTP_BULK_MODULE_ERROR] decode fail: %v", err)
+		http.Error(w, "Invalid array structure", http.StatusBadRequest)
 		return
 	}
 	ids, _ := h.uc.CreateModulesBulk(r.Context(), req)
+
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{"ids": ids})
 }
 
@@ -516,7 +519,6 @@ func (h *ContentAdminHandler) CreateFullCourse(w http.ResponseWriter, r *http.Re
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"id": id})
 }
-
 
 // CreateUser godoc
 // @Summary ADMIN: Создание пользователя (Полный профиль + Родители)
@@ -879,9 +881,9 @@ func parseFlexibleDate(dateStr string) time.Time {
 	}
 	dateStr = strings.TrimSpace(dateStr)
 	formats := []string{
-		"02.01.2006", 
-		"02-01-2006", 
-		"2006-01-02", 
+		"02.01.2006",
+		"02-01-2006",
+		"2006-01-02",
 		"02/01/2006",
 	}
 	for _, f := range formats {
