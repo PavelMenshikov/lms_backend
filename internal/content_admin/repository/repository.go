@@ -50,6 +50,8 @@ type ContentAdminRepository interface {
 	GetByPhone(ctx context.Context, phone string) (*domain.User, error)
 	UnlinkAllParents(ctx context.Context, studentID string) error
 	SetLessonModule(ctx context.Context, lessonID, moduleID string) error
+	GetTestsByCourseID(ctx context.Context, courseID string) ([]domain.Test, error)
+	GetProjectsByCourseID(ctx context.Context, courseID string) ([]domain.Project, error)
 }
 
 type ContentAdminRepoImpl struct {
@@ -524,9 +526,15 @@ func (r *ContentAdminRepoImpl) GetStudentEnrollment(ctx context.Context, userID 
 	}
 
 	res := make(map[string]string)
-	if cid.Valid { res["course_id"] = cid.String }
-	if sid.Valid { res["stream_id"] = sid.String }
-	if gid.Valid { res["group_id"] = gid.String }
+	if cid.Valid {
+		res["course_id"] = cid.String
+	}
+	if sid.Valid {
+		res["stream_id"] = sid.String
+	}
+	if gid.Valid {
+		res["group_id"] = gid.String
+	}
 
 	return res, nil
 }
@@ -554,4 +562,56 @@ func (r *ContentAdminRepoImpl) SetLessonModule(ctx context.Context, lessonID, mo
 	query := `UPDATE lessons SET module_id = $1 WHERE id = $2`
 	_, err := r.db.ExecContext(ctx, query, moduleID, lessonID)
 	return err
+}
+
+func (r *ContentAdminRepoImpl) GetTestsByCourseID(ctx context.Context, courseID string) ([]domain.Test, error) {
+	query := `SELECT t.id, t.lesson_id, t.title, t.description, t.passing_score, t.created_at 
+			  FROM tests t 
+			  JOIN lessons l ON t.lesson_id = l.id 
+			  WHERE l.course_id = $1`
+	rows, err := r.db.QueryContext(ctx, query, courseID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var tests []domain.Test
+	for rows.Next() {
+		var t domain.Test
+		var lid sql.NullString
+		err := rows.Scan(&t.ID, &lid, &t.Title, &t.Description, &t.PassingScore, &t.CreatedAt)
+		if err == nil {
+			if lid.Valid {
+				s := lid.String
+				t.LessonID = &s
+			}
+			tests = append(tests, t)
+		}
+	}
+	return tests, nil
+}
+
+func (r *ContentAdminRepoImpl) GetProjectsByCourseID(ctx context.Context, courseID string) ([]domain.Project, error) {
+	query := `SELECT p.id, p.lesson_id, p.title, p.description, p.max_score, p.created_at 
+			  FROM projects p 
+			  JOIN lessons l ON p.lesson_id = l.id 
+			  WHERE l.course_id = $1`
+	rows, err := r.db.QueryContext(ctx, query, courseID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var projects []domain.Project
+	for rows.Next() {
+		var p domain.Project
+		var lid sql.NullString
+		err := rows.Scan(&p.ID, &lid, &p.Title, &p.Description, &p.MaxScore, &p.CreatedAt)
+		if err == nil {
+			if lid.Valid {
+				s := lid.String
+				p.LessonID = &s
+			}
+			projects = append(projects, p)
+		}
+	}
+	return projects, nil
 }

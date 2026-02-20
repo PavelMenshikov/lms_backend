@@ -266,15 +266,34 @@ func (uc *ContentAdminUseCase) GetCourseStructure(ctx context.Context, courseID 
 	if err != nil {
 		return nil, err
 	}
+	modules, _ := uc.repo.GetModulesByCourseID(ctx, courseID)
+	allLessons, _ := uc.repo.GetLessonsByCourseID(ctx, courseID)
 
-	modules, err := uc.repo.GetModulesByCourseID(ctx, courseID)
-	if err != nil {
-		return nil, err
+	tests, _ := uc.repo.GetTestsByCourseID(ctx, courseID)
+	projects, _ := uc.repo.GetProjectsByCourseID(ctx, courseID)
+
+	testsMap := make(map[string][]domain.Test)
+	for _, t := range tests {
+		if t.LessonID != nil {
+			testsMap[*t.LessonID] = append(testsMap[*t.LessonID], t)
+		}
+	}
+	projectsMap := make(map[string][]domain.Project)
+	for _, p := range projects {
+		if p.LessonID != nil {
+			projectsMap[*p.LessonID] = append(projectsMap[*p.LessonID], p)
+		}
 	}
 
-	allLessons, err := uc.repo.GetLessonsByCourseID(ctx, courseID)
-	if err != nil {
-		return nil, err
+	for i := range allLessons {
+		allLessons[i].Tests = testsMap[allLessons[i].ID]
+		if allLessons[i].Tests == nil {
+			allLessons[i].Tests = []domain.Test{}
+		}
+		allLessons[i].Projects = projectsMap[allLessons[i].ID]
+		if allLessons[i].Projects == nil {
+			allLessons[i].Projects = []domain.Project{}
+		}
 	}
 
 	lessonsByModule := make(map[string][]*domain.Lesson)

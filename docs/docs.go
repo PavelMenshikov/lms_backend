@@ -2056,8 +2056,20 @@ const docTemplate = `{
                 "presentation_url": {
                     "type": "string"
                 },
+                "projects": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.Project"
+                    }
+                },
                 "teacher_id": {
                     "type": "string"
+                },
+                "tests": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.Test"
+                    }
                 },
                 "title": {
                     "type": "string"
@@ -2184,6 +2196,29 @@ const docTemplate = `{
                 },
                 "yellow_percent": {
                     "type": "number"
+                }
+            }
+        },
+        "domain.Project": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "lesson_id": {
+                    "type": "string"
+                },
+                "max_score": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
                 }
             }
         },
@@ -2582,6 +2617,29 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "photo": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.Test": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "lesson_id": {
+                    "type": "string"
+                },
+                "passing_score": {
+                    "type": "integer"
+                },
+                "title": {
                     "type": "string"
                 }
             }

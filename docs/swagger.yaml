@@ -250,8 +250,16 @@ definitions:
         type: integer
       presentation_url:
         type: string
+      projects:
+        items:
+          $ref: '#/definitions/domain.Project'
+        type: array
       teacher_id:
         type: string
+      tests:
+        items:
+          $ref: '#/definitions/domain.Test'
+        type: array
       title:
         type: string
       video_url:
@@ -334,6 +342,21 @@ definitions:
         type: integer
       yellow_percent:
         type: number
+    type: object
+  domain.Project:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      lesson_id:
+        type: string
+      max_score:
+        type: integer
+      title:
+        type: string
     type: object
   domain.Role:
     enum:
@@ -598,6 +621,21 @@ definitions:
       phone:
         type: string
       photo:
+        type: string
+    type: object
+  domain.Test:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      lesson_id:
+        type: string
+      passing_score:
+        type: integer
+      title:
         type: string
     type: object
   domain.UpcomingLesson:
