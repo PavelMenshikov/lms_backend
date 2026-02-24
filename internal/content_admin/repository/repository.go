@@ -356,15 +356,25 @@ func (r *ContentAdminRepoImpl) DeleteUser(ctx context.Context, userID string) er
 func (r *ContentAdminRepoImpl) GetDetailedStudentList(ctx context.Context, filter domain.UserFilter) ([]*domain.StudentTableItem, error) {
 	query := `
 		SELECT 
-			u.id, COALESCE(u.avatar_url, ''), u.first_name || ' ' || u.last_name, u.created_at, u.gender,
+			u.id, 
+			COALESCE(u.avatar_url, '') as photo, 
+			u.first_name || ' ' || u.last_name as full_name, 
+			u.created_at, 
+			u.gender,
 			COALESCE(EXTRACT(YEAR FROM AGE(u.birth_date)), 0) as age,
-			COALESCE(uc.status, 'inactive'), COALESCE(c.title, ''), COALESCE(g.title, ''),
-			COALESCE(cur.first_name || ' ' || cur.last_name, ''),
-			COALESCE(teach.first_name || ' ' || teach.last_name, ''),
-			COALESCE(s.title, ''), COALESCE(uc.progress_percent, 0),
-			COALESCE((SELECT phone FROM users pu JOIN child_parent_link cpl ON pu.id = cpl.parent_id WHERE cpl.child_id = u.id LIMIT 1), ''),
-			COALESCE(u.city, ''), COALESCE(u.school_name, ''), COALESCE(u.language, ''),
-			COALESCE(u.phone, ''), u.email
+			COALESCE(STRING_AGG(DISTINCT uc.status, ', '), 'inactive') as status, 
+			COALESCE(STRING_AGG(DISTINCT c.title, ', '), '') as course, 
+			COALESCE(STRING_AGG(DISTINCT g.title, ', '), '') as "group", 
+			COALESCE(STRING_AGG(DISTINCT cur.first_name || ' ' || cur.last_name, ', '), '') as curator,
+			COALESCE(STRING_AGG(DISTINCT teach.first_name || ' ' || teach.last_name, ', '), '') as teacher,
+			COALESCE(STRING_AGG(DISTINCT s.title, ', '), '') as stream,
+			COALESCE(AVG(uc.progress_percent)::INT, 0) as performance,
+			COALESCE((SELECT phone FROM users pu JOIN child_parent_link cpl ON pu.id = cpl.parent_id WHERE cpl.child_id = u.id LIMIT 1), '') as parent_phone,
+			COALESCE(u.city, '') as city, 
+			COALESCE(u.school_name, '') as school, 
+			COALESCE(u.language, '') as language,
+			COALESCE(u.phone, '') as phone, 
+			u.email
 		FROM users u
 		LEFT JOIN user_courses uc ON u.id = uc.user_id
 		LEFT JOIN courses c ON uc.course_id = c.id
@@ -379,16 +389,27 @@ func (r *ContentAdminRepoImpl) GetDetailedStudentList(ctx context.Context, filte
 		query += " AND uc.course_id = $1"
 		args = append(args, filter.CourseID)
 	}
-	query += " ORDER BY u.created_at DESC"
+
+	query += ` GROUP BY u.id ORDER BY u.created_at DESC`
+
 	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("repository: failed to fetch detailed students: %w", err)
 	}
 	defer rows.Close()
+
 	var list []*domain.StudentTableItem
 	for rows.Next() {
 		item := &domain.StudentTableItem{}
-		rows.Scan(&item.ID, &item.Photo, &item.FullName, &item.CreatedAt, &item.Gender, &item.Age, &item.Status, &item.Course, &item.Group, &item.Curator, &item.Teacher, &item.Stream, &item.Performance, &item.ParentPhone, &item.City, &item.School, &item.Language, &item.Phone, &item.Email)
+		err := rows.Scan(
+			&item.ID, &item.Photo, &item.FullName, &item.CreatedAt, &item.Gender, &item.Age,
+			&item.Status, &item.Course, &item.Group, &item.Curator, &item.Teacher, &item.Stream,
+			&item.Performance, &item.ParentPhone, &item.City, &item.School, &item.Language,
+			&item.Phone, &item.Email,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("repository: failed to scan student item: %w", err)
+		}
 		list = append(list, item)
 	}
 	return list, nil
