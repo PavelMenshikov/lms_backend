@@ -1000,17 +1000,63 @@ paths:
     put:
       consumes:
       - multipart/form-data
+      description: Редактирование параметров курса (ДЗ, Тесты, Discord) и загрузка
+        новой обложки.
       parameters:
       - description: ID курса
         in: path
         name: id
         required: true
         type: string
+      - description: Название курса
+        in: formData
+        name: title
+        type: string
+      - description: Описание курса
+        in: formData
+        name: description
+        type: string
+      - description: Основной курс
+        in: formData
+        name: is_main
+        type: boolean
+      - description: Статус (draft, active, archived)
+        in: formData
+        name: status
+        type: string
+      - description: Включить домашние задания
+        in: formData
+        name: has_homework
+        type: boolean
+      - description: ДЗ обязательно для прохода дальше
+        in: formData
+        name: is_homework_mandatory
+        type: boolean
+      - description: Тесты обязательны
+        in: formData
+        name: is_test_mandatory
+        type: boolean
+      - description: Проекты обязательны
+        in: formData
+        name: is_project_mandatory
+        type: boolean
+      - description: Discord обязателен
+        in: formData
+        name: is_discord_mandatory
+        type: boolean
+      - description: Защита от копирования
+        in: formData
+        name: is_anti_copy_enabled
+        type: boolean
+      - description: Новая обложка курса
+        in: formData
+        name: cover_image
+        type: file
       produces:
       - application/json
       responses:
         "200":
-          description: status
+          description: 'status: updated'
           schema:
             additionalProperties:
               type: string

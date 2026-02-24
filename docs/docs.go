@@ -125,6 +125,7 @@ const docTemplate = `{
         },
         "/admin/courses/{id}/settings": {
             "put": {
+                "description": "Редактирование параметров курса (ДЗ, Тесты, Discord) и загрузка новой обложки.",
                 "consumes": [
                     "multipart/form-data"
                 ],
@@ -142,11 +143,77 @@ const docTemplate = `{
                         "name": "id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Название курса",
+                        "name": "title",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Описание курса",
+                        "name": "description",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Основной курс",
+                        "name": "is_main",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Статус (draft, active, archived)",
+                        "name": "status",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Включить домашние задания",
+                        "name": "has_homework",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "ДЗ обязательно для прохода дальше",
+                        "name": "is_homework_mandatory",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Тесты обязательны",
+                        "name": "is_test_mandatory",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Проекты обязательны",
+                        "name": "is_project_mandatory",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Discord обязателен",
+                        "name": "is_discord_mandatory",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Защита от копирования",
+                        "name": "is_anti_copy_enabled",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "file",
+                        "description": "Новая обложка курса",
+                        "name": "cover_image",
+                        "in": "formData"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "status",
+                        "description": "status: updated",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {

@@ -171,11 +171,23 @@ func (h *ContentAdminHandler) UploadMedia(w http.ResponseWriter, r *http.Request
 
 // UpdateCourseSettings godoc
 // @Summary ADMIN: Обновление настроек курса
+// @Description Редактирование параметров курса (ДЗ, Тесты, Discord) и загрузка новой обложки.
 // @Tags Admin-Content
 // @Accept multipart/form-data
 // @Produce json
 // @Param id path string true "ID курса"
-// @Success 200 {object} map[string]string "status"
+// @Param title formData string false "Название курса"
+// @Param description formData string false "Описание курса"
+// @Param is_main formData boolean false "Основной курс"
+// @Param status formData string false "Статус (draft, active, archived)"
+// @Param has_homework formData boolean false "Включить домашние задания"
+// @Param is_homework_mandatory formData boolean false "ДЗ обязательно для прохода дальше"
+// @Param is_test_mandatory formData boolean false "Тесты обязательны"
+// @Param is_project_mandatory formData boolean false "Проекты обязательны"
+// @Param is_discord_mandatory formData boolean false "Discord обязателен"
+// @Param is_anti_copy_enabled formData boolean false "Защита от копирования"
+// @Param cover_image formData file false "Новая обложка курса"
+// @Success 200 {object} map[string]string "status: updated"
 // @Router /admin/courses/{id}/settings [put]
 func (h *ContentAdminHandler) UpdateCourseSettings(w http.ResponseWriter, r *http.Request) {
 	const MAX_UPLOAD_SIZE = 10 << 20
