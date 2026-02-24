@@ -152,6 +152,7 @@ func main() {
 
 	r.Post("/auth/register", authHandler.Register)
 	r.Post("/auth/login", authHandler.Login)
+	r.Post("/auth/logout", authHandler.Logout)
 
 	r.Post("/system/reset-password", func(w http.ResponseWriter, r *http.Request) {
 		secret := os.Getenv("SYSTEM_SECRET")
@@ -230,8 +231,7 @@ func main() {
 		r.Put("/admin/users/{id}", adminHandler.UpdateUser)
 		r.Delete("/admin/users/{id}", adminHandler.DeleteUser)
 		r.Post("/admin/enroll", adminHandler.EnrollUser)
-		
-		
+
 		r.Get("/admin/users/all", adminHandler.GetAllUsersTable)
 		r.Get("/admin/students/detailed", adminHandler.GetDetailedStudents)
 		r.Get("/admin/teachers/detailed", adminHandler.GetDetailedTeachers)
