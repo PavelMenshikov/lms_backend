@@ -216,23 +216,25 @@ func (uc *ContentAdminUseCase) CreateCourse(ctx context.Context, input CreateCou
 }
 
 func (uc *ContentAdminUseCase) UpdateCourseSettings(ctx context.Context, input UpdateCourseSettingsInput) error {
-	var imageURL string
+	existing, err := uc.repo.GetCourseByID(ctx, input.CourseID)
+	if err != nil {
+		return err
+	}
+
+	imageURL := existing.ImageURL
 
 	if input.FileHeader != nil {
 		file, err := input.FileHeader.Open()
-		if err != nil {
-			return err
-		}
+		if err != nil { return err }
 		defer file.Close()
 
 		s3Key := fmt.Sprintf("course_previews/%s_%s", input.CourseID, input.FileHeader.Filename)
 		mimeType := input.FileHeader.Header.Get("Content-Type")
 
 		key, err := uc.s3Storage.UploadFile(ctx, file, s3Key, input.FileHeader.Size, mimeType)
-		if err != nil {
-			return err
+		if err == nil {
+			imageURL, _ = uc.s3Storage.GetPublicURL(ctx, key)
 		}
-		imageURL, _ = uc.s3Storage.GetPublicURL(ctx, key)
 	}
 
 	course := &domain.Course{
@@ -477,26 +479,18 @@ func (uc *ContentAdminUseCase) CreateFullUser(ctx context.Context, input Extende
 
 			var parentID string
 			existingParent, err := uc.repo.GetByEmail(ctx, targetEmail)
-
 			if err == nil {
 				parentID = existingParent.ID
 			} else {
 				pFirst, pLast := splitName(pInfo.FullName)
 				pPass := generateSecurePassword()
 				hash, _ := bcrypt.GenerateFromPassword([]byte(pPass), 12)
-
 				newParent := &domain.User{
-					FirstName: pFirst,
-					LastName:  pLast,
-					Email:     targetEmail,
-					Phone:     pInfo.Phone,
-					Password:  string(hash),
-					Role:      domain.RoleParent,
-					City:      input.City,
+					FirstName: pFirst, LastName: pLast, Email: targetEmail, Phone: pInfo.Phone,
+					Password: string(hash), Role: domain.RoleParent, City: input.City,
 				}
 				parentID, _ = uc.repo.CreateUser(ctx, newParent)
 			}
-
 			if parentID != "" {
 				_ = uc.repo.LinkParentToStudent(ctx, userID, parentID)
 			}
@@ -504,17 +498,13 @@ func (uc *ContentAdminUseCase) CreateFullUser(ctx context.Context, input Extende
 
 		courseID := input.CourseID
 		if courseID == "" && input.StreamID != "" {
-			derivedCourseID, err := uc.repo.GetCourseIDByStream(ctx, input.StreamID)
-			if err == nil {
-				courseID = derivedCourseID
-			}
+			derived, err := uc.repo.GetCourseIDByStream(ctx, input.StreamID)
+			if err == nil { courseID = derived }
 		}
-
 		if courseID != "" || input.StreamID != "" || input.GroupID != "" {
 			_ = uc.repo.EnrollStudentExtended(ctx, userID, courseID, input.StreamID, input.GroupID)
 		}
 	}
-
 	return map[string]string{"user_id": userID}, nil
 }
 func (uc *ContentAdminUseCase) EnrollStudent(ctx context.Context, userID, courseID string) error {
@@ -574,91 +564,54 @@ func (uc *ContentAdminUseCase) GetUserInfo(ctx context.Context, userID string) (
 	if user.Role == domain.RoleStudent {
 		enrollment, err := uc.repo.GetStudentEnrollment(ctx, userID)
 		if err == nil && enrollment != nil {
-			if val, ok := enrollment["course_id"]; ok {
-				res["course_id"] = val
-			}
-			if val, ok := enrollment["stream_id"]; ok {
-				res["stream_id"] = val
-			}
-			if val, ok := enrollment["group_id"]; ok {
-				res["group_id"] = val
-			}
+			if val, ok := enrollment["course_id"]; ok { res["course_id"] = val }
+			if val, ok := enrollment["stream_id"]; ok { res["stream_id"] = val }
+			if val, ok := enrollment["group_id"]; ok { res["group_id"] = val }
 		}
-
 		parents, err := uc.repo.GetParentsByStudentID(ctx, userID)
 		if err == nil && parents != nil {
 			res["parents"] = parents
 		}
 	}
-
 	return res, nil
 }
 
 func (uc *ContentAdminUseCase) UpdateUser(ctx context.Context, userID string, input ExtendedCreateUserInput) error {
-	existingUser, err := uc.repo.GetByID(ctx, userID)
-	if err != nil {
-		return err
-	}
+	existing, err := uc.repo.GetByID(ctx, userID)
+	if err != nil { return err }
 
 	firstName, lastName := splitName(input.FullName)
-
-	finalBirthDate := input.BirthDate
-	if finalBirthDate.IsZero() {
-		finalBirthDate = existingUser.BirthDate
-	}
+	finalBD := input.BirthDate
+	if finalBD.IsZero() { finalBD = existing.BirthDate }
 
 	user := &domain.User{
-		ID:              userID,
-		FirstName:       firstName,
-		LastName:        lastName,
-		Email:           input.Email,
-		Role:            input.Role,
-		Phone:           input.Phone,
-		City:            input.City,
-		SchoolName:      input.SchoolName,
-		Language:        input.Language,
-		Gender:          input.Gender,
-		BirthDate:       finalBirthDate,
-		ExperienceYears: input.ExperienceYears,
-		Whatsapp:        input.Whatsapp,
-		Telegram:        input.Telegram,
+		ID: userID, FirstName: firstName, LastName: lastName, Email: input.Email, Role: input.Role,
+		Phone: input.Phone, City: input.City, SchoolName: input.SchoolName, Language: input.Language,
+		Gender: input.Gender, BirthDate: finalBD, ExperienceYears: input.ExperienceYears,
+		Whatsapp: input.Whatsapp, Telegram: input.Telegram,
 	}
 
-	if err := uc.repo.UpdateUser(ctx, user); err != nil {
-		return err
-	}
+	if err := uc.repo.UpdateUser(ctx, user); err != nil { return err }
 
 	if input.Role == domain.RoleStudent && len(input.Parents) > 0 {
+		_ = uc.repo.UnlinkAllParents(ctx, userID)
 		for _, pInfo := range input.Parents {
-			if pInfo.Phone == "" && pInfo.Email == "" {
-				continue
-			}
+			targetEmail := pInfo.Email
+			if targetEmail == "" && pInfo.Phone != "" {
+				cleanPhone := strings.ReplaceAll(strings.ReplaceAll(pInfo.Phone, " ", ""), "+", "")
+				targetEmail = fmt.Sprintf("p_%s_%s@capedu.local", userID[:5], cleanPhone)
+			} else if targetEmail == "" { continue }
 
-			var parentID string
-			existingParent, pErr := uc.repo.GetByEmail(ctx, pInfo.Email)
-			if pErr != nil && pInfo.Phone != "" {
-				existingParent, pErr = uc.repo.GetByPhone(ctx, pInfo.Phone)
-			}
-
-			if pErr == nil {
-				parentID = existingParent.ID
-			} else {
+			var pID string
+			existingP, err := uc.repo.GetByEmail(ctx, targetEmail)
+			if err == nil { pID = existingP.ID } else {
 				pFirst, pLast := splitName(pInfo.FullName)
 				pPass := generateSecurePassword()
 				hash, _ := bcrypt.GenerateFromPassword([]byte(pPass), 12)
-				pEmail := pInfo.Email
-				if pEmail == "" {
-					pEmail = fmt.Sprintf("p_%s_%s@capedu.local", userID[:5], time.Now().Format("05.999"))
-				}
-				newP := &domain.User{
-					FirstName: pFirst, LastName: pLast, Email: pEmail, Phone: pInfo.Phone,
-					Password: string(hash), Role: domain.RoleParent, City: input.City,
-				}
-				parentID, _ = uc.repo.CreateUser(ctx, newP)
+				newP := &domain.User{FirstName: pFirst, LastName: pLast, Email: targetEmail, Phone: pInfo.Phone, Password: string(hash), Role: domain.RoleParent, City: input.City}
+				pID, _ = uc.repo.CreateUser(ctx, newP)
 			}
-			if parentID != "" {
-				_ = uc.repo.LinkParentToStudent(ctx, userID, parentID)
-			}
+			if pID != "" { _ = uc.repo.LinkParentToStudent(ctx, userID, pID) }
 		}
 	}
 	return nil
@@ -788,4 +741,8 @@ func (uc *ContentAdminUseCase) CreateFullCourse(ctx context.Context, input Creat
 	}
 
 	return courseID, nil
+}
+
+func (uc *ContentAdminUseCase) UnenrollStudent(ctx context.Context, userID, courseID string) error {
+	return uc.repo.UnenrollStudent(ctx, userID, courseID)
 }

@@ -111,15 +111,29 @@ func (r *DashboardRepositoryImpl) GetUpcomingLessons(ctx context.Context, userID
 	return lessons, nil
 }
 
-func (r *DashboardRepositoryImpl) GetAdminCounters(ctx context.Context) (totalStudents, newStudents, totalTeachers, activeCourses int, err error) {
+func (r *DashboardRepositoryImpl) GetAdminCounters(ctx context.Context) (totalStudents, newStudents int, studentsDelta float64, totalTeachers, activeCourses int, err error) {
 	query := `
-		SELECT
-			(SELECT COUNT(*) FROM users WHERE role = 'student') as total_students,
-			(SELECT COUNT(*) FROM users WHERE role = 'student' AND created_at > date_trunc('month', now())) as new_students,
-			(SELECT COUNT(*) FROM users WHERE role = 'teacher') as total_teachers,
-			(SELECT COUNT(*) FROM courses WHERE status = 'active') as active_courses
+		WITH stats AS (
+			SELECT
+				COUNT(*) FILTER (WHERE role = 'student') as total_s,
+				COUNT(*) FILTER (WHERE role = 'student' AND created_at >= date_trunc('month', now())) as new_s,
+				COUNT(*) FILTER (WHERE role = 'student' AND created_at >= date_trunc('month', now() - interval '1 month') AND created_at < date_trunc('month', now())) as prev_month_s,
+				COUNT(*) FILTER (WHERE role = 'teacher') as total_t,
+				(SELECT COUNT(*) FROM courses WHERE status = 'active') as active_c
+			FROM users
+		)
+		SELECT 
+			total_s, 
+			new_s, 
+			CASE 
+				WHEN prev_month_s = 0 THEN 100 
+				ELSE ROUND(((new_s::numeric - prev_month_s::numeric) / prev_month_s::numeric) * 100, 1) 
+			END as delta,
+			total_t, 
+			active_c
+		FROM stats
 	`
-	err = r.db.QueryRowContext(ctx, query).Scan(&totalStudents, &newStudents, &totalTeachers, &activeCourses)
+	err = r.db.QueryRowContext(ctx, query).Scan(&totalStudents, &newStudents, &studentsDelta, &totalTeachers, &activeCourses)
 	return
 }
 

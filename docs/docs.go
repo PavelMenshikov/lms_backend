@@ -123,6 +123,15 @@ const docTemplate = `{
                 }
             }
         },
+        "/admin/courses/{id}/enroll/{user_id}": {
+            "delete": {
+                "tags": [
+                    "Admin-Users"
+                ],
+                "summary": "ADMIN: Удалить ученика с курса",
+                "responses": {}
+            }
+        },
         "/admin/courses/{id}/settings": {
             "put": {
                 "description": "Редактирование параметров курса (ДЗ, Тесты, Discord) и загрузка новой обложки.",

@@ -52,6 +52,7 @@ type ContentAdminRepository interface {
 	SetLessonModule(ctx context.Context, lessonID, moduleID string) error
 	GetTestsByCourseID(ctx context.Context, courseID string) ([]domain.Test, error)
 	GetProjectsByCourseID(ctx context.Context, courseID string) ([]domain.Project, error)
+	UnenrollStudent(ctx context.Context, userID, courseID string) error
 }
 
 type ContentAdminRepoImpl struct {
@@ -201,6 +202,17 @@ func (r *ContentAdminRepoImpl) GetUsers(ctx context.Context, filter domain.UserF
 
 	query += " ORDER BY created_at DESC"
 
+	if filter.Limit > 0 {
+		query += fmt.Sprintf(" LIMIT $%d", argID)
+		args = append(args, filter.Limit)
+		argID++
+	}
+	if filter.Offset > 0 {
+		query += fmt.Sprintf(" OFFSET $%d", argID)
+		args = append(args, filter.Offset)
+		argID++
+	}
+
 	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
@@ -347,7 +359,6 @@ func (r *ContentAdminRepoImpl) UpdateUser(ctx context.Context, u *domain.User) e
 	)
 	return err
 }
-
 func (r *ContentAdminRepoImpl) DeleteUser(ctx context.Context, userID string) error {
 	_, err := r.db.ExecContext(ctx, "DELETE FROM users WHERE id = $1", userID)
 	return err
@@ -408,7 +419,7 @@ func (r *ContentAdminRepoImpl) GetDetailedStudentList(ctx context.Context, filte
 			&item.Phone, &item.Email,
 		)
 		if err != nil {
-			return nil, fmt.Errorf("repository: failed to scan student item: %w", err)
+			return nil, err
 		}
 		list = append(list, item)
 	}
@@ -635,4 +646,10 @@ func (r *ContentAdminRepoImpl) GetProjectsByCourseID(ctx context.Context, course
 		}
 	}
 	return projects, nil
+}
+
+func (r *ContentAdminRepoImpl) UnenrollStudent(ctx context.Context, userID, courseID string) error {
+	query := `DELETE FROM user_courses WHERE user_id = $1 AND course_id = $2`
+	_, err := r.db.ExecContext(ctx, query, userID, courseID)
+	return err
 }

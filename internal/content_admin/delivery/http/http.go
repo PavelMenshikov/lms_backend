@@ -673,8 +673,19 @@ func (h *ContentAdminHandler) DeleteUser(w http.ResponseWriter, r *http.Request)
 // @Success 200 {array} domain.User
 // @Router /admin/users [get]
 func (h *ContentAdminHandler) GetUsersList(w http.ResponseWriter, r *http.Request) {
-	role := r.URL.Query().Get("role")
-	users, _ := h.uc.GetUsersList(r.Context(), domain.Role(role))
+	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+	
+	filter := domain.UserFilter{
+		Role:   domain.Role(r.URL.Query().Get("role")),
+		Limit:  limit,
+		Offset: offset,
+	}
+	users, err := h.uc.GetUsersList(r.Context(), filter.Role) // Обнови вызов, если поменял сигнатуру
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
 	json.NewEncoder(w).Encode(users)
 }
 
@@ -905,4 +916,17 @@ func parseFlexibleDate(dateStr string) time.Time {
 	}
 	log.Printf("[DEBUG_DATE_FAIL] Input: '%s'", dateStr)
 	return time.Time{}
+}
+// UnenrollStudent godoc
+// @Summary ADMIN: Удалить ученика с курса
+// @Tags Admin-Users
+// @Router /admin/courses/{id}/enroll/{user_id} [delete]
+func (h *ContentAdminHandler) UnenrollStudent(w http.ResponseWriter, r *http.Request) {
+	courseID := chi.URLParam(r, "id")
+	userID := chi.URLParam(r, "user_id")
+	if err := h.uc.UnenrollStudent(r.Context(), userID, courseID); err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
 }

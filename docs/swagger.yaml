@@ -996,6 +996,12 @@ paths:
       summary: 'ADMIN: Создание нового курса'
       tags:
       - Admin-Content
+  /admin/courses/{id}/enroll/{user_id}:
+    delete:
+      responses: {}
+      summary: 'ADMIN: Удалить ученика с курса'
+      tags:
+      - Admin-Users
   /admin/courses/{id}/settings:
     put:
       consumes:
