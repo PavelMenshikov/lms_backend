@@ -231,6 +231,7 @@ func main() {
 		r.Put("/admin/users/{id}", adminHandler.UpdateUser)
 		r.Delete("/admin/users/{id}", adminHandler.DeleteUser)
 		r.Post("/admin/enroll", adminHandler.EnrollUser)
+		r.Delete("/admin/courses/{id}/enroll/{user_id}", adminHandler.UnenrollStudent)
 
 		r.Get("/admin/users/all", adminHandler.GetAllUsersTable)
 		r.Get("/admin/students/detailed", adminHandler.GetDetailedStudents)

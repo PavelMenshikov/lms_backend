@@ -681,11 +681,12 @@ func (h *ContentAdminHandler) GetUsersList(w http.ResponseWriter, r *http.Reques
 		Limit:  limit,
 		Offset: offset,
 	}
-	users, err := h.uc.GetUsersList(r.Context(), filter.Role) // Обнови вызов, если поменял сигнатуру
+	users, err := h.uc.GetUsersList(r.Context(), filter)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(users)
 }
 

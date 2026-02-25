@@ -34,7 +34,7 @@ func (uc *DashboardUseCase) GetUserHomeData(ctx context.Context, user *domain.Us
 }
 
 func (uc *DashboardUseCase) GetAdminDashboard(ctx context.Context) (*domain.AdminHomeDashboard, error) {
-	totalStudents, newStudents, totalTeachers, activeCourses, err := uc.repo.GetAdminCounters(ctx)
+	totalStudents, newStudents, studentsDelta, totalTeachers, activeCourses, err := uc.repo.GetAdminCounters(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -44,11 +44,12 @@ func (uc *DashboardUseCase) GetAdminDashboard(ctx context.Context) (*domain.Admi
 
 	return &domain.AdminHomeDashboard{
 		TotalStudents:    totalStudents,
+		StudentsDelta:    studentsDelta,
 		NewStudentsMonth: newStudents,
 		TotalTeachers:    totalTeachers,
 		ActiveCourses:    activeCourses,
 		Performance:      zones,
 		LessonActivity:   activity,
-		StudentsDelta:    5.4,
+		UpdatePeriodMonth: time.Now().Format("January"),
 	}, nil
 }

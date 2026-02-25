@@ -519,10 +519,7 @@ func (uc *ContentAdminUseCase) GetCourseStats(ctx context.Context, courseID stri
 	return uc.repo.GetCourseStats(ctx, courseID)
 }
 
-func (uc *ContentAdminUseCase) GetUsersList(ctx context.Context, role domain.Role) ([]*domain.User, error) {
-	filter := domain.UserFilter{
-		Role: role,
-	}
+func (uc *ContentAdminUseCase) GetUsersList(ctx context.Context, filter domain.UserFilter) ([]*domain.User, error) {
 	return uc.repo.GetUsers(ctx, filter)
 }
 
