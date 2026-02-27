@@ -6,7 +6,7 @@
         "contact": {},
         "version": "1.0"
     },
-    "host": "test.xcx.cx",
+    "host": "capapi.grtsq.ru",
     "basePath": "/",
     "paths": {
         "/admin/courses": {

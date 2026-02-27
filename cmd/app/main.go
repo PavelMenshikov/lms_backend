@@ -56,7 +56,7 @@ import (
 // @title Cap Education LMS - API
 // @version 1.0
 // @description API для LMS платформы Cap Education.
-// @host test.xcx.cx
+// @host capapi.grtsq.ru
 // @BasePath /
 func main() {
 	if err := godotenv.Load(); err != nil {
@@ -139,6 +139,9 @@ func main() {
 			"https://localhost:3000",
 			"http://test.xcx.cx",
 			"https://test.xcx.cx",
+			"http://capapi.grtsq.ru",
+			"https://capapi.grtsq.ru",
+			"https://cap.grtsq.ru",
 		},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "Cookie", "X-System-Secret"},
@@ -273,7 +276,7 @@ func main() {
 	})
 
 	r.Get("/swagger/*", httpSwagger.Handler(
-		httpSwagger.URL("https://test.xcx.cx/docs/swagger.json"),
+		httpSwagger.URL("https://capapi.grtsq.ru/docs/swagger.json"),
 	))
 	r.Get("/docs/*", func(w http.ResponseWriter, r *http.Request) {
 		http.StripPrefix("/docs/", http.FileServer(http.Dir("./docs"))).ServeHTTP(w, r)

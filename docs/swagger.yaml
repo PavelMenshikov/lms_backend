@@ -942,7 +942,7 @@ definitions:
         example: "+77001112233"
         type: string
     type: object
-host: test.xcx.cx
+host: capapi.grtsq.ru
 info:
   contact: {}
   description: API для LMS платформы Cap Education.

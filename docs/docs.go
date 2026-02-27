@@ -3198,7 +3198,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "test.xcx.cx",
+	Host:             "capapi.grtsq.ru",
 	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "Cap Education LMS - API",
