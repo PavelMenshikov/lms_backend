@@ -23,6 +23,17 @@ func NewContentAdminHandler(uc *usecase.ContentAdminUseCase) *ContentAdminHandle
 	return &ContentAdminHandler{uc: uc}
 }
 
+
+type CreateLessonRequest struct {
+	CourseID         string                `json:"course_id" example:"uuid"`
+	ModuleID         string                `json:"module_id" example:"uuid"`
+	TeacherID        string                `json:"teacher_id" example:"uuid"`
+	Title            string                `json:"title" example:"Название урока"`
+	OrderNum         int                   `json:"order_num" example:"1"`
+	ContentText      string                `json:"content_text"`
+	Content          []domain.ContentBlock `json:"content"` 
+}
+
 type CreateFullUserRequest struct {
 	FullName        string               `json:"full_name" example:"Иван Иванов"`
 	Email           string               `json:"email" example:"student@test.kz"`
@@ -316,16 +327,44 @@ func (h *ContentAdminHandler) DeleteModule(w http.ResponseWriter, r *http.Reques
 
 // CreateLesson godoc
 // @Summary ADMIN: Добавление урока
+// @Description Создание урока. Можно слать JSON (для блочного контента) или multipart/form-data (для старой загрузки файлов).
 // @Tags Admin-Content
+// @Accept json
 // @Accept multipart/form-data
-// @Param course_id formData string true "ID курса"
-// @Param module_id formData string false "ID модуля (опционально)"
-// @Param teacher_id formData string false "ID преподавателя (опционально)"
-// @Param title formData string true "Название урока"
-// @Param order_num formData int true "Порядковый номер"
+// @Produce json
+// @Param request body CreateLessonRequest false "Данные урока (JSON)"
+// @Param video_file formData file false "Видео файл (только для multipart)"
+// @Param presentation_file formData file false "Презентация (только для multipart)"
 // @Success 200 {object} map[string]string "id"
 // @Router /admin/lessons [post]
 func (h *ContentAdminHandler) CreateLesson(w http.ResponseWriter, r *http.Request) {
+	if strings.Contains(r.Header.Get("Content-Type"), "application/json") {
+		var req CreateLessonRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "Invalid JSON: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		input := usecase.CreateLessonInput{
+			CourseID:    req.CourseID,
+			ModuleID:    req.ModuleID,
+			TeacherID:   req.TeacherID,
+			Title:       req.Title,
+			OrderNum:    req.OrderNum,
+			ContentText: req.ContentText,
+			Content:     req.Content,
+		}
+
+		id, err := h.uc.CreateLesson(r.Context(), input)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{"id": id})
+		return
+	}
+
 	const MAX_VIDEO_SIZE = 500 << 20
 	if err := r.ParseMultipartForm(MAX_VIDEO_SIZE); err != nil {
 		http.Error(w, "File too large.", http.StatusBadRequest)
@@ -352,6 +391,7 @@ func (h *ContentAdminHandler) CreateLesson(w http.ResponseWriter, r *http.Reques
 		ContentText:      r.FormValue("content_text"),
 		VideoFile:        vH,
 		PresentationFile: pH,
+		Content:          []domain.ContentBlock{},
 	}
 
 	id, err := h.uc.CreateLesson(r.Context(), input)

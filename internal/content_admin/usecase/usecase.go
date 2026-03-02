@@ -74,7 +74,9 @@ type CreateLessonInput struct {
 	VideoFile        *multipart.FileHeader
 	PresentationFile *multipart.FileHeader
 	ContentText      string
+	Content          []domain.ContentBlock
 }
+
 
 type ExtendedCreateUserInput struct {
 	FullName        string
@@ -153,7 +155,9 @@ type LessonBulkInput struct {
 	OrderNum    int
 	ContentText string
 	VideoURL    string
+	Content     []domain.ContentBlock
 }
+
 
 func (uc *ContentAdminUseCase) UploadMedia(ctx context.Context, fileHeader *multipart.FileHeader) (string, error) {
 	if fileHeader == nil {
@@ -404,6 +408,7 @@ func (uc *ContentAdminUseCase) CreateLesson(ctx context.Context, input CreateLes
 		VideoURL:        videoURL,
 		PresentationURL: presentationURL,
 		ContentText:     input.ContentText,
+		Content:         input.Content,
 		IsPublished:     true,
 	}
 

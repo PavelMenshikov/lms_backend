@@ -9,6 +9,7 @@ import (
 
 	authMiddleware "lms_backend/internal/auth/delivery/middleware"
 	"lms_backend/internal/learning/usecase"
+	"lms_backend/internal/domain"
 )
 
 type LearningHandler struct {

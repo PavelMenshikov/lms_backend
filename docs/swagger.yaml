@@ -1,6 +1,288 @@
 basePath: /
 definitions:
-  domain.AdminCourseStats:
+  internal_auth_delivery_http.LoginRequest:
+    properties:
+      email:
+        example: admin@capedu.kz
+        type: string
+      password:
+        example: capedu123
+        type: string
+    type: object
+  internal_content_admin_delivery_http.CreateFullUserRequest:
+    properties:
+      birth_date:
+        example: 20.01.2000
+        type: string
+      city:
+        example: Алматы
+        type: string
+      course_id:
+        type: string
+      email:
+        example: student@test.kz
+        type: string
+      experience_years:
+        example: 5
+        type: integer
+      full_name:
+        example: Иван Иванов
+        type: string
+      gender:
+        example: male
+        type: string
+      group_id:
+        type: string
+      language:
+        example: ru
+        type: string
+      parents:
+        items:
+          $ref: '#/definitions/lms_backend_internal_content_admin_usecase.ParentInfo'
+        type: array
+      password:
+        example: secret123
+        type: string
+      phone:
+        example: "+79998887766"
+        type: string
+      role:
+        allOf:
+        - $ref: '#/definitions/lms_backend_internal_domain.Role'
+        example: student
+      school_name:
+        example: Школа №123
+        type: string
+      stream_id:
+        type: string
+      telegram:
+        example: https://t.me/...
+        type: string
+      whatsapp:
+        example: https://wa.me/...
+        type: string
+    type: object
+  internal_content_admin_delivery_http.CreateGroupRequest:
+    properties:
+      curator_id:
+        example: u4444444-4444-4444-4444-444444444444
+        type: string
+      stream_id:
+        example: s3333333-3333-3333-3333-333333333333
+        type: string
+      teacher_id:
+        example: u5555555-5555-5555-5555-555555555555
+        type: string
+      title:
+        example: Группа А-1
+        type: string
+    type: object
+  internal_content_admin_delivery_http.CreateLessonRequest:
+    properties:
+      content:
+        items:
+          $ref: '#/definitions/lms_backend_internal_domain.ContentBlock'
+        type: array
+      content_text:
+        type: string
+      course_id:
+        example: uuid
+        type: string
+      module_id:
+        example: uuid
+        type: string
+      order_num:
+        example: 1
+        type: integer
+      teacher_id:
+        example: uuid
+        type: string
+      title:
+        example: Название урока
+        type: string
+    type: object
+  internal_content_admin_delivery_http.CreateModuleRequest:
+    properties:
+      course_id:
+        example: c1111111-1111-1111-1111-111111111111
+        type: string
+      description:
+        example: Типы данных, переменные, циклы
+        type: string
+      order_num:
+        example: 1
+        type: integer
+      title:
+        example: Основы синтаксиса
+        type: string
+    type: object
+  internal_content_admin_delivery_http.CreateProjectRequest:
+    properties:
+      course_id:
+        example: uuid
+        type: string
+      description:
+        example: Разработка API на Go
+        type: string
+      lesson_id:
+        example: l2222222-2222-2222-2222-222222222222
+        type: string
+      lesson_number:
+        example: 1
+        type: integer
+      max_score:
+        example: 100
+        type: integer
+      title:
+        example: Финальный проект
+        type: string
+    type: object
+  internal_content_admin_delivery_http.CreateStreamRequest:
+    properties:
+      course_id:
+        example: c1111111-1111-1111-1111-111111111111
+        type: string
+      start_date:
+        example: "2024-09-01"
+        type: string
+      title:
+        example: Поток Сентябрь 2024
+        type: string
+    type: object
+  internal_content_admin_delivery_http.CreateTestRequest:
+    properties:
+      course_id:
+        type: string
+      description:
+        type: string
+      lesson_id:
+        type: string
+      lesson_number:
+        type: integer
+      passing_score:
+        type: integer
+      title:
+        type: string
+    type: object
+  internal_content_admin_delivery_http.EnrollRequest:
+    properties:
+      course_id:
+        example: c1111111-1111-1111-1111-111111111111
+        type: string
+      user_id:
+        example: a0000000-0000-0000-0000-000000000001
+        type: string
+    type: object
+  internal_learning_delivery_http.ReviewRequest:
+    properties:
+      comment:
+        type: string
+      rating:
+        type: integer
+    type: object
+  internal_review_delivery_http.EvaluateRequest:
+    properties:
+      comment:
+        type: string
+      grade:
+        type: integer
+      is_accepted:
+        type: boolean
+    type: object
+  lms_backend_internal_content_admin_usecase.CreateBulkCourseInput:
+    properties:
+      description:
+        type: string
+      imageURL:
+        type: string
+      isMain:
+        type: boolean
+      modules:
+        items:
+          $ref: '#/definitions/lms_backend_internal_content_admin_usecase.ModuleBulkInput'
+        type: array
+      title:
+        type: string
+    type: object
+  lms_backend_internal_content_admin_usecase.CreateLessonInput:
+    properties:
+      content:
+        items:
+          $ref: '#/definitions/lms_backend_internal_domain.ContentBlock'
+        type: array
+      contentText:
+        type: string
+      courseID:
+        type: string
+      moduleID:
+        type: string
+      orderNum:
+        type: integer
+      presentationFile:
+        $ref: '#/definitions/multipart.FileHeader'
+      teacherID:
+        type: string
+      title:
+        type: string
+      videoFile:
+        $ref: '#/definitions/multipart.FileHeader'
+    type: object
+  lms_backend_internal_content_admin_usecase.CreateModuleInput:
+    properties:
+      course_id:
+        type: string
+      description:
+        type: string
+      lesson_ids:
+        items:
+          type: string
+        type: array
+      order_num:
+        type: integer
+      title:
+        type: string
+    type: object
+  lms_backend_internal_content_admin_usecase.LessonBulkInput:
+    properties:
+      content:
+        items:
+          $ref: '#/definitions/lms_backend_internal_domain.ContentBlock'
+        type: array
+      contentText:
+        type: string
+      orderNum:
+        type: integer
+      title:
+        type: string
+      videoURL:
+        type: string
+    type: object
+  lms_backend_internal_content_admin_usecase.ModuleBulkInput:
+    properties:
+      description:
+        type: string
+      lessons:
+        items:
+          $ref: '#/definitions/lms_backend_internal_content_admin_usecase.LessonBulkInput'
+        type: array
+      orderNum:
+        type: integer
+      title:
+        type: string
+    type: object
+  lms_backend_internal_content_admin_usecase.ParentInfo:
+    properties:
+      email:
+        example: parent@test.kz
+        type: string
+      full_name:
+        example: Иван Петров
+        type: string
+      phone:
+        example: "+77001112233"
+        type: string
+    type: object
+  lms_backend_internal_domain.AdminCourseStats:
     properties:
       average_lag_lessons:
         type: number
@@ -21,20 +303,20 @@ definitions:
       total_students:
         type: integer
     type: object
-  domain.AdminHomeDashboard:
+  lms_backend_internal_domain.AdminHomeDashboard:
     properties:
       active_courses:
         type: integer
       lesson_activity:
         items:
-          $ref: '#/definitions/domain.DailyLessonActivity'
+          $ref: '#/definitions/lms_backend_internal_domain.DailyLessonActivity'
         type: array
       new_students_delta_percent:
         type: number
       new_students_month:
         type: integer
       performance_zones:
-        $ref: '#/definitions/domain.PerformanceZones'
+        $ref: '#/definitions/lms_backend_internal_domain.PerformanceZones'
       students_delta_percent:
         type: number
       total_students:
@@ -44,7 +326,7 @@ definitions:
       update_period_month:
         type: string
     type: object
-  domain.AdminStudentProgress:
+  lms_backend_internal_domain.AdminStudentProgress:
     properties:
       full_name:
         type: string
@@ -63,7 +345,7 @@ definitions:
       user_id:
         type: string
     type: object
-  domain.AllUsersTableItem:
+  lms_backend_internal_domain.AllUsersTableItem:
     properties:
       created_at:
         type: string
@@ -74,9 +356,9 @@ definitions:
       photo:
         type: string
       role:
-        $ref: '#/definitions/domain.Role'
+        $ref: '#/definitions/lms_backend_internal_domain.Role'
     type: object
-  domain.ChatMessage:
+  lms_backend_internal_domain.ChatMessage:
     properties:
       created_at:
         type: string
@@ -95,11 +377,17 @@ definitions:
       sender_name:
         type: string
       sender_role:
-        $ref: '#/definitions/domain.Role'
+        $ref: '#/definitions/lms_backend_internal_domain.Role'
       student_id:
         type: string
     type: object
-  domain.Course:
+  lms_backend_internal_domain.ContentBlock:
+    properties:
+      content: {}
+      type:
+        type: string
+    type: object
+  lms_backend_internal_domain.Course:
     properties:
       created_at:
         type: string
@@ -124,11 +412,11 @@ definitions:
       is_test_mandatory:
         type: boolean
       status:
-        $ref: '#/definitions/domain.CourseStatus'
+        $ref: '#/definitions/lms_backend_internal_domain.CourseStatus'
       title:
         type: string
     type: object
-  domain.CourseStatus:
+  lms_backend_internal_domain.CourseStatus:
     enum:
     - draft
     - active
@@ -138,28 +426,28 @@ definitions:
     - CourseStatusDraft
     - CourseStatusActive
     - CourseStatusArchived
-  domain.CourseStructure:
+  lms_backend_internal_domain.CourseStructure:
     properties:
       course:
-        $ref: '#/definitions/domain.Course'
+        $ref: '#/definitions/lms_backend_internal_domain.Course'
       modules:
         items:
-          $ref: '#/definitions/domain.ModuleStructure'
+          $ref: '#/definitions/lms_backend_internal_domain.ModuleStructure'
         type: array
       root_lessons:
         items:
-          $ref: '#/definitions/domain.Lesson'
+          $ref: '#/definitions/lms_backend_internal_domain.Lesson'
         type: array
       root_projects:
         items:
-          $ref: '#/definitions/domain.Project'
+          $ref: '#/definitions/lms_backend_internal_domain.Project'
         type: array
       root_tests:
         items:
-          $ref: '#/definitions/domain.Test'
+          $ref: '#/definitions/lms_backend_internal_domain.Test'
         type: array
     type: object
-  domain.CuratorTableItem:
+  lms_backend_internal_domain.CuratorTableItem:
     properties:
       created_at:
         type: string
@@ -174,7 +462,7 @@ definitions:
       phone:
         type: string
     type: object
-  domain.DailyLessonActivity:
+  lms_backend_internal_domain.DailyLessonActivity:
     properties:
       date:
         type: string
@@ -185,7 +473,7 @@ definitions:
       trial:
         type: integer
     type: object
-  domain.Group:
+  lms_backend_internal_domain.Group:
     properties:
       created_at:
         type: string
@@ -200,26 +488,26 @@ definitions:
       title:
         type: string
     type: object
-  domain.HomeDashboard:
+  lms_backend_internal_domain.HomeDashboard:
     properties:
       active_courses_count:
         type: integer
       assignment_stats:
-        $ref: '#/definitions/domain.StatisticSummary'
+        $ref: '#/definitions/lms_backend_internal_domain.StatisticSummary'
       attendance_stats:
-        $ref: '#/definitions/domain.StatisticSummary'
+        $ref: '#/definitions/lms_backend_internal_domain.StatisticSummary'
       last_lesson:
-        $ref: '#/definitions/domain.LastLesson'
+        $ref: '#/definitions/lms_backend_internal_domain.LastLesson'
       role:
-        $ref: '#/definitions/domain.Role'
+        $ref: '#/definitions/lms_backend_internal_domain.Role'
       upcoming_lessons:
         items:
-          $ref: '#/definitions/domain.UpcomingLesson'
+          $ref: '#/definitions/lms_backend_internal_domain.UpcomingLesson'
         type: array
       user_data:
-        $ref: '#/definitions/domain.User'
+        $ref: '#/definitions/lms_backend_internal_domain.User'
     type: object
-  domain.LastLesson:
+  lms_backend_internal_domain.LastLesson:
     properties:
       assignment_status:
         type: string
@@ -234,8 +522,12 @@ definitions:
       module_name:
         type: string
     type: object
-  domain.Lesson:
+  lms_backend_internal_domain.Lesson:
     properties:
+      content:
+        items:
+          $ref: '#/definitions/lms_backend_internal_domain.ContentBlock'
+        type: array
       content_text:
         type: string
       course_id:
@@ -260,20 +552,20 @@ definitions:
         type: string
       projects:
         items:
-          $ref: '#/definitions/domain.Project'
+          $ref: '#/definitions/lms_backend_internal_domain.Project'
         type: array
       teacher_id:
         type: string
       tests:
         items:
-          $ref: '#/definitions/domain.Test'
+          $ref: '#/definitions/lms_backend_internal_domain.Test'
         type: array
       title:
         type: string
       video_url:
         type: string
     type: object
-  domain.LessonMaterial:
+  lms_backend_internal_domain.LessonMaterial:
     properties:
       id:
         type: string
@@ -286,7 +578,7 @@ definitions:
       title:
         type: string
     type: object
-  domain.ModeratorTableItem:
+  lms_backend_internal_domain.ModeratorTableItem:
     properties:
       created_at:
         type: string
@@ -299,7 +591,7 @@ definitions:
       phone:
         type: string
     type: object
-  domain.Module:
+  lms_backend_internal_domain.Module:
     properties:
       course_id:
         type: string
@@ -312,21 +604,21 @@ definitions:
       title:
         type: string
     type: object
-  domain.ModuleStructure:
+  lms_backend_internal_domain.ModuleStructure:
     properties:
       lessons:
         items:
-          $ref: '#/definitions/domain.Lesson'
+          $ref: '#/definitions/lms_backend_internal_domain.Lesson'
         type: array
       module:
-        $ref: '#/definitions/domain.Module'
+        $ref: '#/definitions/lms_backend_internal_domain.Module'
     type: object
-  domain.MonthlySchedule:
+  lms_backend_internal_domain.MonthlySchedule:
     properties:
       days:
         additionalProperties:
           items:
-            $ref: '#/definitions/domain.ScheduleLesson'
+            $ref: '#/definitions/lms_backend_internal_domain.ScheduleLesson'
           type: array
         type: object
       month:
@@ -334,7 +626,7 @@ definitions:
       year:
         type: integer
     type: object
-  domain.PerformanceZones:
+  lms_backend_internal_domain.PerformanceZones:
     properties:
       green_count:
         type: integer
@@ -351,7 +643,7 @@ definitions:
       yellow_percent:
         type: number
     type: object
-  domain.Project:
+  lms_backend_internal_domain.Project:
     properties:
       created_at:
         type: string
@@ -366,7 +658,7 @@ definitions:
       title:
         type: string
     type: object
-  domain.Role:
+  lms_backend_internal_domain.Role:
     enum:
     - student
     - parent
@@ -382,7 +674,7 @@ definitions:
     - RoleModerator
     - RoleCurator
     - RoleAdmin
-  domain.ScheduleLesson:
+  lms_backend_internal_domain.ScheduleLesson:
     properties:
       color:
         type: string
@@ -409,7 +701,7 @@ definitions:
       title:
         type: string
     type: object
-  domain.StatisticSummary:
+  lms_backend_internal_domain.StatisticSummary:
     properties:
       breakdown:
         additionalProperties:
@@ -420,7 +712,7 @@ definitions:
       percentage:
         type: number
     type: object
-  domain.Stream:
+  lms_backend_internal_domain.Stream:
     properties:
       course_id:
         type: string
@@ -433,7 +725,7 @@ definitions:
       title:
         type: string
     type: object
-  domain.StudentCoursePreview:
+  lms_backend_internal_domain.StudentCoursePreview:
     properties:
       description:
         type: string
@@ -448,26 +740,26 @@ definitions:
       title:
         type: string
     type: object
-  domain.StudentCourseView:
+  lms_backend_internal_domain.StudentCourseView:
     properties:
       course:
-        $ref: '#/definitions/domain.Course'
+        $ref: '#/definitions/lms_backend_internal_domain.Course'
       modules:
         items:
-          $ref: '#/definitions/domain.StudentModuleView'
+          $ref: '#/definitions/lms_backend_internal_domain.StudentModuleView'
         type: array
     type: object
-  domain.StudentLessonDetail:
+  lms_backend_internal_domain.StudentLessonDetail:
     properties:
       assignment_status:
         type: string
       is_completed:
         type: boolean
       lesson:
-        $ref: '#/definitions/domain.Lesson'
+        $ref: '#/definitions/lms_backend_internal_domain.Lesson'
       materials:
         items:
-          $ref: '#/definitions/domain.LessonMaterial'
+          $ref: '#/definitions/lms_backend_internal_domain.LessonMaterial'
         type: array
       next_lesson_id:
         type: string
@@ -476,7 +768,7 @@ definitions:
       teacher_comment:
         type: string
     type: object
-  domain.StudentLessonRef:
+  lms_backend_internal_domain.StudentLessonRef:
     properties:
       duration_min:
         type: integer
@@ -491,7 +783,7 @@ definitions:
       title:
         type: string
     type: object
-  domain.StudentModuleView:
+  lms_backend_internal_domain.StudentModuleView:
     properties:
       description:
         type: string
@@ -499,14 +791,14 @@ definitions:
         type: string
       lessons:
         items:
-          $ref: '#/definitions/domain.StudentLessonRef'
+          $ref: '#/definitions/lms_backend_internal_domain.StudentLessonRef'
         type: array
       order_num:
         type: integer
       title:
         type: string
     type: object
-  domain.StudentTableItem:
+  lms_backend_internal_domain.StudentTableItem:
     properties:
       age:
         type: integer
@@ -547,7 +839,7 @@ definitions:
       teacher:
         type: string
     type: object
-  domain.SubmissionRecord:
+  lms_backend_internal_domain.SubmissionRecord:
     properties:
       course_title:
         type: string
@@ -566,7 +858,7 @@ definitions:
       user_id:
         type: string
     type: object
-  domain.TeacherPublicInfo:
+  lms_backend_internal_domain.TeacherPublicInfo:
     properties:
       avatar_url:
         type: string
@@ -584,10 +876,10 @@ definitions:
         type: number
       reviews:
         items:
-          $ref: '#/definitions/domain.TeacherReview'
+          $ref: '#/definitions/lms_backend_internal_domain.TeacherReview'
         type: array
     type: object
-  domain.TeacherReview:
+  lms_backend_internal_domain.TeacherReview:
     properties:
       comment:
         type: string
@@ -606,7 +898,7 @@ definitions:
       teacher_id:
         type: string
     type: object
-  domain.TeacherTableItem:
+  lms_backend_internal_domain.TeacherTableItem:
     properties:
       city:
         type: string
@@ -631,7 +923,7 @@ definitions:
       photo:
         type: string
     type: object
-  domain.Test:
+  lms_backend_internal_domain.Test:
     properties:
       created_at:
         type: string
@@ -646,7 +938,7 @@ definitions:
       title:
         type: string
     type: object
-  domain.UpcomingLesson:
+  lms_backend_internal_domain.UpcomingLesson:
     properties:
       course_title:
         type: string
@@ -659,7 +951,7 @@ definitions:
       time_range:
         type: string
     type: object
-  domain.User:
+  lms_backend_internal_domain.User:
     properties:
       avatar_url:
         type: string
@@ -688,7 +980,7 @@ definitions:
       phone:
         type: string
       role:
-        $ref: '#/definitions/domain.Role'
+        $ref: '#/definitions/lms_backend_internal_domain.Role'
       school_name:
         type: string
       telegram:
@@ -696,12 +988,12 @@ definitions:
       whatsapp:
         type: string
     type: object
-  domain.WeeklySchedule:
+  lms_backend_internal_domain.WeeklySchedule:
     properties:
       days:
         additionalProperties:
           items:
-            $ref: '#/definitions/domain.ScheduleLesson'
+            $ref: '#/definitions/lms_backend_internal_domain.ScheduleLesson'
           type: array
         type: object
       end_date:
@@ -709,238 +1001,21 @@ definitions:
       start_date:
         type: string
     type: object
-  http.CreateFullUserRequest:
+  multipart.FileHeader:
     properties:
-      birth_date:
-        example: 20.01.2000
+      filename:
         type: string
-      city:
-        example: Алматы
-        type: string
-      course_id:
-        type: string
-      email:
-        example: student@test.kz
-        type: string
-      experience_years:
-        example: 5
-        type: integer
-      full_name:
-        example: Иван Иванов
-        type: string
-      gender:
-        example: male
-        type: string
-      group_id:
-        type: string
-      language:
-        example: ru
-        type: string
-      parents:
-        items:
-          $ref: '#/definitions/usecase.ParentInfo'
-        type: array
-      password:
-        example: secret123
-        type: string
-      phone:
-        example: "+79998887766"
-        type: string
-      role:
-        allOf:
-        - $ref: '#/definitions/domain.Role'
-        example: student
-      school_name:
-        example: Школа №123
-        type: string
-      stream_id:
-        type: string
-      telegram:
-        example: https://t.me/...
-        type: string
-      whatsapp:
-        example: https://wa.me/...
-        type: string
-    type: object
-  http.CreateGroupRequest:
-    properties:
-      curator_id:
-        example: u4444444-4444-4444-4444-444444444444
-        type: string
-      stream_id:
-        example: s3333333-3333-3333-3333-333333333333
-        type: string
-      teacher_id:
-        example: u5555555-5555-5555-5555-555555555555
-        type: string
-      title:
-        example: Группа А-1
-        type: string
-    type: object
-  http.CreateModuleRequest:
-    properties:
-      course_id:
-        example: c1111111-1111-1111-1111-111111111111
-        type: string
-      description:
-        example: Типы данных, переменные, циклы
-        type: string
-      order_num:
-        example: 1
-        type: integer
-      title:
-        example: Основы синтаксиса
-        type: string
-    type: object
-  http.CreateProjectRequest:
-    properties:
-      course_id:
-        example: uuid
-        type: string
-      description:
-        example: Разработка API на Go
-        type: string
-      lesson_id:
-        example: l2222222-2222-2222-2222-222222222222
-        type: string
-      lesson_number:
-        example: 1
-        type: integer
-      max_score:
-        example: 100
-        type: integer
-      title:
-        example: Финальный проект
-        type: string
-    type: object
-  http.CreateStreamRequest:
-    properties:
-      course_id:
-        example: c1111111-1111-1111-1111-111111111111
-        type: string
-      start_date:
-        example: "2024-09-01"
-        type: string
-      title:
-        example: Поток Сентябрь 2024
-        type: string
-    type: object
-  http.CreateTestRequest:
-    properties:
-      course_id:
-        type: string
-      description:
-        type: string
-      lesson_id:
-        type: string
-      lesson_number:
-        type: integer
-      passing_score:
-        type: integer
-      title:
-        type: string
-    type: object
-  http.EnrollRequest:
-    properties:
-      course_id:
-        example: c1111111-1111-1111-1111-111111111111
-        type: string
-      user_id:
-        example: a0000000-0000-0000-0000-000000000001
-        type: string
-    type: object
-  http.EvaluateRequest:
-    properties:
-      comment:
-        type: string
-      grade:
-        type: integer
-      is_accepted:
-        type: boolean
-    type: object
-  http.LoginRequest:
-    properties:
-      email:
-        example: admin@capedu.kz
-        type: string
-      password:
-        example: capedu123
-        type: string
-    type: object
-  http.ReviewRequest:
-    properties:
-      comment:
-        type: string
-      rating:
+      header:
+        $ref: '#/definitions/textproto.MIMEHeader'
+      size:
+        format: int64
         type: integer
     type: object
-  usecase.CreateBulkCourseInput:
-    properties:
-      description:
+  textproto.MIMEHeader:
+    additionalProperties:
+      items:
         type: string
-      imageURL:
-        type: string
-      isMain:
-        type: boolean
-      modules:
-        items:
-          $ref: '#/definitions/usecase.ModuleBulkInput'
-        type: array
-      title:
-        type: string
-    type: object
-  usecase.CreateLessonInput:
-    type: object
-  usecase.CreateModuleInput:
-    properties:
-      course_id:
-        type: string
-      description:
-        type: string
-      lesson_ids:
-        items:
-          type: string
-        type: array
-      order_num:
-        type: integer
-      title:
-        type: string
-    type: object
-  usecase.LessonBulkInput:
-    properties:
-      contentText:
-        type: string
-      orderNum:
-        type: integer
-      title:
-        type: string
-      videoURL:
-        type: string
-    type: object
-  usecase.ModuleBulkInput:
-    properties:
-      description:
-        type: string
-      lessons:
-        items:
-          $ref: '#/definitions/usecase.LessonBulkInput'
-        type: array
-      orderNum:
-        type: integer
-      title:
-        type: string
-    type: object
-  usecase.ParentInfo:
-    properties:
-      email:
-        example: parent@test.kz
-        type: string
-      full_name:
-        example: Иван Петров
-        type: string
-      phone:
-        example: "+77001112233"
-        type: string
+      type: array
     type: object
 host: capapi.grtsq.ru
 info:
@@ -958,7 +1033,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/domain.Course'
+              $ref: '#/definitions/lms_backend_internal_domain.Course'
             type: array
       summary: 'ADMIN: Список всех курсов'
       tags:
@@ -1084,7 +1159,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/domain.AdminCourseStats'
+            $ref: '#/definitions/lms_backend_internal_domain.AdminCourseStats'
       summary: 'ADMIN: Статистика курса'
       tags:
       - Admin-Stats
@@ -1102,7 +1177,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/domain.CourseStructure'
+            $ref: '#/definitions/lms_backend_internal_domain.CourseStructure'
       summary: 'ADMIN: Содержание курса (Дерево)'
       tags:
       - Admin-Content
@@ -1121,7 +1196,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/domain.AdminStudentProgress'
+              $ref: '#/definitions/lms_backend_internal_domain.AdminStudentProgress'
             type: array
       summary: 'ADMIN: Ученики конкретного курса'
       tags:
@@ -1136,7 +1211,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/usecase.CreateBulkCourseInput'
+          $ref: '#/definitions/lms_backend_internal_content_admin_usecase.CreateBulkCourseInput'
       produces:
       - application/json
       responses:
@@ -1158,7 +1233,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/domain.CuratorTableItem'
+              $ref: '#/definitions/lms_backend_internal_domain.CuratorTableItem'
             type: array
       summary: 'ADMIN: Список кураторов (Таблица)'
       tags:
@@ -1173,7 +1248,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/domain.AdminHomeDashboard'
+            $ref: '#/definitions/lms_backend_internal_domain.AdminHomeDashboard'
       summary: 'ADMIN: Статистика главной страницы'
       tags:
       - Admin-Stats
@@ -1187,7 +1262,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/http.EnrollRequest'
+          $ref: '#/definitions/internal_content_admin_delivery_http.EnrollRequest'
       produces:
       - application/json
       responses:
@@ -1214,7 +1289,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/domain.Group'
+              $ref: '#/definitions/lms_backend_internal_domain.Group'
             type: array
       summary: 'ADMIN: Список групп потока'
       tags:
@@ -1228,7 +1303,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/http.CreateGroupRequest'
+          $ref: '#/definitions/internal_content_admin_delivery_http.CreateGroupRequest'
       produces:
       - application/json
       responses:
@@ -1244,31 +1319,26 @@ paths:
   /admin/lessons:
     post:
       consumes:
+      - application/json
       - multipart/form-data
+      description: Создание урока. Можно слать JSON (для блочного контента) или multipart/form-data
+        (для старой загрузки файлов).
       parameters:
-      - description: ID курса
+      - description: Данные урока (JSON)
+        in: body
+        name: request
+        schema:
+          $ref: '#/definitions/internal_content_admin_delivery_http.CreateLessonRequest'
+      - description: Видео файл (только для multipart)
         in: formData
-        name: course_id
-        required: true
-        type: string
-      - description: ID модуля (опционально)
+        name: video_file
+        type: file
+      - description: Презентация (только для multipart)
         in: formData
-        name: module_id
-        type: string
-      - description: ID преподавателя (опционально)
-        in: formData
-        name: teacher_id
-        type: string
-      - description: Название урока
-        in: formData
-        name: title
-        required: true
-        type: string
-      - description: Порядковый номер
-        in: formData
-        name: order_num
-        required: true
-        type: integer
+        name: presentation_file
+        type: file
+      produces:
+      - application/json
       responses:
         "200":
           description: id
@@ -1304,7 +1374,7 @@ paths:
         required: true
         schema:
           items:
-            $ref: '#/definitions/usecase.CreateLessonInput'
+            $ref: '#/definitions/lms_backend_internal_content_admin_usecase.CreateLessonInput'
           type: array
       produces:
       - application/json
@@ -1343,7 +1413,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/domain.ModeratorTableItem'
+              $ref: '#/definitions/lms_backend_internal_domain.ModeratorTableItem'
             type: array
       summary: 'ADMIN: Список модераторов (Таблица)'
       tags:
@@ -1358,7 +1428,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/http.CreateModuleRequest'
+          $ref: '#/definitions/internal_content_admin_delivery_http.CreateModuleRequest'
       produces:
       - application/json
       responses:
@@ -1396,7 +1466,7 @@ paths:
         required: true
         schema:
           items:
-            $ref: '#/definitions/usecase.CreateModuleInput'
+            $ref: '#/definitions/lms_backend_internal_content_admin_usecase.CreateModuleInput'
           type: array
       produces:
       - application/json
@@ -1414,7 +1484,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/http.CreateProjectRequest'
+          $ref: '#/definitions/internal_content_admin_delivery_http.CreateProjectRequest'
       produces:
       - application/json
       responses:
@@ -1455,7 +1525,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/domain.Stream'
+              $ref: '#/definitions/lms_backend_internal_domain.Stream'
             type: array
       summary: 'ADMIN: Список потоков курса'
       tags:
@@ -1469,7 +1539,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/http.CreateStreamRequest'
+          $ref: '#/definitions/internal_content_admin_delivery_http.CreateStreamRequest'
       produces:
       - application/json
       responses:
@@ -1496,7 +1566,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/domain.StudentTableItem'
+              $ref: '#/definitions/lms_backend_internal_domain.StudentTableItem'
             type: array
       summary: 'ADMIN: Детальный список учеников (Таблица)'
       tags:
@@ -1510,7 +1580,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/domain.TeacherTableItem'
+              $ref: '#/definitions/lms_backend_internal_domain.TeacherTableItem'
             type: array
       summary: 'ADMIN: Список учителей (Таблица)'
       tags:
@@ -1525,7 +1595,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/http.CreateTestRequest'
+          $ref: '#/definitions/internal_content_admin_delivery_http.CreateTestRequest'
       produces:
       - application/json
       responses:
@@ -1566,7 +1636,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/domain.User'
+              $ref: '#/definitions/lms_backend_internal_domain.User'
             type: array
       summary: 'ADMIN: Список пользователей (по ролям)'
       tags:
@@ -1582,7 +1652,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/http.CreateFullUserRequest'
+          $ref: '#/definitions/internal_content_admin_delivery_http.CreateFullUserRequest'
       produces:
       - application/json
       responses:
@@ -1655,7 +1725,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/domain.AllUsersTableItem'
+              $ref: '#/definitions/lms_backend_internal_domain.AllUsersTableItem'
             type: array
       summary: 'ADMIN: Показать всех пользователей (Таблица)'
       tags:
@@ -1671,7 +1741,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/http.LoginRequest'
+          $ref: '#/definitions/internal_auth_delivery_http.LoginRequest'
       produces:
       - application/json
       responses:
@@ -1747,7 +1817,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/domain.ChatMessage'
+              $ref: '#/definitions/lms_backend_internal_domain.ChatMessage'
             type: array
       summary: 'USER: История чата'
       tags:
@@ -1785,7 +1855,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/domain.StudentCourseView'
+            $ref: '#/definitions/lms_backend_internal_domain.StudentCourseView'
       summary: 'УЧЕНИК: Страница курса'
       tags:
       - Student-Learning
@@ -1798,7 +1868,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/domain.HomeDashboard'
+            $ref: '#/definitions/lms_backend_internal_domain.HomeDashboard'
       summary: 'УЧЕНИК: Главная страница'
       tags:
       - Dashboard
@@ -1817,7 +1887,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/domain.StudentLessonDetail'
+            $ref: '#/definitions/lms_backend_internal_domain.StudentLessonDetail'
       summary: 'УЧЕНИК: Просмотр урока'
       tags:
       - Student-Learning
@@ -1883,7 +1953,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/domain.StudentCoursePreview'
+              $ref: '#/definitions/lms_backend_internal_domain.StudentCoursePreview'
             type: array
       summary: 'УЧЕНИК: Мои курсы'
       tags:
@@ -1897,7 +1967,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/domain.User'
+            $ref: '#/definitions/lms_backend_internal_domain.User'
       summary: 'USER: Мой профиль'
       tags:
       - Profile
@@ -1972,7 +2042,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/domain.MonthlySchedule'
+            $ref: '#/definitions/lms_backend_internal_domain.MonthlySchedule'
       summary: 'USER: Расписание на месяц'
       tags:
       - Schedule
@@ -1990,7 +2060,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/domain.WeeklySchedule'
+            $ref: '#/definitions/lms_backend_internal_domain.WeeklySchedule'
       summary: 'USER: Расписание на неделю'
       tags:
       - Schedule
@@ -2004,7 +2074,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/domain.SubmissionRecord'
+              $ref: '#/definitions/lms_backend_internal_domain.SubmissionRecord'
             type: array
       summary: 'STAFF: Список ДЗ на проверку'
       tags:
@@ -2025,7 +2095,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/http.EvaluateRequest'
+          $ref: '#/definitions/internal_review_delivery_http.EvaluateRequest'
       produces:
       - application/json
       responses:
@@ -2048,7 +2118,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/domain.TeacherPublicInfo'
+              $ref: '#/definitions/lms_backend_internal_domain.TeacherPublicInfo'
             type: array
       summary: 'УЧЕНИК: Список преподавателей'
       tags:
@@ -2068,7 +2138,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/domain.TeacherPublicInfo'
+            $ref: '#/definitions/lms_backend_internal_domain.TeacherPublicInfo'
       summary: 'УЧЕНИК: Детали преподавателя'
       tags:
       - Student-Learning
@@ -2088,7 +2158,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/http.ReviewRequest'
+          $ref: '#/definitions/internal_learning_delivery_http.ReviewRequest'
       produces:
       - application/json
       responses:

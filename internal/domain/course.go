@@ -34,23 +34,31 @@ type Module struct {
 	Description string `json:"description" db:"description"`
 }
 
+
+type ContentBlock struct {
+	Type    string      `json:"type"`
+	Content interface{} `json:"content"`
+}
+
+
 type Lesson struct {
-	ID              string    `json:"id" db:"id"`
-	CourseID        string    `json:"course_id" db:"course_id"`
-	ModuleID        *string   `json:"module_id" db:"module_id"`
-	TeacherID       string    `json:"teacher_id" db:"teacher_id"`
-	Title           string    `json:"title" db:"title"`
-	LessonTime      time.Time `json:"lesson_time" db:"lesson_time"`
-	DurationMin     int       `json:"duration_min" db:"duration_min"`
-	OrderNum        int       `json:"order_num" db:"order_num"`
-	IsPublished     bool      `json:"is_published" db:"is_published"`
-	VideoURL        string    `json:"video_url" db:"video_url"`
-	PresentationURL string    `json:"presentation_url" db:"presentation_url"`
-	ContentText     string    `json:"content_text" db:"content_text"`
-	HasHomework     bool      `json:"has_homework" db:"has_homework"`
-	IsInteractive   bool      `json:"is_interactive" db:"is_interactive"`
-	Tests           []Test    `json:"tests"`
-	Projects        []Project `json:"projects"`
+	ID              string         `json:"id" db:"id"`
+	CourseID        string         `json:"course_id" db:"course_id"`
+	ModuleID        *string        `json:"module_id" db:"module_id"`
+	TeacherID       string         `json:"teacher_id" db:"teacher_id"`
+	Title           string         `json:"title" db:"title"`
+	LessonTime      time.Time      `json:"lesson_time" db:"lesson_time"`
+	DurationMin     int            `json:"duration_min" db:"duration_min"`
+	OrderNum        int            `json:"order_num" db:"order_num"`
+	IsPublished     bool           `json:"is_published" db:"is_published"`
+	VideoURL        string         `json:"video_url" db:"video_url"`
+	PresentationURL string         `json:"presentation_url" db:"presentation_url"`
+	ContentText     string         `json:"content_text" db:"content_text"`
+	Content         []ContentBlock `json:"content" db:"content"` 
+	HasHomework     bool           `json:"has_homework" db:"has_homework"`
+	IsInteractive   bool           `json:"is_interactive" db:"is_interactive"`
+	Tests           []Test         `json:"tests"`
+	Projects        []Project      `json:"projects"`
 }
 
 type Stream struct {

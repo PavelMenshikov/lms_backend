@@ -7,6 +7,7 @@ import (
 
 	authMiddleware "lms_backend/internal/auth/delivery/middleware"
 	"lms_backend/internal/profile/usecase"
+	"lms_backend/internal/domain"
 )
 
 type ProfileHandler struct {

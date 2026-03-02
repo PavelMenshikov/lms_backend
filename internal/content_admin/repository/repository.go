@@ -96,9 +96,29 @@ func (r *ContentAdminRepoImpl) CreateLesson(ctx context.Context, lesson *domain.
 	if lesson.TeacherID != "" {
 		tid = sql.NullString{String: lesson.TeacherID, Valid: true}
 	}
-	query := `INSERT INTO lessons (course_id, module_id, teacher_id, title, lesson_time, order_num, video_url, presentation_url, content_text, is_published)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`
-	err := r.db.QueryRowContext(ctx, query, lesson.CourseID, lesson.ModuleID, tid, lesson.Title, lesson.LessonTime, lesson.OrderNum, lesson.VideoURL, lesson.PresentationURL, lesson.ContentText, lesson.IsPublished).Scan(&newID)
+
+	contentJSON, err := json.Marshal(lesson.Content)
+	if err != nil {
+		contentJSON = []byte("[]")
+	}
+
+	query := `INSERT INTO lessons (course_id, module_id, teacher_id, title, lesson_time, order_num, video_url, presentation_url, content_text, content, is_published)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id`
+	
+	err = r.db.QueryRowContext(ctx, query, 
+		lesson.CourseID, 
+		lesson.ModuleID, 
+		tid, 
+		lesson.Title, 
+		lesson.LessonTime, 
+		lesson.OrderNum, 
+		lesson.VideoURL, 
+		lesson.PresentationURL, 
+		lesson.ContentText,
+		contentJSON, 
+		lesson.IsPublished,
+	).Scan(&newID)
+	
 	return newID, err
 }
 
@@ -155,7 +175,7 @@ func (r *ContentAdminRepoImpl) GetModulesByCourseID(ctx context.Context, courseI
 }
 
 func (r *ContentAdminRepoImpl) GetLessonsByCourseID(ctx context.Context, courseID string) ([]*domain.Lesson, error) {
-	rows, err := r.db.QueryContext(ctx, "SELECT id, course_id, module_id, teacher_id, title, lesson_time, duration_min, order_num, is_published, video_url, presentation_url, content_text FROM lessons WHERE course_id = $1 ORDER BY order_num ASC", courseID)
+	rows, err := r.db.QueryContext(ctx, "SELECT id, course_id, module_id, teacher_id, title, lesson_time, duration_min, order_num, is_published, video_url, presentation_url, content_text, content FROM lessons WHERE course_id = $1 ORDER BY order_num ASC", courseID)
 	if err != nil {
 		return nil, err
 	}
@@ -164,7 +184,13 @@ func (r *ContentAdminRepoImpl) GetLessonsByCourseID(ctx context.Context, courseI
 	for rows.Next() {
 		l := &domain.Lesson{}
 		var mid, tid sql.NullString
-		rows.Scan(&l.ID, &l.CourseID, &mid, &tid, &l.Title, &l.LessonTime, &l.DurationMin, &l.OrderNum, &l.IsPublished, &l.VideoURL, &l.PresentationURL, &l.ContentText)
+		var contentRaw []byte
+
+		err := rows.Scan(&l.ID, &l.CourseID, &mid, &tid, &l.Title, &l.LessonTime, &l.DurationMin, &l.OrderNum, &l.IsPublished, &l.VideoURL, &l.PresentationURL, &l.ContentText, &contentRaw)
+		if err != nil {
+			return nil, err
+		}
+
 		if mid.Valid {
 			s := mid.String
 			l.ModuleID = &s
@@ -172,11 +198,17 @@ func (r *ContentAdminRepoImpl) GetLessonsByCourseID(ctx context.Context, courseI
 		if tid.Valid {
 			l.TeacherID = tid.String
 		}
+		
+		if len(contentRaw) > 0 {
+			_ = json.Unmarshal(contentRaw, &l.Content)
+		} else {
+			l.Content = []domain.ContentBlock{}
+		}
+
 		lessons = append(lessons, l)
 	}
 	return lessons, nil
 }
-
 func (r *ContentAdminRepoImpl) CreateUser(ctx context.Context, u *domain.User) (string, error) {
 	var newID string
 	query := `INSERT INTO users (first_name, last_name, email, password_hash, role, phone, city, language, gender, birth_date, school_name, experience_years, whatsapp_link, telegram_link, avatar_url)

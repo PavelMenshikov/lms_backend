@@ -276,7 +276,7 @@ func main() {
 	})
 
 	r.Get("/swagger/*", httpSwagger.Handler(
-		httpSwagger.URL("https://capapi.grtsq.ru/docs/swagger.json"),
+		httpSwagger.URL("/docs/swagger.json"), 
 	))
 	r.Get("/docs/*", func(w http.ResponseWriter, r *http.Request) {
 		http.StripPrefix("/docs/", http.FileServer(http.Dir("./docs"))).ServeHTTP(w, r)
