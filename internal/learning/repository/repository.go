@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"encoding/json"
 	"lms_backend/internal/domain"
 )
 
@@ -115,7 +116,7 @@ func (r *LearningRepoImpl) GetCourseContent(ctx context.Context, courseID, userI
 
 func (r *LearningRepoImpl) GetLessonDetail(ctx context.Context, lessonID, userID string) (*domain.StudentLessonDetail, error) {
 	lesson := &domain.Lesson{}
-	var contentRaw []byte 
+	var contentRaw []byte
 
 	query := `SELECT id, title, video_url, presentation_url, content_text, content, duration_min 
               FROM lessons WHERE id = $1 AND is_published = true`
@@ -132,7 +133,7 @@ func (r *LearningRepoImpl) GetLessonDetail(ctx context.Context, lessonID, userID
 		_ = json.Unmarshal(contentRaw, &lesson.Content)
 	}
 	if lesson.Content == nil {
-		lesson.Content = []domain.ContentBlock{} 
+		lesson.Content = []domain.ContentBlock{}
 	}
 
 	var isCompleted bool
@@ -141,6 +142,7 @@ func (r *LearningRepoImpl) GetLessonDetail(ctx context.Context, lessonID, userID
 	
 	return &domain.StudentLessonDetail{Lesson: lesson, IsCompleted: isCompleted}, nil
 }
+
 func (r *LearningRepoImpl) GetAssignmentIDByLesson(ctx context.Context, lessonID string) (string, error) {
 	var id string
 	query := `SELECT id FROM assignments WHERE lesson_id = $1 LIMIT 1`

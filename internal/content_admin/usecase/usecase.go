@@ -766,7 +766,6 @@ func (uc *ContentAdminUseCase) UpdateLesson(ctx context.Context, lessonID string
 	if len(input.Content) > 0 {
 		existing.Content = input.Content
 	}
-    
 	if input.ModuleID != "" {
 		existing.ModuleID = &input.ModuleID
 	}

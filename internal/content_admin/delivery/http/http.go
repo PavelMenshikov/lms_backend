@@ -345,10 +345,18 @@ func (h *ContentAdminHandler) CreateLesson(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
+		var modID, teachID string
+		if req.ModuleID != nil {
+			modID = *req.ModuleID
+		}
+		if req.TeacherID != nil {
+			teachID = *req.TeacherID
+		}
+
 		input := usecase.CreateLessonInput{
 			CourseID:    req.CourseID,
-			ModuleID:    req.ModuleID,
-			TeacherID:   req.TeacherID,
+			ModuleID:    modID,
+			TeacherID:   teachID,
 			Title:       req.Title,
 			OrderNum:    req.OrderNum,
 			ContentText: req.ContentText,
@@ -402,6 +410,7 @@ func (h *ContentAdminHandler) CreateLesson(w http.ResponseWriter, r *http.Reques
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"id": id})
 }
+
 
 // DeleteLesson godoc
 // @Summary ADMIN: Удаление урока
@@ -987,10 +996,18 @@ func (h *ContentAdminHandler) UpdateLesson(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	var modID, teachID string
+	if req.ModuleID != nil {
+		modID = *req.ModuleID
+	}
+	if req.TeacherID != nil {
+		teachID = *req.TeacherID
+	}
+
 	input := usecase.CreateLessonInput{
 		CourseID:    req.CourseID,
-		ModuleID:    req.ModuleID,
-		TeacherID:   req.TeacherID,
+		ModuleID:    modID,
+		TeacherID:   teachID,
 		Title:       req.Title,
 		OrderNum:    req.OrderNum,
 		ContentText: req.ContentText,
