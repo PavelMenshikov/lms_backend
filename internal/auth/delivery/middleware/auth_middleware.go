@@ -19,19 +19,14 @@ type contextKey string
 const ContextUserDataKey contextKey = "userData"
 
 func extractUserDataFromToken(tokenValue string) *UserContextData {
-	if tokenValue == "mock-jwt-token-for-user-admin@capedu.kz" || strings.Contains(tokenValue, "admin") {
-		return &UserContextData{
-			UserID: "00000000-0000-0000-0000-000000000001",
-			Role:   domain.RoleAdmin,
-		}
+	parts := strings.Split(tokenValue, ":")
+	if len(parts) != 2 {
+		return nil
 	}
-	if strings.Contains(tokenValue, "student") {
-		return &UserContextData{
-			UserID: "a0000000-0000-0000-0000-000000000001",
-			Role:   domain.RoleStudent,
-		}
+	return &UserContextData{
+		UserID: parts[0],
+		Role:   domain.Role(parts[1]),
 	}
-	return nil
 }
 
 func AuthMiddleware(next http.Handler) http.Handler {

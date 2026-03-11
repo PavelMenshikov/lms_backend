@@ -30,7 +30,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/lms_backend_internal_domain.Course"
+                                "$ref": "#/definitions/domain.Course"
                             }
                         }
                     }
@@ -106,7 +106,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/lms_backend_internal_content_admin_usecase.CreateBulkCourseInput"
+                            "$ref": "#/definitions/usecase.CreateBulkCourseInput"
                         }
                     }
                 ],
@@ -255,7 +255,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/lms_backend_internal_domain.AdminCourseStats"
+                            "$ref": "#/definitions/domain.AdminCourseStats"
                         }
                     }
                 }
@@ -283,7 +283,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/lms_backend_internal_domain.CourseStructure"
+                            "$ref": "#/definitions/domain.CourseStructure"
                         }
                     }
                 }
@@ -313,7 +313,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/lms_backend_internal_domain.AdminStudentProgress"
+                                "$ref": "#/definitions/domain.AdminStudentProgress"
                             }
                         }
                     }
@@ -335,7 +335,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/lms_backend_internal_domain.CuratorTableItem"
+                                "$ref": "#/definitions/domain.CuratorTableItem"
                             }
                         }
                     }
@@ -356,7 +356,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/lms_backend_internal_domain.AdminHomeDashboard"
+                            "$ref": "#/definitions/domain.AdminHomeDashboard"
                         }
                     }
                 }
@@ -381,7 +381,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_content_admin_delivery_http.EnrollRequest"
+                            "$ref": "#/definitions/http.EnrollRequest"
                         }
                     }
                 ],
@@ -421,7 +421,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/lms_backend_internal_domain.Group"
+                                "$ref": "#/definitions/domain.Group"
                             }
                         }
                     }
@@ -445,7 +445,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_content_admin_delivery_http.CreateGroupRequest"
+                            "$ref": "#/definitions/http.CreateGroupRequest"
                         }
                     }
                 ],
@@ -482,7 +482,7 @@ const docTemplate = `{
                         "name": "request",
                         "in": "body",
                         "schema": {
-                            "$ref": "#/definitions/internal_content_admin_delivery_http.CreateLessonRequest"
+                            "$ref": "#/definitions/http.CreateLessonRequest"
                         }
                     },
                     {
@@ -532,7 +532,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/lms_backend_internal_content_admin_usecase.CreateLessonInput"
+                                "$ref": "#/definitions/usecase.CreateLessonInput"
                             }
                         }
                     }
@@ -541,6 +541,44 @@ const docTemplate = `{
             }
         },
         "/admin/lessons/{id}": {
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin-Content"
+                ],
+                "summary": "ADMIN: Редактировать урок",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Lesson ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Данные урока",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.CreateLessonRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
             "delete": {
                 "tags": [
                     "Admin-Content"
@@ -611,7 +649,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/lms_backend_internal_domain.ModeratorTableItem"
+                                "$ref": "#/definitions/domain.ModeratorTableItem"
                             }
                         }
                     }
@@ -637,7 +675,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_content_admin_delivery_http.CreateModuleRequest"
+                            "$ref": "#/definitions/http.CreateModuleRequest"
                         }
                     }
                 ],
@@ -675,7 +713,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/lms_backend_internal_content_admin_usecase.CreateModuleInput"
+                                "$ref": "#/definitions/usecase.CreateModuleInput"
                             }
                         }
                     }
@@ -724,7 +762,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_content_admin_delivery_http.CreateProjectRequest"
+                            "$ref": "#/definitions/http.CreateProjectRequest"
                         }
                     }
                 ],
@@ -786,7 +824,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/lms_backend_internal_domain.Stream"
+                                "$ref": "#/definitions/domain.Stream"
                             }
                         }
                     }
@@ -810,7 +848,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_content_admin_delivery_http.CreateStreamRequest"
+                            "$ref": "#/definitions/http.CreateStreamRequest"
                         }
                     }
                 ],
@@ -850,7 +888,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/lms_backend_internal_domain.StudentTableItem"
+                                "$ref": "#/definitions/domain.StudentTableItem"
                             }
                         }
                     }
@@ -872,7 +910,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/lms_backend_internal_domain.TeacherTableItem"
+                                "$ref": "#/definitions/domain.TeacherTableItem"
                             }
                         }
                     }
@@ -898,7 +936,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_content_admin_delivery_http.CreateTestRequest"
+                            "$ref": "#/definitions/http.CreateTestRequest"
                         }
                     }
                 ],
@@ -960,7 +998,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/lms_backend_internal_domain.User"
+                                "$ref": "#/definitions/domain.User"
                             }
                         }
                     }
@@ -985,7 +1023,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_content_admin_delivery_http.CreateFullUserRequest"
+                            "$ref": "#/definitions/http.CreateFullUserRequest"
                         }
                     }
                 ],
@@ -1017,7 +1055,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/lms_backend_internal_domain.AllUsersTableItem"
+                                "$ref": "#/definitions/domain.AllUsersTableItem"
                             }
                         }
                     }
@@ -1121,7 +1159,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_auth_delivery_http.LoginRequest"
+                            "$ref": "#/definitions/http.LoginRequest"
                         }
                     }
                 ],
@@ -1234,7 +1272,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/lms_backend_internal_domain.ChatMessage"
+                                "$ref": "#/definitions/domain.ChatMessage"
                             }
                         }
                     }
@@ -1290,7 +1328,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/lms_backend_internal_domain.StudentCourseView"
+                            "$ref": "#/definitions/domain.StudentCourseView"
                         }
                     }
                 }
@@ -1310,7 +1348,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/lms_backend_internal_domain.HomeDashboard"
+                            "$ref": "#/definitions/domain.HomeDashboard"
                         }
                     }
                 }
@@ -1339,7 +1377,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/lms_backend_internal_domain.StudentLessonDetail"
+                            "$ref": "#/definitions/domain.StudentLessonDetail"
                         }
                     }
                 }
@@ -1440,7 +1478,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/lms_backend_internal_domain.StudentCoursePreview"
+                                "$ref": "#/definitions/domain.StudentCoursePreview"
                             }
                         }
                     }
@@ -1461,7 +1499,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/lms_backend_internal_domain.User"
+                            "$ref": "#/definitions/domain.User"
                         }
                     }
                 }
@@ -1575,7 +1613,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/lms_backend_internal_domain.MonthlySchedule"
+                            "$ref": "#/definitions/domain.MonthlySchedule"
                         }
                     }
                 }
@@ -1603,7 +1641,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/lms_backend_internal_domain.WeeklySchedule"
+                            "$ref": "#/definitions/domain.WeeklySchedule"
                         }
                     }
                 }
@@ -1625,7 +1663,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/lms_backend_internal_domain.SubmissionRecord"
+                                "$ref": "#/definitions/domain.SubmissionRecord"
                             }
                         }
                     }
@@ -1659,7 +1697,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_review_delivery_http.EvaluateRequest"
+                            "$ref": "#/definitions/http.EvaluateRequest"
                         }
                     }
                 ],
@@ -1692,7 +1730,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/lms_backend_internal_domain.TeacherPublicInfo"
+                                "$ref": "#/definitions/domain.TeacherPublicInfo"
                             }
                         }
                     }
@@ -1722,7 +1760,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/lms_backend_internal_domain.TeacherPublicInfo"
+                            "$ref": "#/definitions/domain.TeacherPublicInfo"
                         }
                     }
                 }
@@ -1755,7 +1793,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_learning_delivery_http.ReviewRequest"
+                            "$ref": "#/definitions/http.ReviewRequest"
                         }
                     }
                 ],
@@ -1768,420 +1806,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "internal_auth_delivery_http.LoginRequest": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string",
-                    "example": "admin@capedu.kz"
-                },
-                "password": {
-                    "type": "string",
-                    "example": "capedu123"
-                }
-            }
-        },
-        "internal_content_admin_delivery_http.CreateFullUserRequest": {
-            "type": "object",
-            "properties": {
-                "birth_date": {
-                    "type": "string",
-                    "example": "20.01.2000"
-                },
-                "city": {
-                    "type": "string",
-                    "example": "Алматы"
-                },
-                "course_id": {
-                    "type": "string"
-                },
-                "email": {
-                    "type": "string",
-                    "example": "student@test.kz"
-                },
-                "experience_years": {
-                    "type": "integer",
-                    "example": 5
-                },
-                "full_name": {
-                    "type": "string",
-                    "example": "Иван Иванов"
-                },
-                "gender": {
-                    "type": "string",
-                    "example": "male"
-                },
-                "group_id": {
-                    "type": "string"
-                },
-                "language": {
-                    "type": "string",
-                    "example": "ru"
-                },
-                "parents": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/lms_backend_internal_content_admin_usecase.ParentInfo"
-                    }
-                },
-                "password": {
-                    "type": "string",
-                    "example": "secret123"
-                },
-                "phone": {
-                    "type": "string",
-                    "example": "+79998887766"
-                },
-                "role": {
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/lms_backend_internal_domain.Role"
-                        }
-                    ],
-                    "example": "student"
-                },
-                "school_name": {
-                    "type": "string",
-                    "example": "Школа №123"
-                },
-                "stream_id": {
-                    "type": "string"
-                },
-                "telegram": {
-                    "type": "string",
-                    "example": "https://t.me/..."
-                },
-                "whatsapp": {
-                    "type": "string",
-                    "example": "https://wa.me/..."
-                }
-            }
-        },
-        "internal_content_admin_delivery_http.CreateGroupRequest": {
-            "type": "object",
-            "properties": {
-                "curator_id": {
-                    "type": "string",
-                    "example": "u4444444-4444-4444-4444-444444444444"
-                },
-                "stream_id": {
-                    "type": "string",
-                    "example": "s3333333-3333-3333-3333-333333333333"
-                },
-                "teacher_id": {
-                    "type": "string",
-                    "example": "u5555555-5555-5555-5555-555555555555"
-                },
-                "title": {
-                    "type": "string",
-                    "example": "Группа А-1"
-                }
-            }
-        },
-        "internal_content_admin_delivery_http.CreateLessonRequest": {
-            "type": "object",
-            "properties": {
-                "content": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/lms_backend_internal_domain.ContentBlock"
-                    }
-                },
-                "content_text": {
-                    "type": "string"
-                },
-                "course_id": {
-                    "type": "string",
-                    "example": "uuid"
-                },
-                "module_id": {
-                    "type": "string",
-                    "example": "uuid"
-                },
-                "order_num": {
-                    "type": "integer",
-                    "example": 1
-                },
-                "teacher_id": {
-                    "type": "string",
-                    "example": "uuid"
-                },
-                "title": {
-                    "type": "string",
-                    "example": "Название урока"
-                }
-            }
-        },
-        "internal_content_admin_delivery_http.CreateModuleRequest": {
-            "type": "object",
-            "properties": {
-                "course_id": {
-                    "type": "string",
-                    "example": "c1111111-1111-1111-1111-111111111111"
-                },
-                "description": {
-                    "type": "string",
-                    "example": "Типы данных, переменные, циклы"
-                },
-                "order_num": {
-                    "type": "integer",
-                    "example": 1
-                },
-                "title": {
-                    "type": "string",
-                    "example": "Основы синтаксиса"
-                }
-            }
-        },
-        "internal_content_admin_delivery_http.CreateProjectRequest": {
-            "type": "object",
-            "properties": {
-                "course_id": {
-                    "type": "string",
-                    "example": "uuid"
-                },
-                "description": {
-                    "type": "string",
-                    "example": "Разработка API на Go"
-                },
-                "lesson_id": {
-                    "type": "string",
-                    "example": "l2222222-2222-2222-2222-222222222222"
-                },
-                "lesson_number": {
-                    "type": "integer",
-                    "example": 1
-                },
-                "max_score": {
-                    "type": "integer",
-                    "example": 100
-                },
-                "title": {
-                    "type": "string",
-                    "example": "Финальный проект"
-                }
-            }
-        },
-        "internal_content_admin_delivery_http.CreateStreamRequest": {
-            "type": "object",
-            "properties": {
-                "course_id": {
-                    "type": "string",
-                    "example": "c1111111-1111-1111-1111-111111111111"
-                },
-                "start_date": {
-                    "type": "string",
-                    "example": "2024-09-01"
-                },
-                "title": {
-                    "type": "string",
-                    "example": "Поток Сентябрь 2024"
-                }
-            }
-        },
-        "internal_content_admin_delivery_http.CreateTestRequest": {
-            "type": "object",
-            "properties": {
-                "course_id": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "lesson_id": {
-                    "type": "string"
-                },
-                "lesson_number": {
-                    "type": "integer"
-                },
-                "passing_score": {
-                    "type": "integer"
-                },
-                "title": {
-                    "type": "string"
-                }
-            }
-        },
-        "internal_content_admin_delivery_http.EnrollRequest": {
-            "type": "object",
-            "properties": {
-                "course_id": {
-                    "type": "string",
-                    "example": "c1111111-1111-1111-1111-111111111111"
-                },
-                "user_id": {
-                    "type": "string",
-                    "example": "a0000000-0000-0000-0000-000000000001"
-                }
-            }
-        },
-        "internal_learning_delivery_http.ReviewRequest": {
-            "type": "object",
-            "properties": {
-                "comment": {
-                    "type": "string"
-                },
-                "rating": {
-                    "type": "integer"
-                }
-            }
-        },
-        "internal_review_delivery_http.EvaluateRequest": {
-            "type": "object",
-            "properties": {
-                "comment": {
-                    "type": "string"
-                },
-                "grade": {
-                    "type": "integer"
-                },
-                "is_accepted": {
-                    "type": "boolean"
-                }
-            }
-        },
-        "lms_backend_internal_content_admin_usecase.CreateBulkCourseInput": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "imageURL": {
-                    "type": "string"
-                },
-                "isMain": {
-                    "type": "boolean"
-                },
-                "modules": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/lms_backend_internal_content_admin_usecase.ModuleBulkInput"
-                    }
-                },
-                "title": {
-                    "type": "string"
-                }
-            }
-        },
-        "lms_backend_internal_content_admin_usecase.CreateLessonInput": {
-            "type": "object",
-            "properties": {
-                "content": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/lms_backend_internal_domain.ContentBlock"
-                    }
-                },
-                "contentText": {
-                    "type": "string"
-                },
-                "courseID": {
-                    "type": "string"
-                },
-                "moduleID": {
-                    "type": "string"
-                },
-                "orderNum": {
-                    "type": "integer"
-                },
-                "presentationFile": {
-                    "$ref": "#/definitions/multipart.FileHeader"
-                },
-                "teacherID": {
-                    "type": "string"
-                },
-                "title": {
-                    "type": "string"
-                },
-                "videoFile": {
-                    "$ref": "#/definitions/multipart.FileHeader"
-                }
-            }
-        },
-        "lms_backend_internal_content_admin_usecase.CreateModuleInput": {
-            "type": "object",
-            "properties": {
-                "course_id": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "lesson_ids": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "order_num": {
-                    "type": "integer"
-                },
-                "title": {
-                    "type": "string"
-                }
-            }
-        },
-        "lms_backend_internal_content_admin_usecase.LessonBulkInput": {
-            "type": "object",
-            "properties": {
-                "content": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/lms_backend_internal_domain.ContentBlock"
-                    }
-                },
-                "contentText": {
-                    "type": "string"
-                },
-                "orderNum": {
-                    "type": "integer"
-                },
-                "title": {
-                    "type": "string"
-                },
-                "videoURL": {
-                    "type": "string"
-                }
-            }
-        },
-        "lms_backend_internal_content_admin_usecase.ModuleBulkInput": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "lessons": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/lms_backend_internal_content_admin_usecase.LessonBulkInput"
-                    }
-                },
-                "orderNum": {
-                    "type": "integer"
-                },
-                "title": {
-                    "type": "string"
-                }
-            }
-        },
-        "lms_backend_internal_content_admin_usecase.ParentInfo": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string",
-                    "example": "parent@test.kz"
-                },
-                "full_name": {
-                    "type": "string",
-                    "example": "Иван Петров"
-                },
-                "phone": {
-                    "type": "string",
-                    "example": "+77001112233"
-                }
-            }
-        },
-        "lms_backend_internal_domain.AdminCourseStats": {
+        "domain.AdminCourseStats": {
             "type": "object",
             "properties": {
                 "average_lag_lessons": {
@@ -2213,7 +1838,7 @@ const docTemplate = `{
                 }
             }
         },
-        "lms_backend_internal_domain.AdminHomeDashboard": {
+        "domain.AdminHomeDashboard": {
             "type": "object",
             "properties": {
                 "active_courses": {
@@ -2222,7 +1847,7 @@ const docTemplate = `{
                 "lesson_activity": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/lms_backend_internal_domain.DailyLessonActivity"
+                        "$ref": "#/definitions/domain.DailyLessonActivity"
                     }
                 },
                 "new_students_delta_percent": {
@@ -2232,7 +1857,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "performance_zones": {
-                    "$ref": "#/definitions/lms_backend_internal_domain.PerformanceZones"
+                    "$ref": "#/definitions/domain.PerformanceZones"
                 },
                 "students_delta_percent": {
                     "type": "number"
@@ -2248,7 +1873,7 @@ const docTemplate = `{
                 }
             }
         },
-        "lms_backend_internal_domain.AdminStudentProgress": {
+        "domain.AdminStudentProgress": {
             "type": "object",
             "properties": {
                 "full_name": {
@@ -2277,7 +1902,7 @@ const docTemplate = `{
                 }
             }
         },
-        "lms_backend_internal_domain.AllUsersTableItem": {
+        "domain.AllUsersTableItem": {
             "type": "object",
             "properties": {
                 "created_at": {
@@ -2293,11 +1918,11 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "role": {
-                    "$ref": "#/definitions/lms_backend_internal_domain.Role"
+                    "$ref": "#/definitions/domain.Role"
                 }
             }
         },
-        "lms_backend_internal_domain.ChatMessage": {
+        "domain.ChatMessage": {
             "type": "object",
             "properties": {
                 "created_at": {
@@ -2325,14 +1950,14 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "sender_role": {
-                    "$ref": "#/definitions/lms_backend_internal_domain.Role"
+                    "$ref": "#/definitions/domain.Role"
                 },
                 "student_id": {
                     "type": "string"
                 }
             }
         },
-        "lms_backend_internal_domain.ContentBlock": {
+        "domain.ContentBlock": {
             "type": "object",
             "properties": {
                 "content": {},
@@ -2341,7 +1966,7 @@ const docTemplate = `{
                 }
             }
         },
-        "lms_backend_internal_domain.Course": {
+        "domain.Course": {
             "type": "object",
             "properties": {
                 "created_at": {
@@ -2378,14 +2003,14 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "status": {
-                    "$ref": "#/definitions/lms_backend_internal_domain.CourseStatus"
+                    "$ref": "#/definitions/domain.CourseStatus"
                 },
                 "title": {
                     "type": "string"
                 }
             }
         },
-        "lms_backend_internal_domain.CourseStatus": {
+        "domain.CourseStatus": {
             "type": "string",
             "enum": [
                 "draft",
@@ -2398,39 +2023,39 @@ const docTemplate = `{
                 "CourseStatusArchived"
             ]
         },
-        "lms_backend_internal_domain.CourseStructure": {
+        "domain.CourseStructure": {
             "type": "object",
             "properties": {
                 "course": {
-                    "$ref": "#/definitions/lms_backend_internal_domain.Course"
+                    "$ref": "#/definitions/domain.Course"
                 },
                 "modules": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/lms_backend_internal_domain.ModuleStructure"
+                        "$ref": "#/definitions/domain.ModuleStructure"
                     }
                 },
                 "root_lessons": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/lms_backend_internal_domain.Lesson"
+                        "$ref": "#/definitions/domain.Lesson"
                     }
                 },
                 "root_projects": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/lms_backend_internal_domain.Project"
+                        "$ref": "#/definitions/domain.Project"
                     }
                 },
                 "root_tests": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/lms_backend_internal_domain.Test"
+                        "$ref": "#/definitions/domain.Test"
                     }
                 }
             }
         },
-        "lms_backend_internal_domain.CuratorTableItem": {
+        "domain.CuratorTableItem": {
             "type": "object",
             "properties": {
                 "created_at": {
@@ -2453,7 +2078,7 @@ const docTemplate = `{
                 }
             }
         },
-        "lms_backend_internal_domain.DailyLessonActivity": {
+        "domain.DailyLessonActivity": {
             "type": "object",
             "properties": {
                 "date": {
@@ -2470,7 +2095,7 @@ const docTemplate = `{
                 }
             }
         },
-        "lms_backend_internal_domain.Group": {
+        "domain.Group": {
             "type": "object",
             "properties": {
                 "created_at": {
@@ -2493,36 +2118,36 @@ const docTemplate = `{
                 }
             }
         },
-        "lms_backend_internal_domain.HomeDashboard": {
+        "domain.HomeDashboard": {
             "type": "object",
             "properties": {
                 "active_courses_count": {
                     "type": "integer"
                 },
                 "assignment_stats": {
-                    "$ref": "#/definitions/lms_backend_internal_domain.StatisticSummary"
+                    "$ref": "#/definitions/domain.StatisticSummary"
                 },
                 "attendance_stats": {
-                    "$ref": "#/definitions/lms_backend_internal_domain.StatisticSummary"
+                    "$ref": "#/definitions/domain.StatisticSummary"
                 },
                 "last_lesson": {
-                    "$ref": "#/definitions/lms_backend_internal_domain.LastLesson"
+                    "$ref": "#/definitions/domain.LastLesson"
                 },
                 "role": {
-                    "$ref": "#/definitions/lms_backend_internal_domain.Role"
+                    "$ref": "#/definitions/domain.Role"
                 },
                 "upcoming_lessons": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/lms_backend_internal_domain.UpcomingLesson"
+                        "$ref": "#/definitions/domain.UpcomingLesson"
                     }
                 },
                 "user_data": {
-                    "$ref": "#/definitions/lms_backend_internal_domain.User"
+                    "$ref": "#/definitions/domain.User"
                 }
             }
         },
-        "lms_backend_internal_domain.LastLesson": {
+        "domain.LastLesson": {
             "type": "object",
             "properties": {
                 "assignment_status": {
@@ -2545,13 +2170,13 @@ const docTemplate = `{
                 }
             }
         },
-        "lms_backend_internal_domain.Lesson": {
+        "domain.Lesson": {
             "type": "object",
             "properties": {
                 "content": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/lms_backend_internal_domain.ContentBlock"
+                        "$ref": "#/definitions/domain.ContentBlock"
                     }
                 },
                 "content_text": {
@@ -2590,7 +2215,7 @@ const docTemplate = `{
                 "projects": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/lms_backend_internal_domain.Project"
+                        "$ref": "#/definitions/domain.Project"
                     }
                 },
                 "teacher_id": {
@@ -2599,7 +2224,7 @@ const docTemplate = `{
                 "tests": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/lms_backend_internal_domain.Test"
+                        "$ref": "#/definitions/domain.Test"
                     }
                 },
                 "title": {
@@ -2610,7 +2235,7 @@ const docTemplate = `{
                 }
             }
         },
-        "lms_backend_internal_domain.LessonMaterial": {
+        "domain.LessonMaterial": {
             "type": "object",
             "properties": {
                 "id": {
@@ -2630,7 +2255,7 @@ const docTemplate = `{
                 }
             }
         },
-        "lms_backend_internal_domain.ModeratorTableItem": {
+        "domain.ModeratorTableItem": {
             "type": "object",
             "properties": {
                 "created_at": {
@@ -2650,7 +2275,7 @@ const docTemplate = `{
                 }
             }
         },
-        "lms_backend_internal_domain.Module": {
+        "domain.Module": {
             "type": "object",
             "properties": {
                 "course_id": {
@@ -2670,21 +2295,21 @@ const docTemplate = `{
                 }
             }
         },
-        "lms_backend_internal_domain.ModuleStructure": {
+        "domain.ModuleStructure": {
             "type": "object",
             "properties": {
                 "lessons": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/lms_backend_internal_domain.Lesson"
+                        "$ref": "#/definitions/domain.Lesson"
                     }
                 },
                 "module": {
-                    "$ref": "#/definitions/lms_backend_internal_domain.Module"
+                    "$ref": "#/definitions/domain.Module"
                 }
             }
         },
-        "lms_backend_internal_domain.MonthlySchedule": {
+        "domain.MonthlySchedule": {
             "type": "object",
             "properties": {
                 "days": {
@@ -2692,7 +2317,7 @@ const docTemplate = `{
                     "additionalProperties": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/definitions/lms_backend_internal_domain.ScheduleLesson"
+                            "$ref": "#/definitions/domain.ScheduleLesson"
                         }
                     }
                 },
@@ -2704,7 +2329,7 @@ const docTemplate = `{
                 }
             }
         },
-        "lms_backend_internal_domain.PerformanceZones": {
+        "domain.PerformanceZones": {
             "type": "object",
             "properties": {
                 "green_count": {
@@ -2730,7 +2355,7 @@ const docTemplate = `{
                 }
             }
         },
-        "lms_backend_internal_domain.Project": {
+        "domain.Project": {
             "type": "object",
             "properties": {
                 "created_at": {
@@ -2753,7 +2378,7 @@ const docTemplate = `{
                 }
             }
         },
-        "lms_backend_internal_domain.Role": {
+        "domain.Role": {
             "type": "string",
             "enum": [
                 "student",
@@ -2772,7 +2397,7 @@ const docTemplate = `{
                 "RoleAdmin"
             ]
         },
-        "lms_backend_internal_domain.ScheduleLesson": {
+        "domain.ScheduleLesson": {
             "type": "object",
             "properties": {
                 "color": {
@@ -2813,7 +2438,7 @@ const docTemplate = `{
                 }
             }
         },
-        "lms_backend_internal_domain.StatisticSummary": {
+        "domain.StatisticSummary": {
             "type": "object",
             "properties": {
                 "breakdown": {
@@ -2830,7 +2455,7 @@ const docTemplate = `{
                 }
             }
         },
-        "lms_backend_internal_domain.Stream": {
+        "domain.Stream": {
             "type": "object",
             "properties": {
                 "course_id": {
@@ -2850,7 +2475,7 @@ const docTemplate = `{
                 }
             }
         },
-        "lms_backend_internal_domain.StudentCoursePreview": {
+        "domain.StudentCoursePreview": {
             "type": "object",
             "properties": {
                 "description": {
@@ -2873,21 +2498,21 @@ const docTemplate = `{
                 }
             }
         },
-        "lms_backend_internal_domain.StudentCourseView": {
+        "domain.StudentCourseView": {
             "type": "object",
             "properties": {
                 "course": {
-                    "$ref": "#/definitions/lms_backend_internal_domain.Course"
+                    "$ref": "#/definitions/domain.Course"
                 },
                 "modules": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/lms_backend_internal_domain.StudentModuleView"
+                        "$ref": "#/definitions/domain.StudentModuleView"
                     }
                 }
             }
         },
-        "lms_backend_internal_domain.StudentLessonDetail": {
+        "domain.StudentLessonDetail": {
             "type": "object",
             "properties": {
                 "assignment_status": {
@@ -2897,12 +2522,12 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "lesson": {
-                    "$ref": "#/definitions/lms_backend_internal_domain.Lesson"
+                    "$ref": "#/definitions/domain.Lesson"
                 },
                 "materials": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/lms_backend_internal_domain.LessonMaterial"
+                        "$ref": "#/definitions/domain.LessonMaterial"
                     }
                 },
                 "next_lesson_id": {
@@ -2916,7 +2541,7 @@ const docTemplate = `{
                 }
             }
         },
-        "lms_backend_internal_domain.StudentLessonRef": {
+        "domain.StudentLessonRef": {
             "type": "object",
             "properties": {
                 "duration_min": {
@@ -2939,7 +2564,7 @@ const docTemplate = `{
                 }
             }
         },
-        "lms_backend_internal_domain.StudentModuleView": {
+        "domain.StudentModuleView": {
             "type": "object",
             "properties": {
                 "description": {
@@ -2951,7 +2576,7 @@ const docTemplate = `{
                 "lessons": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/lms_backend_internal_domain.StudentLessonRef"
+                        "$ref": "#/definitions/domain.StudentLessonRef"
                     }
                 },
                 "order_num": {
@@ -2962,7 +2587,7 @@ const docTemplate = `{
                 }
             }
         },
-        "lms_backend_internal_domain.StudentTableItem": {
+        "domain.StudentTableItem": {
             "type": "object",
             "properties": {
                 "age": {
@@ -3024,7 +2649,7 @@ const docTemplate = `{
                 }
             }
         },
-        "lms_backend_internal_domain.SubmissionRecord": {
+        "domain.SubmissionRecord": {
             "type": "object",
             "properties": {
                 "course_title": {
@@ -3053,7 +2678,7 @@ const docTemplate = `{
                 }
             }
         },
-        "lms_backend_internal_domain.TeacherPublicInfo": {
+        "domain.TeacherPublicInfo": {
             "type": "object",
             "properties": {
                 "avatar_url": {
@@ -3080,12 +2705,12 @@ const docTemplate = `{
                 "reviews": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/lms_backend_internal_domain.TeacherReview"
+                        "$ref": "#/definitions/domain.TeacherReview"
                     }
                 }
             }
         },
-        "lms_backend_internal_domain.TeacherReview": {
+        "domain.TeacherReview": {
             "type": "object",
             "properties": {
                 "comment": {
@@ -3114,7 +2739,7 @@ const docTemplate = `{
                 }
             }
         },
-        "lms_backend_internal_domain.TeacherTableItem": {
+        "domain.TeacherTableItem": {
             "type": "object",
             "properties": {
                 "city": {
@@ -3152,7 +2777,7 @@ const docTemplate = `{
                 }
             }
         },
-        "lms_backend_internal_domain.Test": {
+        "domain.Test": {
             "type": "object",
             "properties": {
                 "created_at": {
@@ -3175,7 +2800,7 @@ const docTemplate = `{
                 }
             }
         },
-        "lms_backend_internal_domain.UpcomingLesson": {
+        "domain.UpcomingLesson": {
             "type": "object",
             "properties": {
                 "course_title": {
@@ -3195,7 +2820,7 @@ const docTemplate = `{
                 }
             }
         },
-        "lms_backend_internal_domain.User": {
+        "domain.User": {
             "type": "object",
             "properties": {
                 "avatar_url": {
@@ -3238,7 +2863,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "role": {
-                    "$ref": "#/definitions/lms_backend_internal_domain.Role"
+                    "$ref": "#/definitions/domain.Role"
                 },
                 "school_name": {
                     "type": "string"
@@ -3251,7 +2876,7 @@ const docTemplate = `{
                 }
             }
         },
-        "lms_backend_internal_domain.WeeklySchedule": {
+        "domain.WeeklySchedule": {
             "type": "object",
             "properties": {
                 "days": {
@@ -3259,7 +2884,7 @@ const docTemplate = `{
                     "additionalProperties": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/definitions/lms_backend_internal_domain.ScheduleLesson"
+                            "$ref": "#/definitions/domain.ScheduleLesson"
                         }
                     }
                 },
@@ -3271,27 +2896,384 @@ const docTemplate = `{
                 }
             }
         },
-        "multipart.FileHeader": {
+        "http.CreateFullUserRequest": {
             "type": "object",
             "properties": {
-                "filename": {
+                "birth_date": {
+                    "type": "string",
+                    "example": "20.01.2000"
+                },
+                "city": {
+                    "type": "string",
+                    "example": "Алматы"
+                },
+                "course_id": {
                     "type": "string"
                 },
-                "header": {
-                    "$ref": "#/definitions/textproto.MIMEHeader"
+                "email": {
+                    "type": "string",
+                    "example": "student@test.kz"
                 },
-                "size": {
+                "experience_years": {
                     "type": "integer",
-                    "format": "int64"
+                    "example": 5
+                },
+                "full_name": {
+                    "type": "string",
+                    "example": "Иван Иванов"
+                },
+                "gender": {
+                    "type": "string",
+                    "example": "male"
+                },
+                "group_id": {
+                    "type": "string"
+                },
+                "language": {
+                    "type": "string",
+                    "example": "ru"
+                },
+                "parents": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/usecase.ParentInfo"
+                    }
+                },
+                "password": {
+                    "type": "string",
+                    "example": "secret123"
+                },
+                "phone": {
+                    "type": "string",
+                    "example": "+79998887766"
+                },
+                "role": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/domain.Role"
+                        }
+                    ],
+                    "example": "student"
+                },
+                "school_name": {
+                    "type": "string",
+                    "example": "Школа №123"
+                },
+                "stream_id": {
+                    "type": "string"
+                },
+                "telegram": {
+                    "type": "string",
+                    "example": "https://t.me/..."
+                },
+                "whatsapp": {
+                    "type": "string",
+                    "example": "https://wa.me/..."
                 }
             }
         },
-        "textproto.MIMEHeader": {
+        "http.CreateGroupRequest": {
             "type": "object",
-            "additionalProperties": {
-                "type": "array",
-                "items": {
+            "properties": {
+                "curator_id": {
+                    "type": "string",
+                    "example": "u4444444-4444-4444-4444-444444444444"
+                },
+                "stream_id": {
+                    "type": "string",
+                    "example": "s3333333-3333-3333-3333-333333333333"
+                },
+                "teacher_id": {
+                    "type": "string",
+                    "example": "u5555555-5555-5555-5555-555555555555"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Группа А-1"
+                }
+            }
+        },
+        "http.CreateLessonRequest": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.ContentBlock"
+                    }
+                },
+                "content_text": {
                     "type": "string"
+                },
+                "course_id": {
+                    "type": "string",
+                    "example": "uuid"
+                },
+                "module_id": {
+                    "type": "string",
+                    "example": "uuid"
+                },
+                "order_num": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "teacher_id": {
+                    "type": "string",
+                    "example": "uuid"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Название урока"
+                }
+            }
+        },
+        "http.CreateModuleRequest": {
+            "type": "object",
+            "properties": {
+                "course_id": {
+                    "type": "string",
+                    "example": "c1111111-1111-1111-1111-111111111111"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "Типы данных, переменные, циклы"
+                },
+                "order_num": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Основы синтаксиса"
+                }
+            }
+        },
+        "http.CreateProjectRequest": {
+            "type": "object",
+            "properties": {
+                "course_id": {
+                    "type": "string",
+                    "example": "uuid"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "Разработка API на Go"
+                },
+                "lesson_id": {
+                    "type": "string",
+                    "example": "l2222222-2222-2222-2222-222222222222"
+                },
+                "lesson_number": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "max_score": {
+                    "type": "integer",
+                    "example": 100
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Финальный проект"
+                }
+            }
+        },
+        "http.CreateStreamRequest": {
+            "type": "object",
+            "properties": {
+                "course_id": {
+                    "type": "string",
+                    "example": "c1111111-1111-1111-1111-111111111111"
+                },
+                "start_date": {
+                    "type": "string",
+                    "example": "2024-09-01"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Поток Сентябрь 2024"
+                }
+            }
+        },
+        "http.CreateTestRequest": {
+            "type": "object",
+            "properties": {
+                "course_id": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "lesson_id": {
+                    "type": "string"
+                },
+                "lesson_number": {
+                    "type": "integer"
+                },
+                "passing_score": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "http.EnrollRequest": {
+            "type": "object",
+            "properties": {
+                "course_id": {
+                    "type": "string",
+                    "example": "c1111111-1111-1111-1111-111111111111"
+                },
+                "user_id": {
+                    "type": "string",
+                    "example": "a0000000-0000-0000-0000-000000000001"
+                }
+            }
+        },
+        "http.EvaluateRequest": {
+            "type": "object",
+            "properties": {
+                "comment": {
+                    "type": "string"
+                },
+                "grade": {
+                    "type": "integer"
+                },
+                "is_accepted": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "http.LoginRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "admin@capedu.kz"
+                },
+                "password": {
+                    "type": "string",
+                    "example": "capedu123"
+                }
+            }
+        },
+        "http.ReviewRequest": {
+            "type": "object",
+            "properties": {
+                "comment": {
+                    "type": "string"
+                },
+                "rating": {
+                    "type": "integer"
+                }
+            }
+        },
+        "usecase.CreateBulkCourseInput": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "imageURL": {
+                    "type": "string"
+                },
+                "isMain": {
+                    "type": "boolean"
+                },
+                "modules": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/usecase.ModuleBulkInput"
+                    }
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "usecase.CreateLessonInput": {
+            "type": "object"
+        },
+        "usecase.CreateModuleInput": {
+            "type": "object",
+            "properties": {
+                "course_id": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "lesson_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "order_num": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "usecase.LessonBulkInput": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.ContentBlock"
+                    }
+                },
+                "contentText": {
+                    "type": "string"
+                },
+                "orderNum": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "videoURL": {
+                    "type": "string"
+                }
+            }
+        },
+        "usecase.ModuleBulkInput": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "lessons": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/usecase.LessonBulkInput"
+                    }
+                },
+                "orderNum": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "usecase.ParentInfo": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "parent@test.kz"
+                },
+                "full_name": {
+                    "type": "string",
+                    "example": "Иван Петров"
+                },
+                "phone": {
+                    "type": "string",
+                    "example": "+77001112233"
                 }
             }
         }

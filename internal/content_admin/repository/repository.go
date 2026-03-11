@@ -685,3 +685,26 @@ func (r *ContentAdminRepoImpl) UnenrollStudent(ctx context.Context, userID, cour
 	_, err := r.db.ExecContext(ctx, query, userID, courseID)
 	return err
 }
+func (r *ContentAdminRepoImpl) UpdateLesson(ctx context.Context, lesson *domain.Lesson) error {
+	contentJSON, err := json.Marshal(lesson.Content)
+	if err != nil {
+		contentJSON = []byte("[]")
+	}
+
+	query := `
+		UPDATE lessons 
+		SET title = $1, order_num = $2, video_url = $3, presentation_url = $4, 
+		    content_text = $5, content = $6, is_published = $7, module_id = $8, teacher_id = $9
+		WHERE id = $10`
+	
+	var tid sql.NullString
+	if lesson.TeacherID != "" {
+		tid = sql.NullString{String: lesson.TeacherID, Valid: true}
+	}
+
+	_, err = r.db.ExecContext(ctx, query,
+		lesson.Title, lesson.OrderNum, lesson.VideoURL, lesson.PresentationURL,
+		lesson.ContentText, contentJSON, lesson.IsPublished, lesson.ModuleID, tid, lesson.ID,
+	)
+	return err
+}

@@ -748,3 +748,23 @@ func (uc *ContentAdminUseCase) CreateFullCourse(ctx context.Context, input Creat
 func (uc *ContentAdminUseCase) UnenrollStudent(ctx context.Context, userID, courseID string) error {
 	return uc.repo.UnenrollStudent(ctx, userID, courseID)
 }
+func (uc *ContentAdminUseCase) UpdateLesson(ctx context.Context, lessonID string, input CreateLessonInput) error {
+	
+	var modID *string
+	if input.ModuleID != "" {
+		modID = &input.ModuleID
+	}
+
+	lesson := &domain.Lesson{
+		ID:              lessonID,
+		Title:           input.Title,
+		OrderNum:        input.OrderNum,
+		ContentText:     input.ContentText,
+		Content:         input.Content,
+		ModuleID:        modID,
+		TeacherID:       input.TeacherID,
+		IsPublished:     true,
+	}
+
+	return uc.repo.UpdateLesson(ctx, lesson)
+}

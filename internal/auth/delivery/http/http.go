@@ -58,7 +58,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token := "mock-jwt-token-for-user-" + user.Email
+	token := user.ID + ":" + string(user.Role)
 
 	http.SetCookie(w, &http.Cookie{
 		Name:     "auth_token",

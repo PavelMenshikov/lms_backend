@@ -971,3 +971,35 @@ func (h *ContentAdminHandler) UnenrollStudent(w http.ResponseWriter, r *http.Req
 	}
 	w.WriteHeader(http.StatusOK)
 }
+// UpdateLesson godoc
+// @Summary ADMIN: Редактировать урок
+// @Tags Admin-Content
+// @Accept json
+// @Param id path string true "Lesson ID"
+// @Param request body CreateLessonRequest true "Данные урока"
+// @Success 200 {object} map[string]string
+// @Router /admin/lessons/{id} [put]
+func (h *ContentAdminHandler) UpdateLesson(w http.ResponseWriter, r *http.Request) {
+	lessonID := chi.URLParam(r, "id")
+	var req CreateLessonRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	input := usecase.CreateLessonInput{
+		CourseID:    req.CourseID,
+		ModuleID:    req.ModuleID,
+		TeacherID:   req.TeacherID,
+		Title:       req.Title,
+		OrderNum:    req.OrderNum,
+		ContentText: req.ContentText,
+		Content:     req.Content,
+	}
+
+	if err := h.uc.UpdateLesson(r.Context(), lessonID, input); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(map[string]string{"status": "updated"})
+}
