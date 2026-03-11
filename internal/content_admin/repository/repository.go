@@ -15,6 +15,7 @@ type ContentAdminRepository interface {
 	CreateModule(ctx context.Context, module *domain.Module) (string, error)
 	DeleteModule(ctx context.Context, id string) error
 	CreateLesson(ctx context.Context, lesson *domain.Lesson) (string, error)
+	UpdateLesson(ctx context.Context, lesson *domain.Lesson) error
 	DeleteLesson(ctx context.Context, id string) error
 	AssignTeacherToLesson(ctx context.Context, lessonID, teacherID string) error
 	GetLessonIDByOrder(ctx context.Context, courseID string, orderNum int) (string, error)
