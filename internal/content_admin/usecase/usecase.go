@@ -749,22 +749,30 @@ func (uc *ContentAdminUseCase) UnenrollStudent(ctx context.Context, userID, cour
 	return uc.repo.UnenrollStudent(ctx, userID, courseID)
 }
 func (uc *ContentAdminUseCase) UpdateLesson(ctx context.Context, lessonID string, input CreateLessonInput) error {
-	
-	var modID *string
+	existing, err := uc.repo.GetLessonByID(ctx, lessonID)
+	if err != nil {
+		return fmt.Errorf("lesson not found: %w", err)
+	}
+
+	if input.Title != "" {
+		existing.Title = input.Title
+	}
+	if input.OrderNum != 0 {
+		existing.OrderNum = input.OrderNum
+	}
+	if input.ContentText != "" {
+		existing.ContentText = input.ContentText
+	}
+	if len(input.Content) > 0 {
+		existing.Content = input.Content
+	}
+    
 	if input.ModuleID != "" {
-		modID = &input.ModuleID
+		existing.ModuleID = &input.ModuleID
+	}
+	if input.TeacherID != "" {
+		existing.TeacherID = input.TeacherID
 	}
 
-	lesson := &domain.Lesson{
-		ID:              lessonID,
-		Title:           input.Title,
-		OrderNum:        input.OrderNum,
-		ContentText:     input.ContentText,
-		Content:         input.Content,
-		ModuleID:        modID,
-		TeacherID:       input.TeacherID,
-		IsPublished:     true,
-	}
-
-	return uc.repo.UpdateLesson(ctx, lesson)
+	return uc.repo.UpdateLesson(ctx, existing)
 }

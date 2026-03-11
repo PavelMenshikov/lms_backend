@@ -796,19 +796,14 @@ definitions:
       content_text:
         type: string
       course_id:
-        example: uuid
         type: string
       module_id:
-        example: uuid
         type: string
       order_num:
-        example: 1
         type: integer
       teacher_id:
-        example: uuid
         type: string
       title:
-        example: Название урока
         type: string
     type: object
   http.CreateModuleRequest:

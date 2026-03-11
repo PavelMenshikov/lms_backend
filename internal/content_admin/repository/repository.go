@@ -17,6 +17,7 @@ type ContentAdminRepository interface {
 	CreateLesson(ctx context.Context, lesson *domain.Lesson) (string, error)
 	UpdateLesson(ctx context.Context, lesson *domain.Lesson) error
 	DeleteLesson(ctx context.Context, id string) error
+	GetLessonByID(ctx context.Context, id string) (*domain.Lesson, error)
 	AssignTeacherToLesson(ctx context.Context, lessonID, teacherID string) error
 	GetLessonIDByOrder(ctx context.Context, courseID string, orderNum int) (string, error)
 	GetAllCourses(ctx context.Context) ([]*domain.Course, error)
@@ -709,4 +710,30 @@ func (r *ContentAdminRepoImpl) UpdateLesson(ctx context.Context, lesson *domain.
 		lesson.ContentText, contentJSON, lesson.IsPublished, lesson.ModuleID, tid, lesson.ID,
 	)
 	return err
+}
+
+func (r *ContentAdminRepoImpl) GetLessonByID(ctx context.Context, id string) (*domain.Lesson, error) {
+	l := &domain.Lesson{}
+	var mid, tid sql.NullString
+	var contentRaw []byte
+	query := `SELECT id, course_id, module_id, teacher_id, title, lesson_time, duration_min, order_num, is_published, video_url, presentation_url, content_text, content 
+              FROM lessons WHERE id = $1`
+	err := r.db.QueryRowContext(ctx, query, id).Scan(
+		&l.ID, &l.CourseID, &mid, &tid, &l.Title, &l.LessonTime, &l.DurationMin, &l.OrderNum, 
+		&l.IsPublished, &l.VideoURL, &l.PresentationURL, &l.ContentText, &contentRaw,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if mid.Valid {
+		s := mid.String
+		l.ModuleID = &s
+	}
+	if tid.Valid {
+		l.TeacherID = tid.String
+	}
+	if len(contentRaw) > 0 {
+		_ = json.Unmarshal(contentRaw, &l.Content)
+	}
+	return l, nil
 }

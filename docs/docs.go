@@ -3006,24 +3006,19 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "course_id": {
-                    "type": "string",
-                    "example": "uuid"
+                    "type": "string"
                 },
                 "module_id": {
-                    "type": "string",
-                    "example": "uuid"
+                    "type": "string"
                 },
                 "order_num": {
-                    "type": "integer",
-                    "example": 1
+                    "type": "integer"
                 },
                 "teacher_id": {
-                    "type": "string",
-                    "example": "uuid"
+                    "type": "string"
                 },
                 "title": {
-                    "type": "string",
-                    "example": "Название урока"
+                    "type": "string"
                 }
             }
         },

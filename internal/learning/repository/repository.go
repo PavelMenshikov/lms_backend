@@ -115,17 +115,32 @@ func (r *LearningRepoImpl) GetCourseContent(ctx context.Context, courseID, userI
 
 func (r *LearningRepoImpl) GetLessonDetail(ctx context.Context, lessonID, userID string) (*domain.StudentLessonDetail, error) {
 	lesson := &domain.Lesson{}
-	query := `SELECT id, title, video_url, presentation_url, content_text, duration_min FROM lessons WHERE id = $1 AND is_published = true`
-	err := r.db.QueryRowContext(ctx, query, lessonID).Scan(&lesson.ID, &lesson.Title, &lesson.VideoURL, &lesson.PresentationURL, &lesson.ContentText, &lesson.DurationMin)
+	var contentRaw []byte 
+
+	query := `SELECT id, title, video_url, presentation_url, content_text, content, duration_min 
+              FROM lessons WHERE id = $1 AND is_published = true`
+	
+	err := r.db.QueryRowContext(ctx, query, lessonID).Scan(
+		&lesson.ID, &lesson.Title, &lesson.VideoURL, &lesson.PresentationURL, 
+		&lesson.ContentText, &contentRaw, &lesson.DurationMin,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("lesson not found: %w", err)
 	}
+
+	if len(contentRaw) > 0 {
+		_ = json.Unmarshal(contentRaw, &lesson.Content)
+	}
+	if lesson.Content == nil {
+		lesson.Content = []domain.ContentBlock{} 
+	}
+
 	var isCompleted bool
 	queryStatus := `SELECT EXISTS(SELECT 1 FROM user_lesson_attendance WHERE lesson_id = $1 AND user_id = $2 AND is_attended = true)`
 	_ = r.db.QueryRowContext(ctx, queryStatus, lessonID, userID).Scan(&isCompleted)
+	
 	return &domain.StudentLessonDetail{Lesson: lesson, IsCompleted: isCompleted}, nil
 }
-
 func (r *LearningRepoImpl) GetAssignmentIDByLesson(ctx context.Context, lessonID string) (string, error) {
 	var id string
 	query := `SELECT id FROM assignments WHERE lesson_id = $1 LIMIT 1`

@@ -25,13 +25,13 @@ func NewContentAdminHandler(uc *usecase.ContentAdminUseCase) *ContentAdminHandle
 
 
 type CreateLessonRequest struct {
-	CourseID         string                `json:"course_id" example:"uuid"`
-	ModuleID         string                `json:"module_id" example:"uuid"`
-	TeacherID        string                `json:"teacher_id" example:"uuid"`
-	Title            string                `json:"title" example:"Название урока"`
-	OrderNum         int                   `json:"order_num" example:"1"`
-	ContentText      string                `json:"content_text"`
-	Content          []domain.ContentBlock `json:"content"` 
+	CourseID    string                `json:"course_id"`
+	ModuleID    *string               `json:"module_id"` 
+	TeacherID   *string               `json:"teacher_id"` 
+	Title       string                `json:"title"`
+	OrderNum    int                   `json:"order_num"`
+	ContentText string                `json:"content_text"`
+	Content     []domain.ContentBlock `json:"content"`
 }
 
 type CreateFullUserRequest struct {
