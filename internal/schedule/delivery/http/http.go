@@ -8,7 +8,7 @@ import (
 
 	authMiddleware "lms_backend/internal/auth/delivery/middleware"
 	"lms_backend/internal/schedule/usecase"
-	"lms_backend/internal/domain" 
+	_"lms_backend/internal/domain" 
 )
 
 type ScheduleHandler struct {
