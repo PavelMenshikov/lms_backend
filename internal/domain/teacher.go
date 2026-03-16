@@ -29,5 +29,9 @@ type TeacherPublicInfo struct {
 	Rating          float64          `json:"rating"`
 	ExperienceYears int              `json:"experience_years"`
 	Bio             string           `json:"bio"`
-	Reviews         []*TeacherReview `json:"reviews"`
+	Email           string           `json:"email"`    
+	City            string           `json:"city"`     
+	Phone           string           `json:"phone"`    
+	Schedule        interface{}      `json:"schedule"` 
+	Reviews[]*TeacherReview `json:"reviews"`
 }

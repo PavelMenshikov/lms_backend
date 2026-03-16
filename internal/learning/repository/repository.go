@@ -209,9 +209,9 @@ func (r *LearningRepoImpl) MarkLessonComplete(ctx context.Context, userID, lesso
 func (r *LearningRepoImpl) GetTeachersList(ctx context.Context) ([]*domain.TeacherPublicInfo, error) {
 	query := `
 		SELECT u.id, u.first_name, u.last_name, COALESCE(u.avatar_url, ''), 
-		       COALESCE(t.rating, 0.0), COALESCE(u.experience_years, 0)
+		       COALESCE((SELECT ROUND(AVG(rating), 1) FROM teacher_reviews WHERE teacher_id = u.id), 0.0) as rating, 
+		       COALESCE(u.experience_years, 0), u.email, COALESCE(u.city, ''), COALESCE(u.phone, '')
 		FROM users u
-		LEFT JOIN teachers t ON u.id = t.id
 		WHERE u.role = 'teacher'
 	`
 	rows, err := r.db.QueryContext(ctx, query)
@@ -219,10 +219,10 @@ func (r *LearningRepoImpl) GetTeachersList(ctx context.Context) ([]*domain.Teach
 		return nil, err
 	}
 	defer rows.Close()
-	var teachers []*domain.TeacherPublicInfo
+	var teachers[]*domain.TeacherPublicInfo
 	for rows.Next() {
 		t := &domain.TeacherPublicInfo{}
-		if err := rows.Scan(&t.ID, &t.FirstName, &t.LastName, &t.AvatarURL, &t.Rating, &t.ExperienceYears); err != nil {
+		if err := rows.Scan(&t.ID, &t.FirstName, &t.LastName, &t.AvatarURL, &t.Rating, &t.ExperienceYears, &t.Email, &t.City, &t.Phone); err != nil {
 			return nil, err
 		}
 		teachers = append(teachers, t)
@@ -232,17 +232,34 @@ func (r *LearningRepoImpl) GetTeachersList(ctx context.Context) ([]*domain.Teach
 
 func (r *LearningRepoImpl) GetTeacherByID(ctx context.Context, id string) (*domain.TeacherPublicInfo, error) {
 	t := &domain.TeacherPublicInfo{}
+	
 	query := `
 		SELECT u.id, u.first_name, u.last_name, COALESCE(u.avatar_url, ''), 
-		       COALESCE(t.rating, 0.0), COALESCE(u.experience_years, 0), COALESCE(t.bio, '')
+		       COALESCE((SELECT ROUND(AVG(rating), 1) FROM teacher_reviews WHERE teacher_id = u.id), 0.0) as rating, 
+		       COALESCE(u.experience_years, 0), COALESCE(t.bio, ''), u.email, COALESCE(u.city, ''), COALESCE(u.phone, '')
 		FROM users u
 		LEFT JOIN teachers t ON u.id = t.id
 		WHERE u.id = $1 AND u.role = 'teacher'
 	`
-	err := r.db.QueryRowContext(ctx, query, id).Scan(&t.ID, &t.FirstName, &t.LastName, &t.AvatarURL, &t.Rating, &t.ExperienceYears, &t.Bio)
+	
+	err := r.db.QueryRowContext(ctx, query, id).Scan(
+		&t.ID, &t.FirstName, &t.LastName, &t.AvatarURL, 
+		&t.Rating, &t.ExperienceYears, &t.Bio, &t.Email, &t.City, &t.Phone,
+	)
 	if err != nil {
 		return nil, err
 	}
+
+	t.Schedule = map[string]interface{}{
+		"monday":    map[string]interface{}{"isOpen": true, "intervals": []map[string]string{{"start": "09:00", "end": "13:00"}, {"start": "14:00", "end": "18:00"}}},
+		"tuesday":   map[string]interface{}{"isOpen": true, "intervals": []map[string]string{{"start": "09:00", "end": "18:00"}}},
+		"wednesday": map[string]interface{}{"isOpen": true, "intervals": []map[string]string{{"start": "09:00", "end": "18:00"}}},
+		"thursday":  map[string]interface{}{"isOpen": true, "intervals": []map[string]string{{"start": "09:00", "end": "18:00"}}},
+		"friday":    map[string]interface{}{"isOpen": true, "intervals": []map[string]string{{"start": "09:00", "end": "17:00"}}},
+		"saturday":  map[string]interface{}{"isOpen": false, "intervals": []interface{}{}},
+		"sunday":    map[string]interface{}{"isOpen": false, "intervals": []interface{}{}},
+	}
+	
 	return t, nil
 }
 
