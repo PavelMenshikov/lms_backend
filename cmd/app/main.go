@@ -249,9 +249,7 @@ func main() {
 		r.Post("/admin/groups", adminHandler.CreateGroup)
 		r.Get("/admin/groups", adminHandler.GetGroups)
 
-		r.Get("/teachers", learningHandler.GetTeachers)
-		r.Get("/teachers/{id}", learningHandler.GetTeacherDetails)
-		r.Post("/teachers/{id}/reviews", learningHandler.AddReview)
+
 
 		r.Get("/staff/submissions", reviewHandler.GetPendingSubmissions)
 		r.Post("/staff/submissions/{id}/evaluate", reviewHandler.EvaluateSubmission)
@@ -259,6 +257,9 @@ func main() {
 
 	r.Group(func(r chi.Router) {
 		r.Use(authMiddleware.AuthMiddleware)
+		r.Get("/teachers", learningHandler.GetTeachers)
+		r.Get("/teachers/{id}", learningHandler.GetTeacherDetails)
+		r.Post("/teachers/{id}/reviews", learningHandler.AddReview)
 		r.Get("/dashboard/home", dashboardHandler.GetUserHome)
 		r.Get("/my-courses", learningHandler.GetMyCourses)
 		r.Get("/courses/{id}", learningHandler.GetCourseContent)

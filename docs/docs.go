@@ -2603,6 +2603,18 @@ const docTemplate = `{
                 "order_num": {
                     "type": "integer"
                 },
+                "projects": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.Project"
+                    }
+                },
+                "tests": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.Test"
+                    }
+                },
                 "title": {
                     "type": "string"
                 }

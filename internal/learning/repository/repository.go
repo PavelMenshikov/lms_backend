@@ -59,9 +59,9 @@ func (r *LearningRepoImpl) GetMyCourses(ctx context.Context, userID string) ([]*
 func (r *LearningRepoImpl) GetCourseContent(ctx context.Context, courseID, userID string) (*domain.StudentCourseView, error) {
 	view := &domain.StudentCourseView{
 		Modules:      []*domain.StudentModuleView{},
-		RootLessons:  []*domain.StudentLessonRef{},
+		RootLessons:[]*domain.StudentLessonRef{},
 		RootTests:    []domain.Test{},
-		RootProjects: []domain.Project{},
+		RootProjects:[]domain.Project{},
 	}
 
 	view.Course = &domain.Course{}
@@ -70,9 +70,10 @@ func (r *LearningRepoImpl) GetCourseContent(ctx context.Context, courseID, userI
 	if err != nil {
 		return nil, err
 	}
+
 	rowsM, _ := r.db.QueryContext(ctx, "SELECT id, title, description, order_num FROM modules WHERE course_id = $1 ORDER BY order_num ASC", courseID)
 	for rowsM.Next() {
-		m := &domain.StudentModuleView{Lessons: []*domain.StudentLessonRef{}}
+		m := &domain.StudentModuleView{Lessons:[]*domain.StudentLessonRef{}}
 		rowsM.Scan(&m.ID, &m.Title, &m.Description, &m.OrderNum)
 		view.Modules = append(view.Modules, m)
 	}
@@ -90,24 +91,66 @@ func (r *LearningRepoImpl) GetCourseContent(ctx context.Context, courseID, userI
 		ORDER BY l.order_num ASC`
 	
 	rowsL, _ := r.db.QueryContext(ctx, queryL, courseID, userID)
+	
+	allLessonsMap := make(map[string]*domain.StudentLessonRef)
+
 	for rowsL.Next() {
 		var l domain.StudentLessonRef
 		var mid sql.NullString
 		rowsL.Scan(&l.ID, &mid, &l.Title, &l.OrderNum, &l.DurationMin, &l.IsCompleted)
 		
+		l.Tests =[]domain.Test{}
+		l.Projects = []domain.Project{}
+		allLessonsMap[l.ID] = &l
+
 		if mid.Valid {
 			for _, m := range view.Modules {
 				if m.ID == mid.String {
-					m.Lessons = append(m.Lessons, &l)
+					m.Lessons = append(m.Lessons, allLessonsMap[l.ID])
 				}
 			}
 		} else {
-			view.RootLessons = append(view.RootLessons, &l)
+			view.RootLessons = append(view.RootLessons, allLessonsMap[l.ID])
 		}
 	}
 	rowsL.Close()
 
-	
+	testsQuery := `SELECT id, lesson_id, title, description, passing_score FROM tests WHERE lesson_id IN (SELECT id FROM lessons WHERE course_id = $1)`
+	rowsT, _ := r.db.QueryContext(ctx, testsQuery, courseID)
+	for rowsT.Next() {
+		var t domain.Test
+		var lid sql.NullString
+		rowsT.Scan(&t.ID, &lid, &t.Title, &t.Description, &t.PassingScore)
+		if lid.Valid {
+			s := lid.String
+			t.LessonID = &s
+			if less, ok := allLessonsMap[s]; ok {
+				less.Tests = append(less.Tests, t)
+			}
+		} else {
+			view.RootTests = append(view.RootTests, t)
+		}
+	}
+	rowsT.Close()
+
+	projQuery := `SELECT id, lesson_id, title, description, max_score FROM projects WHERE lesson_id IN (SELECT id FROM lessons WHERE course_id = $1)`
+	rowsP, _ := r.db.QueryContext(ctx, projQuery, courseID)
+	for rowsP.Next() {
+		var p domain.Project
+		var lid sql.NullString
+		rowsP.Scan(&p.ID, &lid, &p.Title, &p.Description, &p.MaxScore)
+		if lid.Valid {
+			s := lid.String
+			p.LessonID = &s
+			if less, ok := allLessonsMap[s]; ok {
+				less.Projects = append(less.Projects, p)
+			}
+		} else {
+			view.RootProjects = append(view.RootProjects, p)
+		}
+	}
+	rowsP.Close()
+
 	return view, nil
 }
 

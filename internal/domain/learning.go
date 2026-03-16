@@ -28,12 +28,14 @@ type StudentModuleView struct {
 }
 
 type StudentLessonRef struct {
-	ID          string `json:"id"`
-	Title       string `json:"title"`
-	OrderNum    int    `json:"order_num"`
-	DurationMin int    `json:"duration_min"`
-	IsCompleted bool   `json:"is_completed"`
-	IsLocked    bool   `json:"is_locked"`
+	ID          string    `json:"id"`
+	Title       string    `json:"title"`
+	OrderNum    int       `json:"order_num"`
+	DurationMin int       `json:"duration_min"`
+	IsCompleted bool      `json:"is_completed"`
+	IsLocked    bool      `json:"is_locked"`
+	Tests[]Test    `json:"tests"` 
+	Projects[]Project `json:"projects"` 
 }
 
 type StudentLessonDetail struct {

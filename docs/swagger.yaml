@@ -510,6 +510,14 @@ definitions:
         type: boolean
       order_num:
         type: integer
+      projects:
+        items:
+          $ref: '#/definitions/domain.Project'
+        type: array
+      tests:
+        items:
+          $ref: '#/definitions/domain.Test'
+        type: array
       title:
         type: string
     type: object
