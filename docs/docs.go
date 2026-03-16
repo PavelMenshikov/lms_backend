@@ -541,6 +541,32 @@ const docTemplate = `{
             }
         },
         "/admin/lessons/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin-Content"
+                ],
+                "summary": "ADMIN: Получить данные урока для редактора",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Lesson ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/domain.Lesson"
+                        }
+                    }
+                }
+            },
             "put": {
                 "consumes": [
                     "application/json"
@@ -2508,6 +2534,24 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/domain.StudentModuleView"
+                    }
+                },
+                "root_lessons": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.StudentLessonRef"
+                    }
+                },
+                "root_projects": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.Project"
+                    }
+                },
+                "root_tests": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.Test"
                     }
                 }
             }

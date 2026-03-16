@@ -775,3 +775,6 @@ func (uc *ContentAdminUseCase) UpdateLesson(ctx context.Context, lessonID string
 
 	return uc.repo.UpdateLesson(ctx, existing)
 }
+func (uc *ContentAdminUseCase) GetLesson(ctx context.Context, lessonID string) (*domain.Lesson, error) {
+	return uc.repo.GetLessonByID(ctx, lessonID)
+}

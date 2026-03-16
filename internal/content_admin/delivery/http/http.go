@@ -1020,3 +1020,20 @@ func (h *ContentAdminHandler) UpdateLesson(w http.ResponseWriter, r *http.Reques
 	}
 	json.NewEncoder(w).Encode(map[string]string{"status": "updated"})
 }
+// GetLesson godoc
+// @Summary ADMIN: Получить данные урока для редактора
+// @Tags Admin-Content
+// @Produce json
+// @Param id path string true "Lesson ID"
+// @Success 200 {object} domain.Lesson
+// @Router /admin/lessons/{id} [get]
+func (h *ContentAdminHandler) GetLesson(w http.ResponseWriter, r *http.Request) {
+	lessonID := chi.URLParam(r, "id")
+	lesson, err := h.uc.GetLesson(r.Context(), lessonID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(lesson)
+}

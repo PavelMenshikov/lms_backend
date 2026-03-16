@@ -12,8 +12,11 @@ type StudentCoursePreview struct {
 }
 
 type StudentCourseView struct {
-	Course  *Course              `json:"course"`
-	Modules []*StudentModuleView `json:"modules"`
+	Course       *Course             `json:"course"`
+	Modules      []*StudentModuleView `json:"modules"`
+	RootLessons  []*StudentLessonRef  `json:"root_lessons"`
+	RootTests    []Test              `json:"root_tests"`
+	RootProjects []Project           `json:"root_projects"`
 }
 
 type StudentModuleView struct {

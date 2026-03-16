@@ -217,6 +217,7 @@ func main() {
 		r.Delete("/admin/modules/{id}", adminHandler.DeleteModule)
 
 		r.Post("/admin/lessons", adminHandler.CreateLesson)
+		r.Get("/admin/lessons/{id}", adminHandler.GetLesson)    
 		r.Put("/admin/lessons/{id}", adminHandler.UpdateLesson)
 		r.Delete("/admin/lessons/{id}", adminHandler.DeleteLesson)
 		r.Post("/admin/modules/bulk", adminHandler.CreateModulesBulk)

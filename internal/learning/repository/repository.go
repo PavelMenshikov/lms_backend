@@ -57,61 +57,58 @@ func (r *LearningRepoImpl) GetMyCourses(ctx context.Context, userID string) ([]*
 }
 
 func (r *LearningRepoImpl) GetCourseContent(ctx context.Context, courseID, userID string) (*domain.StudentCourseView, error) {
-	course := &domain.Course{}
-	queryCourse := `SELECT id, title, description, image_url, is_main FROM courses WHERE id = $1`
-	err := r.db.QueryRowContext(ctx, queryCourse, courseID).Scan(&course.ID, &course.Title, &course.Description, &course.ImageURL, &course.IsMain)
-	if err != nil {
-		return nil, fmt.Errorf("course not found: %w", err)
+	view := &domain.StudentCourseView{
+		Modules:      []*domain.StudentModuleView{},
+		RootLessons:  []*domain.StudentLessonRef{},
+		RootTests:    []domain.Test{},
+		RootProjects: []domain.Project{},
 	}
-	queryModules := `SELECT id, title, description, order_num FROM modules WHERE course_id = $1 ORDER BY order_num ASC`
-	rowsM, err := r.db.QueryContext(ctx, queryModules, courseID)
+
+	view.Course = &domain.Course{}
+	err := r.db.QueryRowContext(ctx, "SELECT id, title, description, image_url, is_main FROM courses WHERE id = $1", courseID).
+		Scan(&view.Course.ID, &view.Course.Title, &view.Course.Description, &view.Course.ImageURL, &view.Course.IsMain)
 	if err != nil {
 		return nil, err
 	}
-	defer rowsM.Close()
-	var modules []*domain.StudentModuleView
+	rowsM, _ := r.db.QueryContext(ctx, "SELECT id, title, description, order_num FROM modules WHERE course_id = $1 ORDER BY order_num ASC", courseID)
 	for rowsM.Next() {
-		m := &domain.StudentModuleView{}
-		if err := rowsM.Scan(&m.ID, &m.Title, &m.Description, &m.OrderNum); err != nil {
-			return nil, err
-		}
-		modules = append(modules, m)
+		m := &domain.StudentModuleView{Lessons: []*domain.StudentLessonRef{}}
+		rowsM.Scan(&m.ID, &m.Title, &m.Description, &m.OrderNum)
+		view.Modules = append(view.Modules, m)
 	}
-	queryLessons := `
+	rowsM.Close()
+
+	queryL := `
 		SELECT 
 			l.id, l.module_id, l.title, l.order_num, l.duration_min,
 			CASE WHEN ula.is_attended = true OR uas.status = 'accepted' THEN true ELSE false END as is_completed
 		FROM lessons l
-		JOIN modules m ON l.module_id = m.id
 		LEFT JOIN user_lesson_attendance ula ON l.id = ula.lesson_id AND ula.user_id = $2
 		LEFT JOIN assignments a ON l.id = a.lesson_id
 		LEFT JOIN user_assignments_submission uas ON a.id = uas.assignment_id AND uas.user_id = $2
-		WHERE m.course_id = $1 AND l.is_published = true
-		ORDER BY l.order_num ASC
-	`
-	rowsL, err := r.db.QueryContext(ctx, queryLessons, courseID, userID)
-	if err != nil {
-		return nil, err
-	}
-	defer rowsL.Close()
-	lessonsByModule := make(map[string][]*domain.StudentLessonRef)
+		WHERE l.course_id = $1 AND l.is_published = true
+		ORDER BY l.order_num ASC`
+	
+	rowsL, _ := r.db.QueryContext(ctx, queryL, courseID, userID)
 	for rowsL.Next() {
 		var l domain.StudentLessonRef
-		var moduleID string
-		if err := rowsL.Scan(&l.ID, &moduleID, &l.Title, &l.OrderNum, &l.DurationMin, &l.IsCompleted); err != nil {
-			return nil, err
-		}
-		l.IsLocked = false
-		lessonsByModule[moduleID] = append(lessonsByModule[moduleID], &l)
-	}
-	for _, m := range modules {
-		if list, ok := lessonsByModule[m.ID]; ok {
-			m.Lessons = list
+		var mid sql.NullString
+		rowsL.Scan(&l.ID, &mid, &l.Title, &l.OrderNum, &l.DurationMin, &l.IsCompleted)
+		
+		if mid.Valid {
+			for _, m := range view.Modules {
+				if m.ID == mid.String {
+					m.Lessons = append(m.Lessons, &l)
+				}
+			}
 		} else {
-			m.Lessons = []*domain.StudentLessonRef{}
+			view.RootLessons = append(view.RootLessons, &l)
 		}
 	}
-	return &domain.StudentCourseView{Course: course, Modules: modules}, nil
+	rowsL.Close()
+
+	
+	return view, nil
 }
 
 func (r *LearningRepoImpl) GetLessonDetail(ctx context.Context, lessonID, userID string) (*domain.StudentLessonDetail, error) {

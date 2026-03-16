@@ -466,6 +466,18 @@ definitions:
         items:
           $ref: '#/definitions/domain.StudentModuleView'
         type: array
+      root_lessons:
+        items:
+          $ref: '#/definitions/domain.StudentLessonRef'
+        type: array
+      root_projects:
+        items:
+          $ref: '#/definitions/domain.Project'
+        type: array
+      root_tests:
+        items:
+          $ref: '#/definitions/domain.Test'
+        type: array
     type: object
   domain.StudentLessonDetail:
     properties:
@@ -1319,6 +1331,23 @@ paths:
         "200":
           description: OK
       summary: 'ADMIN: Удаление урока'
+      tags:
+      - Admin-Content
+    get:
+      parameters:
+      - description: Lesson ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Lesson'
+      summary: 'ADMIN: Получить данные урока для редактора'
       tags:
       - Admin-Content
     put:
