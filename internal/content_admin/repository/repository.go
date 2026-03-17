@@ -27,6 +27,8 @@ type ContentAdminRepository interface {
 	CreateUser(ctx context.Context, user *domain.User) (string, error)
 	GetUsers(ctx context.Context, filter domain.UserFilter) ([]*domain.User, error)
 	GetByID(ctx context.Context, id string) (*domain.User, error)
+	GetTestByID(ctx context.Context, id string) (*domain.Test, error)
+    GetProjectByID(ctx context.Context, id string) (*domain.Project, error)
 	GetParentsByStudentID(ctx context.Context, studentID string) ([]domain.User, error)
 	LinkParentToStudent(ctx context.Context, studentID, parentID string) error
 	EnrollStudentExtended(ctx context.Context, userID, courseID, streamID, groupID string) error
