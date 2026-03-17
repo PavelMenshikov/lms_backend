@@ -806,6 +806,32 @@ const docTemplate = `{
             }
         },
         "/admin/projects/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin-Content"
+                ],
+                "summary": "ADMIN: Получить данные проекта",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Project ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/domain.Project"
+                        }
+                    }
+                }
+            },
             "delete": {
                 "tags": [
                     "Admin-Content"
@@ -980,6 +1006,32 @@ const docTemplate = `{
             }
         },
         "/admin/tests/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin-Content"
+                ],
+                "summary": "ADMIN: Получить данные теста",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Test ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/domain.Test"
+                        }
+                    }
+                }
+            },
             "delete": {
                 "tags": [
                     "Admin-Content"
@@ -2743,6 +2795,12 @@ const docTemplate = `{
                 "bio": {
                     "type": "string"
                 },
+                "city": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
                 "experience_years": {
                     "type": "integer"
                 },
@@ -2755,6 +2813,9 @@ const docTemplate = `{
                 "last_name": {
                     "type": "string"
                 },
+                "phone": {
+                    "type": "string"
+                },
                 "rating": {
                     "type": "number"
                 },
@@ -2763,7 +2824,8 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/domain.TeacherReview"
                     }
-                }
+                },
+                "schedule": {}
             }
         },
         "domain.TeacherReview": {

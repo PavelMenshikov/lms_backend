@@ -1037,3 +1037,37 @@ func (h *ContentAdminHandler) GetLesson(w http.ResponseWriter, r *http.Request) 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(lesson)
 }
+
+// GetTest godoc
+// @Summary ADMIN: Получить данные теста
+// @Tags Admin-Content
+// @Produce json
+// @Param id path string true "Test ID"
+// @Success 200 {object} domain.Test
+// @Router /admin/tests/{id} [get]
+func (h *ContentAdminHandler) GetTest(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	test, err := h.uc.GetTest(r.Context(), id)
+	if err != nil {
+		http.Error(w, "Test not found", http.StatusNotFound)
+		return
+	}
+	json.NewEncoder(w).Encode(test)
+}
+
+// GetProject godoc
+// @Summary ADMIN: Получить данные проекта
+// @Tags Admin-Content
+// @Produce json
+// @Param id path string true "Project ID"
+// @Success 200 {object} domain.Project
+// @Router /admin/projects/{id} [get]
+func (h *ContentAdminHandler) GetProject(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	proj, err := h.uc.GetProject(r.Context(), id)
+	if err != nil {
+		http.Error(w, "Project not found", http.StatusNotFound)
+		return
+	}
+	json.NewEncoder(w).Encode(proj)
+}

@@ -778,3 +778,10 @@ func (uc *ContentAdminUseCase) UpdateLesson(ctx context.Context, lessonID string
 func (uc *ContentAdminUseCase) GetLesson(ctx context.Context, lessonID string) (*domain.Lesson, error) {
 	return uc.repo.GetLessonByID(ctx, lessonID)
 }
+func (uc *ContentAdminUseCase) GetTest(ctx context.Context, id string) (*domain.Test, error) {
+	return uc.repo.GetTestByID(ctx, id)
+}
+
+func (uc *ContentAdminUseCase) GetProject(ctx context.Context, id string) (*domain.Project, error) {
+	return uc.repo.GetProjectByID(ctx, id)
+}

@@ -800,6 +800,32 @@
             }
         },
         "/admin/projects/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin-Content"
+                ],
+                "summary": "ADMIN: Получить данные проекта",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Project ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/domain.Project"
+                        }
+                    }
+                }
+            },
             "delete": {
                 "tags": [
                     "Admin-Content"
@@ -974,6 +1000,32 @@
             }
         },
         "/admin/tests/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin-Content"
+                ],
+                "summary": "ADMIN: Получить данные теста",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Test ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/domain.Test"
+                        }
+                    }
+                }
+            },
             "delete": {
                 "tags": [
                     "Admin-Content"
@@ -2737,6 +2789,12 @@
                 "bio": {
                     "type": "string"
                 },
+                "city": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
                 "experience_years": {
                     "type": "integer"
                 },
@@ -2749,6 +2807,9 @@
                 "last_name": {
                     "type": "string"
                 },
+                "phone": {
+                    "type": "string"
+                },
                 "rating": {
                     "type": "number"
                 },
@@ -2757,7 +2818,8 @@
                     "items": {
                         "$ref": "#/definitions/domain.TeacherReview"
                     }
-                }
+                },
+                "schedule": {}
             }
         },
         "domain.TeacherReview": {

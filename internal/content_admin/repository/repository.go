@@ -737,3 +737,16 @@ func (r *ContentAdminRepoImpl) GetLessonByID(ctx context.Context, id string) (*d
 	}
 	return l, nil
 }
+func (r *ContentAdminRepoImpl) GetTestByID(ctx context.Context, id string) (*domain.Test, error) {
+	t := &domain.Test{}
+	err := r.db.QueryRowContext(ctx, "SELECT id, lesson_id, title, description, passing_score, created_at FROM tests WHERE id = $1", id).
+		Scan(&t.ID, &t.LessonID, &t.Title, &t.Description, &t.PassingScore, &t.CreatedAt)
+	return t, err
+}
+
+func (r *ContentAdminRepoImpl) GetProjectByID(ctx context.Context, id string) (*domain.Project, error) {
+	p := &domain.Project{}
+	err := r.db.QueryRowContext(ctx, "SELECT id, lesson_id, title, description, max_score, created_at FROM projects WHERE id = $1", id).
+		Scan(&p.ID, &p.LessonID, &p.Title, &p.Description, &p.MaxScore, &p.CreatedAt)
+	return p, err
+}

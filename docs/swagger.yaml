@@ -602,6 +602,10 @@ definitions:
         type: string
       bio:
         type: string
+      city:
+        type: string
+      email:
+        type: string
       experience_years:
         type: integer
       first_name:
@@ -610,12 +614,15 @@ definitions:
         type: string
       last_name:
         type: string
+      phone:
+        type: string
       rating:
         type: number
       reviews:
         items:
           $ref: '#/definitions/domain.TeacherReview'
         type: array
+      schedule: {}
     type: object
   domain.TeacherReview:
     properties:
@@ -1531,6 +1538,23 @@ paths:
       summary: 'ADMIN: Удаление проекта'
       tags:
       - Admin-Content
+    get:
+      parameters:
+      - description: Project ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Project'
+      summary: 'ADMIN: Получить данные проекта'
+      tags:
+      - Admin-Content
   /admin/streams:
     get:
       parameters:
@@ -1640,6 +1664,23 @@ paths:
         "200":
           description: OK
       summary: 'ADMIN: Удаление теста'
+      tags:
+      - Admin-Content
+    get:
+      parameters:
+      - description: Test ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Test'
+      summary: 'ADMIN: Получить данные теста'
       tags:
       - Admin-Content
   /admin/users:

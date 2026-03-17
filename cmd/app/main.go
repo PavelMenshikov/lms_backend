@@ -142,6 +142,7 @@ func main() {
 			"http://capapi.grtsq.ru",
 			"https://capapi.grtsq.ru",
 			"https://cap.grtsq.ru",
+			"https://cap-education.vercel.app",
 		},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "Cookie", "X-System-Secret"},
@@ -215,6 +216,8 @@ func main() {
 
 		r.Post("/admin/modules", adminHandler.CreateModule)
 		r.Delete("/admin/modules/{id}", adminHandler.DeleteModule)
+		r.Get("/admin/tests/{id}", adminHandler.GetTest)
+        r.Get("/admin/projects/{id}", adminHandler.GetProject)
 
 		r.Post("/admin/lessons", adminHandler.CreateLesson)
 		r.Get("/admin/lessons/{id}", adminHandler.GetLesson)    
