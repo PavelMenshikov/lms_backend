@@ -2085,6 +2085,24 @@ paths:
       summary: 'USER: Обновить профиль'
       tags:
       - Profile
+  /projects/{id}:
+    get:
+      parameters:
+      - description: Project ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Project'
+      summary: 'USER: Детали проекта'
+      tags:
+      - Student-Learning
   /schedule/monthly:
     get:
       description: Возвращает список занятий для календарной сетки месяца.
@@ -2226,6 +2244,24 @@ paths:
         "201":
           description: Created
       summary: 'УЧЕНИК: Оставить отзыв преподавателю'
+      tags:
+      - Student-Learning
+  /tests/{id}:
+    get:
+      parameters:
+      - description: Test ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Test'
+      summary: 'USER: Детали теста'
       tags:
       - Student-Learning
 swagger: "2.0"

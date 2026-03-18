@@ -207,3 +207,38 @@ func (h *LearningHandler) AddReview(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusCreated)
 }
+// GetTest godoc
+// @Summary USER: Детали теста
+// @Tags Student-Learning
+// @Produce json
+// @Param id path string true "Test ID"
+// @Success 200 {object} domain.Test
+// @Router /tests/{id} [get]
+func (h *LearningHandler) GetTest(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	test, err := h.uc.GetTest(r.Context(), id)
+	if err != nil {
+		http.Error(w, "Test not found", http.StatusNotFound)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(test)
+}
+
+// GetProject godoc
+// @Summary USER: Детали проекта
+// @Tags Student-Learning
+// @Produce json
+// @Param id path string true "Project ID"
+// @Success 200 {object} domain.Project
+// @Router /projects/{id} [get]
+func (h *LearningHandler) GetProject(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	proj, err := h.uc.GetProject(r.Context(), id)
+	if err != nil {
+		http.Error(w, "Project not found", http.StatusNotFound)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(proj)
+}

@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"context"
 
 	"github.com/go-chi/chi/v5"
 
@@ -15,14 +16,55 @@ import (
 	"lms_backend/internal/domain"
 )
 
-type ContentAdminHandler struct {
-	uc *usecase.ContentAdminUseCase
+
+type ContentAdminService interface {
+	CreateCourse(ctx context.Context, input usecase.CreateCourseInput) (string, error)
+	UploadMedia(ctx context.Context, fileHeader *multipart.FileHeader) (string, error)
+	UpdateCourseSettings(ctx context.Context, input usecase.UpdateCourseSettingsInput) error
+	GetAllCourses(ctx context.Context) ([]*domain.Course, error)
+	GetCourseStructure(ctx context.Context, courseID string) (*domain.CourseStructure, error)
+	CreateModule(ctx context.Context, input usecase.CreateModuleInput) (string, error)
+	DeleteModule(ctx context.Context, id string) error
+	CreateLesson(ctx context.Context, input usecase.CreateLessonInput) (string, error)
+	DeleteLesson(ctx context.Context, id string) error
+	CreateTest(ctx context.Context, input usecase.CreateTestInput) (string, error)
+	DeleteTest(ctx context.Context, id string) error
+	CreateProject(ctx context.Context, input usecase.CreateProjectInput) (string, error)
+	DeleteProject(ctx context.Context, id string) error
+	CreateModulesBulk(ctx context.Context, input []usecase.CreateModuleInput) ([]string, error)
+	CreateLessonsBulk(ctx context.Context, input []usecase.CreateLessonInput) ([]string, error)
+	CreateFullCourse(ctx context.Context, input usecase.CreateBulkCourseInput) (string, error)
+	CreateFullUser(ctx context.Context, input usecase.ExtendedCreateUserInput) (map[string]string, error)
+	GetUserInfo(ctx context.Context, userID string) (map[string]interface{}, error)
+	UpdateUser(ctx context.Context, userID string, input usecase.ExtendedCreateUserInput) error
+	DeleteUser(ctx context.Context, userID string) error
+	GetUsersList(ctx context.Context, filter domain.UserFilter) ([]*domain.User, error)
+	GetDetailedStudents(ctx context.Context, courseID string) ([]*domain.StudentTableItem, error)
+	GetDetailedTeachers(ctx context.Context) ([]*domain.TeacherTableItem, error)
+	GetDetailedCurators(ctx context.Context) ([]*domain.CuratorTableItem, error)
+	GetDetailedModerators(ctx context.Context) ([]*domain.ModeratorTableItem, error)
+	GetAllUsersTable(ctx context.Context) ([]*domain.AllUsersTableItem, error)
+	EnrollStudent(ctx context.Context, userID, courseID string) error
+	GetCourseStudents(ctx context.Context, courseID string) ([]*domain.AdminStudentProgress, error)
+	GetCourseStats(ctx context.Context, courseID string) (*domain.AdminCourseStats, error)
+	CreateStream(ctx context.Context, input usecase.CreateStreamInput) (string, error)
+	GetStreamsByCourse(ctx context.Context, courseID string) ([]*domain.Stream, error)
+	CreateGroup(ctx context.Context, input usecase.CreateGroupInput) (string, error)
+	GetGroupsByStream(ctx context.Context, streamID string) ([]*domain.Group, error)
+	UnenrollStudent(ctx context.Context, userID, courseID string) error
+	UpdateLesson(ctx context.Context, lessonID string, input usecase.CreateLessonInput) error
+	GetLesson(ctx context.Context, lessonID string) (*domain.Lesson, error)
+	GetTest(ctx context.Context, id string) (*domain.Test, error)
+	GetProject(ctx context.Context, id string) (*domain.Project, error)
 }
 
-func NewContentAdminHandler(uc *usecase.ContentAdminUseCase) *ContentAdminHandler {
+type ContentAdminHandler struct {
+	uc ContentAdminService
+}
+
+func NewContentAdminHandler(uc ContentAdminService) *ContentAdminHandler {
 	return &ContentAdminHandler{uc: uc}
 }
-
 
 type CreateLessonRequest struct {
 	CourseID    string                `json:"course_id"`

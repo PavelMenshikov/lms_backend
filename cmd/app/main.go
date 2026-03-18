@@ -270,6 +270,8 @@ func main() {
 		r.Post("/lessons/{id}/assignment", learningHandler.SubmitAssignment)
 		r.Post("/lessons/{id}/complete", learningHandler.CompleteLesson)
 		r.Post("/admin/courses/bulk", adminHandler.CreateFullCourse)
+		r.Get("/tests/{id}", learningHandler.GetTest)
+        r.Get("/projects/{id}", learningHandler.GetProject)
 
 		r.Get("/profile", profileHandler.GetProfile)
 		r.Put("/profile", profileHandler.UpdateProfile)

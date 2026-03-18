@@ -101,3 +101,10 @@ func (uc *LearningUseCase) AddReview(ctx context.Context, input AddReviewInput) 
 	}
 	return uc.repo.AddTeacherReview(ctx, review)
 }
+func (uc *LearningUseCase) GetTest(ctx context.Context, testID string) (*domain.Test, error) {
+	return uc.repo.GetTestByID(ctx, testID)
+}
+
+func (uc *LearningUseCase) GetProject(ctx context.Context, projectID string) (*domain.Project, error) {
+	return uc.repo.GetProjectByID(ctx, projectID)
+}

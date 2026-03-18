@@ -20,6 +20,9 @@ type LearningRepository interface {
 	GetTeacherByID(ctx context.Context, id string) (*domain.TeacherPublicInfo, error)
 	AddTeacherReview(ctx context.Context, review *domain.TeacherReview) error
 	GetTeacherReviews(ctx context.Context, teacherID string) ([]*domain.TeacherReview, error)
+
+	GetTestByID(ctx context.Context, testID string) (*domain.Test, error)
+    GetProjectByID(ctx context.Context, projectID string) (*domain.Project, error)
 }
 
 type LearningRepoImpl struct {
@@ -310,4 +313,17 @@ func (r *LearningRepoImpl) GetTeacherReviews(ctx context.Context, teacherID stri
 		reviews = append(reviews, rev)
 	}
 	return reviews, nil
+}
+func (r *LearningRepoImpl) GetTestByID(ctx context.Context, testID string) (*domain.Test, error) {
+	t := &domain.Test{}
+	err := r.db.QueryRowContext(ctx, "SELECT id, lesson_id, title, description, passing_score, created_at FROM tests WHERE id = $1", testID).
+		Scan(&t.ID, &t.LessonID, &t.Title, &t.Description, &t.PassingScore, &t.CreatedAt)
+	return t, err
+}
+
+func (r *LearningRepoImpl) GetProjectByID(ctx context.Context, projectID string) (*domain.Project, error) {
+	p := &domain.Project{}
+	err := r.db.QueryRowContext(ctx, "SELECT id, lesson_id, title, description, max_score, created_at FROM projects WHERE id = $1", projectID).
+		Scan(&p.ID, &p.LessonID, &p.Title, &p.Description, &p.MaxScore, &p.CreatedAt)
+	return p, err
 }
