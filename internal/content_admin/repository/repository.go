@@ -17,7 +17,6 @@ type ContentAdminRepository interface {
 	CreateLesson(ctx context.Context, lesson *domain.Lesson) (string, error)
 	UpdateLesson(ctx context.Context, lesson *domain.Lesson) error
 	DeleteLesson(ctx context.Context, id string) error
-	GetLessonByID(ctx context.Context, id string) (*domain.Lesson, error)
 	AssignTeacherToLesson(ctx context.Context, lessonID, teacherID string) error
 	GetLessonIDByOrder(ctx context.Context, courseID string, orderNum int) (string, error)
 	GetAllCourses(ctx context.Context) ([]*domain.Course, error)
@@ -58,6 +57,8 @@ type ContentAdminRepository interface {
 	GetTestsByCourseID(ctx context.Context, courseID string) ([]domain.Test, error)
 	GetProjectsByCourseID(ctx context.Context, courseID string) ([]domain.Project, error)
 	UnenrollStudent(ctx context.Context, userID, courseID string) error
+	LinkTeachersToCourse(ctx context.Context, courseID string, teacherIDs[]string) error
+	GetLessonByID(ctx context.Context, id string) (*domain.Lesson, error)
 }
 
 type ContentAdminRepoImpl struct {
@@ -751,4 +752,21 @@ func (r *ContentAdminRepoImpl) GetProjectByID(ctx context.Context, id string) (*
 	err := r.db.QueryRowContext(ctx, "SELECT id, lesson_id, title, description, max_score, created_at FROM projects WHERE id = $1", id).
 		Scan(&p.ID, &p.LessonID, &p.Title, &p.Description, &p.MaxScore, &p.CreatedAt)
 	return p, err
+}
+func (r *ContentAdminRepoImpl) LinkTeachersToCourse(ctx context.Context, courseID string, teacherIDs[]string) error {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil { return err }
+
+	if _, err := tx.ExecContext(ctx, "DELETE FROM course_teachers WHERE course_id = $1", courseID); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	for _, tID := range teacherIDs {
+		if _, err := tx.ExecContext(ctx, "INSERT INTO course_teachers (course_id, teacher_id) VALUES ($1, $2)", courseID, tID); err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+	return tx.Commit()
 }

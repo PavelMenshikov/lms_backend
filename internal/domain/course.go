@@ -24,6 +24,7 @@ type Course struct {
 	IsProjectMandatory  bool         `json:"is_project_mandatory" db:"is_project_mandatory"`
 	IsDiscordMandatory  bool         `json:"is_discord_mandatory" db:"is_discord_mandatory"`
 	IsAntiCopyEnabled   bool         `json:"is_anti_copy_enabled" db:"is_anti_copy_enabled"`
+	TeacherIDs[]string     `json:"teacher_ids" db:"-"`
 }
 
 type Module struct {

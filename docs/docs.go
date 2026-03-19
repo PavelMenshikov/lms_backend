@@ -1663,6 +1663,43 @@ const docTemplate = `{
                 }
             }
         },
+        "/profile/teacher/schedule": {
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "USER: Сохранить график работы учителя",
+                "parameters": [
+                    {
+                        "description": "JSON расписания (любой формат Игоря)",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/projects/{id}": {
             "get": {
                 "produces": [
@@ -1755,7 +1792,6 @@ const docTemplate = `{
         },
         "/staff/submissions": {
             "get": {
-                "description": "Получить список всех работ со статусом pending_check.",
                 "produces": [
                     "application/json"
                 ],
@@ -1778,7 +1814,6 @@ const docTemplate = `{
         },
         "/staff/submissions/{id}/evaluate": {
             "post": {
-                "description": "Выставить оценку, статус и комментарий к работе ученика.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1815,6 +1850,25 @@ const docTemplate = `{
                             "additionalProperties": {
                                 "type": "string"
                             }
+                        }
+                    }
+                }
+            }
+        },
+        "/teacher/profile": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Teacher-Dashboard"
+                ],
+                "summary": "ТИЧЕР: Дашборд ЛК",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/domain.TeacherDashboardData"
                         }
                     }
                 }
@@ -2138,6 +2192,12 @@ const docTemplate = `{
                 },
                 "status": {
                     "$ref": "#/definitions/domain.CourseStatus"
+                },
+                "teacher_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "title": {
                     "type": "string"
@@ -2819,17 +2879,32 @@ const docTemplate = `{
                 "course_title": {
                     "type": "string"
                 },
+                "grade": {
+                    "type": "integer"
+                },
                 "id": {
                     "type": "string"
                 },
+                "lesson_order": {
+                    "type": "integer"
+                },
                 "lesson_title": {
+                    "type": "string"
+                },
+                "module_order": {
+                    "type": "integer"
+                },
+                "status": {
                     "type": "string"
                 },
                 "student_name": {
                     "type": "string"
                 },
-                "submission_link": {
-                    "type": "string"
+                "submission_files": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "submission_text": {
                     "type": "string"
@@ -2837,8 +2912,31 @@ const docTemplate = `{
                 "submitted_at": {
                     "type": "string"
                 },
+                "teacher_comment": {
+                    "type": "string"
+                },
                 "user_id": {
                     "type": "string"
+                }
+            }
+        },
+        "domain.TeacherDashboardData": {
+            "type": "object",
+            "properties": {
+                "assigned_courses": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.StudentCoursePreview"
+                    }
+                },
+                "my_reviews": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.TeacherReview"
+                    }
+                },
+                "profile": {
+                    "$ref": "#/definitions/domain.TeacherPublicInfo"
                 }
             }
         },

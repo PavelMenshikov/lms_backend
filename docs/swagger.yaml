@@ -131,6 +131,10 @@ definitions:
         type: boolean
       status:
         $ref: '#/definitions/domain.CourseStatus'
+      teacher_ids:
+        items:
+          type: string
+        type: array
       title:
         type: string
     type: object
@@ -581,20 +585,45 @@ definitions:
     properties:
       course_title:
         type: string
+      grade:
+        type: integer
       id:
         type: string
+      lesson_order:
+        type: integer
       lesson_title:
+        type: string
+      module_order:
+        type: integer
+      status:
         type: string
       student_name:
         type: string
-      submission_link:
-        type: string
+      submission_files:
+        items:
+          type: string
+        type: array
       submission_text:
         type: string
       submitted_at:
         type: string
+      teacher_comment:
+        type: string
       user_id:
         type: string
+    type: object
+  domain.TeacherDashboardData:
+    properties:
+      assigned_courses:
+        items:
+          $ref: '#/definitions/domain.StudentCoursePreview'
+        type: array
+      my_reviews:
+        items:
+          $ref: '#/definitions/domain.TeacherReview'
+        type: array
+      profile:
+        $ref: '#/definitions/domain.TeacherPublicInfo'
     type: object
   domain.TeacherPublicInfo:
     properties:
@@ -2085,6 +2114,30 @@ paths:
       summary: 'USER: Обновить профиль'
       tags:
       - Profile
+  /profile/teacher/schedule:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: JSON расписания (любой формат Игоря)
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: 'USER: Сохранить график работы учителя'
+      tags:
+      - Profile
   /projects/{id}:
     get:
       parameters:
@@ -2145,7 +2198,6 @@ paths:
       - Schedule
   /staff/submissions:
     get:
-      description: Получить список всех работ со статусом pending_check.
       produces:
       - application/json
       responses:
@@ -2162,7 +2214,6 @@ paths:
     post:
       consumes:
       - application/json
-      description: Выставить оценку, статус и комментарий к работе ученика.
       parameters:
       - description: ID задания
         in: path
@@ -2187,6 +2238,18 @@ paths:
       summary: 'STAFF: Проверить ДЗ'
       tags:
       - Staff-Review
+  /teacher/profile:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.TeacherDashboardData'
+      summary: 'ТИЧЕР: Дашборд ЛК'
+      tags:
+      - Teacher-Dashboard
   /teachers:
     get:
       description: Получить список преподавателей с их рейтингом.

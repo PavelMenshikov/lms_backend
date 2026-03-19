@@ -2,12 +2,13 @@ package http
 
 import (
 	"encoding/json"
-	"lms_backend/internal/review/usecase"
-	_ "lms_backend/internal/domain"
-	
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+
+	authMiddleware "lms_backend/internal/auth/delivery/middleware"
+	"lms_backend/internal/domain"
+	"lms_backend/internal/review/usecase"
 )
 
 type ReviewHandler struct {
@@ -26,13 +27,14 @@ type EvaluateRequest struct {
 
 // GetPendingSubmissions godoc
 // @Summary STAFF: Список ДЗ на проверку
-// @Description Получить список всех работ со статусом pending_check.
 // @Tags Staff-Review
 // @Produce json
 // @Success 200 {array} domain.SubmissionRecord
 // @Router /staff/submissions [get]
 func (h *ReviewHandler) GetPendingSubmissions(w http.ResponseWriter, r *http.Request) {
-	list, err := h.uc.GetPendingList(r.Context())
+	userCtx := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+
+	list, err := h.uc.GetPendingList(r.Context(), userCtx.UserID, string(userCtx.Role))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -43,7 +45,6 @@ func (h *ReviewHandler) GetPendingSubmissions(w http.ResponseWriter, r *http.Req
 
 // EvaluateSubmission godoc
 // @Summary STAFF: Проверить ДЗ
-// @Description Выставить оценку, статус и комментарий к работе ученика.
 // @Tags Staff-Review
 // @Accept json
 // @Produce json
@@ -52,18 +53,31 @@ func (h *ReviewHandler) GetPendingSubmissions(w http.ResponseWriter, r *http.Req
 // @Success 200 {object} map[string]string
 // @Router /staff/submissions/{id}/evaluate [post]
 func (h *ReviewHandler) EvaluateSubmission(w http.ResponseWriter, r *http.Request) {
-	submissionID := chi.URLParam(r, "id")
+	userCtx := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	
+	if userCtx.Role == domain.RoleCurator {
+		http.Error(w, "Forbidden: Curators cannot evaluate homework", http.StatusForbidden)
+		return
+	}
+
 	var req EvaluateRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
+	}
+
+	submissionID := chi.URLParam(r, "id")
+
+	status := "on_revision"
+	if req.IsAccepted {
+		status = "accepted"
 	}
 
 	input := usecase.EvaluateInput{
 		SubmissionID: submissionID,
 		Grade:        req.Grade,
 		Comment:      req.Comment,
-		IsAccepted:   req.IsAccepted,
+		Status:       status,
 	}
 
 	if err := h.uc.Evaluate(r.Context(), input); err != nil {

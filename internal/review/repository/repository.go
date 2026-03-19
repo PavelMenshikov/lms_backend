@@ -3,11 +3,13 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"encoding/json" 
+	"fmt"           
 	"lms_backend/internal/domain"
 )
 
 type ReviewRepository interface {
-	GetPendingSubmissions(ctx context.Context) ([]*domain.SubmissionRecord, error)
+	GetPendingSubmissions(ctx context.Context, staffID string, role string) ([]*domain.SubmissionRecord, error)
 	EvaluateSubmission(ctx context.Context, submissionID string, grade int, comment string, status string) error
 	UpdateUserCourseProgress(ctx context.Context, userID, courseID string) error
 }
@@ -22,46 +24,46 @@ func NewReviewRepository(db *sql.DB) *ReviewRepoImpl {
 	return &ReviewRepoImpl{db: db}
 }
 
-func (r *ReviewRepoImpl) GetPendingSubmissions(ctx context.Context) ([]*domain.SubmissionRecord, error) {
+func (r *ReviewRepoImpl) GetPendingSubmissions(ctx context.Context, staffID string, role string) ([]*domain.SubmissionRecord, error) {
 	query := `
 		SELECT 
-			uas.assignment_id,
-			uas.user_id,
-			u.first_name || ' ' || u.last_name as student_name,
-			l.title as lesson_title,
-			c.title as course_title,
-			uas.submission_text,
-			uas.submission_link,
-			uas.submitted_at
+			uas.assignment_id, uas.user_id, u.first_name || ' ' || u.last_name,
+			c.title, m.order_num, l.order_num, l.title,
+			uas.submission_text, uas.submission_files, uas.status, COALESCE(uas.grade, 0), 
+			COALESCE(uas.teacher_comment, ''), uas.submitted_at
 		FROM user_assignments_submission uas
 		JOIN users u ON uas.user_id = u.id
 		JOIN assignments a ON uas.assignment_id = a.id
 		JOIN lessons l ON a.lesson_id = l.id
 		JOIN modules m ON l.module_id = m.id
 		JOIN courses c ON m.course_id = c.id
-		WHERE uas.status = 'pending_check'
-		ORDER BY uas.submitted_at ASC
+		LEFT JOIN course_teachers ct ON c.id = ct.course_id
+		WHERE 1=1
 	`
-	rows, err := r.db.QueryContext(ctx, query)
-	if err != nil {
-		return nil, err
+	if role == "teacher" {
+		query += fmt.Sprintf(" AND ct.teacher_id = '%s'", staffID)
 	}
+
+	query += " ORDER BY uas.submitted_at ASC"
+
+	rows, err := r.db.QueryContext(ctx, query)
+	if err != nil { return nil, err }
 	defer rows.Close()
 
-	var records []*domain.SubmissionRecord
+	var records[]*domain.SubmissionRecord
 	for rows.Next() {
 		rec := &domain.SubmissionRecord{}
-		if err := rows.Scan(
-			&rec.ID, &rec.UserID, &rec.StudentName, &rec.LessonTitle,
-			&rec.CourseTitle, &rec.Text, &rec.Link, &rec.SubmittedAt,
-		); err != nil {
-			return nil, err
-		}
+		var filesRaw[]byte
+		rows.Scan(
+			&rec.ID, &rec.UserID, &rec.StudentName, &rec.CourseTitle, &rec.ModuleOrder, 
+			&rec.LessonOrder, &rec.LessonTitle, &rec.Text, &filesRaw, &rec.Status, 
+			&rec.Grade, &rec.TeacherComment, &rec.SubmittedAt,
+		)
+		json.Unmarshal(filesRaw, &rec.Files)
 		records = append(records, rec)
 	}
 	return records, nil
 }
-
 func (r *ReviewRepoImpl) EvaluateSubmission(ctx context.Context, submissionID string, grade int, comment string, status string) error {
 	query := `
 		UPDATE user_assignments_submission 

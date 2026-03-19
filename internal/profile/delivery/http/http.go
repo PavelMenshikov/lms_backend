@@ -100,3 +100,27 @@ func (h *ProfileHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"status": "profile updated"})
 }
+// UpdateTeacherSchedule godoc
+// @Summary USER: Сохранить график работы учителя
+// @Tags Profile
+// @Accept json
+// @Produce json
+// @Param request body map[string]interface{} true "JSON расписания (любой формат Игоря)"
+// @Success 200 {object} map[string]string
+// @Router /profile/teacher/schedule [put]
+func (h *ProfileHandler) UpdateTeacherSchedule(w http.ResponseWriter, r *http.Request) {
+	userData := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)	
+	var rawData map[string]interface{}
+	if err := json.NewDecoder(r.Body).Decode(&rawData); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	scheduleBytes, _ := json.Marshal(rawData)
+
+	if err := h.uc.UpdateTeacherSchedule(r.Context(), userData.UserID, scheduleBytes); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	
+	json.NewEncoder(w).Encode(map[string]string{"status": "schedule updated"})
+}

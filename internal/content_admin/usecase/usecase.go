@@ -55,6 +55,7 @@ type UpdateCourseSettingsInput struct {
 	IsDiscordMandatory  bool
 	IsAntiCopyEnabled   bool
 	FileHeader          *multipart.FileHeader
+	TeacherIDs[]string
 }
 
 type CreateModuleInput struct {
@@ -256,9 +257,17 @@ func (uc *ContentAdminUseCase) UpdateCourseSettings(ctx context.Context, input U
 		IsAntiCopyEnabled:   input.IsAntiCopyEnabled,
 	}
 
-	return uc.repo.UpdateCourseSettings(ctx, course)
-}
+	err = uc.repo.UpdateCourseSettings(ctx, course)
+	if err != nil {
+		return err
+	}
 
+	if len(input.TeacherIDs) > 0 {
+		_ = uc.repo.LinkTeachersToCourse(ctx, input.CourseID, input.TeacherIDs)
+	}
+
+	return nil
+}
 func (uc *ContentAdminUseCase) GetAllCourses(ctx context.Context) ([]*domain.Course, error) {
 	return uc.repo.GetAllCourses(ctx)
 }
@@ -784,4 +793,7 @@ func (uc *ContentAdminUseCase) GetTest(ctx context.Context, id string) (*domain.
 
 func (uc *ContentAdminUseCase) GetProject(ctx context.Context, id string) (*domain.Project, error) {
 	return uc.repo.GetProjectByID(ctx, id)
+}
+func (uc *ContentAdminUseCase) LinkTeachersToCourse(ctx context.Context, courseID string, teacherIDs []string) error {
+	return uc.repo.LinkTeachersToCourse(ctx, courseID, teacherIDs)
 }

@@ -57,14 +57,19 @@ type LessonMaterial struct {
 }
 
 type SubmissionRecord struct {
-	ID          string    `json:"id"`
-	UserID      string    `json:"user_id"`
-	StudentName string    `json:"student_name"`
-	LessonTitle string    `json:"lesson_title"`
-	CourseTitle string    `json:"course_title"`
-	Text        string    `json:"submission_text"`
-	Link        string    `json:"submission_link"`
-	SubmittedAt time.Time `json:"submitted_at"`
+	ID             string    `json:"id"`
+	UserID         string    `json:"user_id"`
+	StudentName    string    `json:"student_name"`
+	CourseTitle    string    `json:"course_title"`
+	ModuleOrder    int       `json:"module_order"`
+	LessonOrder    int       `json:"lesson_order"`
+	LessonTitle    string    `json:"lesson_title"`	
+	Text           string    `json:"submission_text"`
+	Files          []string  `json:"submission_files"`
+	Status         string    `json:"status"`
+	Grade          int       `json:"grade"`
+	TeacherComment string    `json:"teacher_comment"`
+	SubmittedAt    time.Time `json:"submitted_at"`
 }
 
 type StudentSubmissionInput struct {

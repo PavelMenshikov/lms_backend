@@ -9,7 +9,7 @@ import (
 
 	authMiddleware "lms_backend/internal/auth/delivery/middleware"
 	"lms_backend/internal/learning/usecase"
-	_ "lms_backend/internal/domain"
+	"lms_backend/internal/domain"
 )
 
 type LearningHandler struct {
@@ -241,4 +241,25 @@ func (h *LearningHandler) GetProject(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(proj)
+}
+// GetTeacherDashboard godoc
+// @Summary ТИЧЕР: Дашборд ЛК
+// @Tags Teacher-Dashboard
+// @Produce json
+// @Success 200 {object} domain.TeacherDashboardData
+// @Router /teacher/profile [get]
+func (h *LearningHandler) GetTeacherDashboard(w http.ResponseWriter, r *http.Request) {
+	userData, ok := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	if !ok || userData.Role != domain.RoleTeacher {
+		http.Error(w, "Forbidden: Only for teachers", http.StatusForbidden)
+		return
+	}
+
+	dashboard, err := h.uc.GetTeacherDashboard(r.Context(), userData.UserID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(dashboard)
 }

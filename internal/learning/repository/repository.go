@@ -13,16 +13,18 @@ type LearningRepository interface {
 	GetCourseContent(ctx context.Context, courseID, userID string) (*domain.StudentCourseView, error)
 	GetLessonDetail(ctx context.Context, lessonID, userID string) (*domain.StudentLessonDetail, error)
 	GetAssignmentIDByLesson(ctx context.Context, lessonID string) (string, error)
-	SaveSubmission(ctx context.Context, userID, assignmentID, text, fileURL string) error
+	SaveSubmission(ctx context.Context, userID, assignmentID, text string, files []string) error
 	MarkLessonComplete(ctx context.Context, userID, lessonID string) error
 
 	GetTeachersList(ctx context.Context) ([]*domain.TeacherPublicInfo, error)
 	GetTeacherByID(ctx context.Context, id string) (*domain.TeacherPublicInfo, error)
 	AddTeacherReview(ctx context.Context, review *domain.TeacherReview) error
 	GetTeacherReviews(ctx context.Context, teacherID string) ([]*domain.TeacherReview, error)
+	GetTeacherCourses(ctx context.Context, teacherID string) ([]*domain.StudentCoursePreview, error)
 
 	GetTestByID(ctx context.Context, testID string) (*domain.Test, error)
     GetProjectByID(ctx context.Context, projectID string) (*domain.Project, error)
+	
 }
 
 type LearningRepoImpl struct {
@@ -193,13 +195,20 @@ func (r *LearningRepoImpl) GetAssignmentIDByLesson(ctx context.Context, lessonID
 	return id, err
 }
 
-func (r *LearningRepoImpl) SaveSubmission(ctx context.Context, userID, assignmentID, text, fileURL string) error {
+func (r *LearningRepoImpl) SaveSubmission(ctx context.Context, userID, assignmentID, text string, files[]string) error {
+	filesJSON, _ := json.Marshal(files)
 	query := `
-		INSERT INTO user_assignments_submission (user_id, assignment_id, submission_text, submission_link, status, submitted_at)
+		INSERT INTO user_assignments_submission (user_id, assignment_id, submission_text, submission_files, status, submitted_at)
 		VALUES ($1, $2, $3, $4, 'pending_check', NOW())
-		ON CONFLICT (user_id, assignment_id) DO UPDATE SET submission_text = EXCLUDED.submission_text, submission_link = EXCLUDED.submission_link, status = 'pending_check', submitted_at = NOW()
+		ON CONFLICT (user_id, assignment_id) 
+		DO UPDATE SET 
+			submission_text = EXCLUDED.submission_text, 
+			submission_files = EXCLUDED.submission_files, 
+			status = 'pending_check', 
+			submitted_at = NOW()
+		WHERE user_assignments_submission.status != 'accepted'
 	`
-	_, err := r.db.ExecContext(ctx, query, userID, assignmentID, text, fileURL)
+	_, err := r.db.ExecContext(ctx, query, userID, assignmentID, text, filesJSON)
 	return err
 }
 
@@ -326,4 +335,31 @@ func (r *LearningRepoImpl) GetProjectByID(ctx context.Context, projectID string)
 	err := r.db.QueryRowContext(ctx, "SELECT id, lesson_id, title, description, max_score, created_at FROM projects WHERE id = $1", projectID).
 		Scan(&p.ID, &p.LessonID, &p.Title, &p.Description, &p.MaxScore, &p.CreatedAt)
 	return p, err
+}
+func (r *LearningRepoImpl) GetTeacherCourses(ctx context.Context, teacherID string) ([]*domain.StudentCoursePreview, error) {
+	query := `
+		SELECT c.id, c.title, c.description, c.image_url, c.is_main, 0 as progress_percent
+		FROM courses c
+		JOIN course_teachers ct ON c.id = ct.course_id
+		WHERE ct.teacher_id = $1 AND c.status != 'archived'
+		ORDER BY c.created_at DESC
+	`
+	rows, err := r.db.QueryContext(ctx, query, teacherID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var courses[]*domain.StudentCoursePreview
+	for rows.Next() {
+		c := &domain.StudentCoursePreview{}
+		if err := rows.Scan(&c.ID, &c.Title, &c.Description, &c.ImageURL, &c.IsMain, &c.ProgressPercent); err != nil {
+			return nil, err
+		}
+		courses = append(courses, c)
+	}
+	if courses == nil {
+		courses =[]*domain.StudentCoursePreview{} 
+	}
+	return courses, nil
 }

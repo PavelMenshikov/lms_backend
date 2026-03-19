@@ -263,6 +263,7 @@ func main() {
 		r.Get("/teachers", learningHandler.GetTeachers)
 		r.Get("/teachers/{id}", learningHandler.GetTeacherDetails)
 		r.Post("/teachers/{id}/reviews", learningHandler.AddReview)
+		r.Get("/teacher/profile", learningHandler.GetTeacherDashboard)
 		r.Get("/dashboard/home", dashboardHandler.GetUserHome)
 		r.Get("/my-courses", learningHandler.GetMyCourses)
 		r.Get("/courses/{id}", learningHandler.GetCourseContent)
@@ -275,6 +276,7 @@ func main() {
 
 		r.Get("/profile", profileHandler.GetProfile)
 		r.Put("/profile", profileHandler.UpdateProfile)
+		r.Put("/profile/teacher/schedule", profileHandler.UpdateTeacherSchedule)
 
 		r.Get("/schedule/weekly", scheduleHandler.GetWeeklySchedule)
 		r.Get("/schedule/monthly", scheduleHandler.GetMonthlySchedule)

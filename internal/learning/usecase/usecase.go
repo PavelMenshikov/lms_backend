@@ -61,7 +61,7 @@ func (uc *LearningUseCase) SubmitAssignment(ctx context.Context, input SubmitAss
 		}
 		fileURL, _ = uc.s3Storage.GetPublicURL(ctx, key)
 	}
-	return uc.repo.SaveSubmission(ctx, input.UserID, assignmentID, input.TextAnswer, fileURL)
+	return uc.repo.SaveSubmission(ctx, input.UserID, assignmentID, input.TextAnswer, []string{fileURL})
 }
 
 func (uc *LearningUseCase) CompleteLesson(ctx context.Context, lessonID, userID string) error {
@@ -107,4 +107,23 @@ func (uc *LearningUseCase) GetTest(ctx context.Context, testID string) (*domain.
 
 func (uc *LearningUseCase) GetProject(ctx context.Context, projectID string) (*domain.Project, error) {
 	return uc.repo.GetProjectByID(ctx, projectID)
+}
+func (uc *LearningUseCase) GetTeacherDashboard(ctx context.Context, teacherID string) (*domain.TeacherDashboardData, error) {
+	profile, err := uc.repo.GetTeacherByID(ctx, teacherID)
+	if err != nil {
+		return nil, err
+	}
+
+	reviews, _ := uc.repo.GetTeacherReviews(ctx, teacherID)
+	if reviews == nil {
+		reviews =[]*domain.TeacherReview{}
+	}
+
+	courses, _ := uc.repo.GetTeacherCourses(ctx, teacherID)
+
+	return &domain.TeacherDashboardData{
+		Profile:         profile,
+		AssignedCourses: courses,
+		MyReviews:       reviews,
+	}, nil
 }

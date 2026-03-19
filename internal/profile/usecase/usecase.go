@@ -67,3 +67,6 @@ func (uc *ProfileUseCase) UpdateProfile(ctx context.Context, input UpdateProfile
 
 	return uc.repo.UpdateProfile(ctx, user)
 }
+func (uc *ProfileUseCase) UpdateTeacherSchedule(ctx context.Context, userID string, scheduleJSON[]byte) error {
+	return uc.repo.UpdateTeacherSchedule(ctx, userID, scheduleJSON)
+}

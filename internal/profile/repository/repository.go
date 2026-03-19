@@ -11,6 +11,7 @@ import (
 type ProfileRepository interface {
 	GetProfile(ctx context.Context, userID string) (*domain.User, error)
 	UpdateProfile(ctx context.Context, user *domain.User) error
+	UpdateTeacherSchedule(ctx context.Context, userID string, scheduleJSON[]byte) error
 }
 
 type ProfileRepoImpl struct {
@@ -70,4 +71,13 @@ func (r *ProfileRepoImpl) UpdateProfile(ctx context.Context, u *domain.User) err
 		return fmt.Errorf("profile with ID %s not found", u.ID)
 	}
 	return nil
+}
+func (r *ProfileRepoImpl) UpdateTeacherSchedule(ctx context.Context, userID string, scheduleJSON[]byte) error {
+	query := `
+		INSERT INTO teachers (id, working_hours) 
+		VALUES ($1, $2)
+		ON CONFLICT (id) DO UPDATE SET working_hours = $2
+	`
+	_, err := r.db.ExecContext(ctx, query, userID, scheduleJSON)
+	return err
 }

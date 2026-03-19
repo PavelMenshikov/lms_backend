@@ -56,6 +56,7 @@ type ContentAdminService interface {
 	GetLesson(ctx context.Context, lessonID string) (*domain.Lesson, error)
 	GetTest(ctx context.Context, id string) (*domain.Test, error)
 	GetProject(ctx context.Context, id string) (*domain.Project, error)
+	LinkTeachersToCourse(ctx context.Context, courseID string, teacherIDs[]string) error
 }
 
 type ContentAdminHandler struct {
@@ -258,6 +259,12 @@ func (h *ContentAdminHandler) UpdateCourseSettings(w http.ResponseWriter, r *htt
 		fileHeader = header
 	}
 
+	var tIDs[]string
+	teacherIDsRaw := r.FormValue("teacher_ids")
+	if teacherIDsRaw != "" {
+		tIDs = strings.Split(teacherIDsRaw, ",")
+	}
+
 	input := usecase.UpdateCourseSettingsInput{
 		CourseID:            courseID,
 		Title:               r.FormValue("title"),
@@ -271,6 +278,7 @@ func (h *ContentAdminHandler) UpdateCourseSettings(w http.ResponseWriter, r *htt
 		IsDiscordMandatory:  parseBool("is_discord_mandatory"),
 		IsAntiCopyEnabled:   parseBool("is_anti_copy_enabled"),
 		FileHeader:          fileHeader,
+		TeacherIDs:          tIDs,
 	}
 
 	if err := h.uc.UpdateCourseSettings(r.Context(), input); err != nil {

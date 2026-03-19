@@ -35,3 +35,8 @@ type TeacherPublicInfo struct {
 	Schedule        interface{}      `json:"schedule"` 
 	Reviews[]*TeacherReview `json:"reviews"`
 }
+type TeacherDashboardData struct {
+	Profile         *TeacherPublicInfo      `json:"profile"`
+	AssignedCourses []*StudentCoursePreview `json:"assigned_courses"`
+	MyReviews[]*TeacherReview        `json:"my_reviews"`
+}

@@ -14,27 +14,17 @@ func NewReviewUseCase(repo repository.ReviewRepository) *ReviewUseCase {
 	return &ReviewUseCase{repo: repo}
 }
 
-func (uc *ReviewUseCase) GetPendingList(ctx context.Context) ([]*domain.SubmissionRecord, error) {
-	return uc.repo.GetPendingSubmissions(ctx)
+func (uc *ReviewUseCase) GetPendingList(ctx context.Context, staffID string, role string) ([]*domain.SubmissionRecord, error) {
+	return uc.repo.GetPendingSubmissions(ctx, staffID, role)
 }
 
 type EvaluateInput struct {
 	SubmissionID string
 	Grade        int
 	Comment      string
-	IsAccepted   bool
+	Status       string 
 }
 
 func (uc *ReviewUseCase) Evaluate(ctx context.Context, input EvaluateInput) error {
-	status := "rejected"
-	if input.IsAccepted {
-		status = "accepted"
-	}
-
-	err := uc.repo.EvaluateSubmission(ctx, input.SubmissionID, input.Grade, input.Comment, status)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return uc.repo.EvaluateSubmission(ctx, input.SubmissionID, input.Grade, input.Comment, input.Status)
 }
