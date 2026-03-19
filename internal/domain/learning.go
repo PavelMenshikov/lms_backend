@@ -46,6 +46,7 @@ type StudentLessonDetail struct {
 	IsCompleted      bool              `json:"is_completed"`
 	AssignmentStatus string            `json:"assignment_status,omitempty"`
 	TeacherComment   string            `json:"teacher_comment,omitempty"`
+	Grade            int               `json:"grade,omitempty"`
 }
 
 type LessonMaterial struct {

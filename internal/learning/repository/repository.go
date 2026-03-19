@@ -170,22 +170,32 @@ func (r *LearningRepoImpl) GetLessonDetail(ctx context.Context, lessonID, userID
 		&lesson.ID, &lesson.Title, &lesson.VideoURL, &lesson.PresentationURL, 
 		&lesson.ContentText, &contentRaw, &lesson.DurationMin,
 	)
-	if err != nil {
-		return nil, fmt.Errorf("lesson not found: %w", err)
-	}
+	if err != nil { return nil, fmt.Errorf("lesson not found: %w", err) }
 
-	if len(contentRaw) > 0 {
-		_ = json.Unmarshal(contentRaw, &lesson.Content)
-	}
-	if lesson.Content == nil {
-		lesson.Content = []domain.ContentBlock{}
-	}
+	if len(contentRaw) > 0 { _ = json.Unmarshal(contentRaw, &lesson.Content) }
+	if lesson.Content == nil { lesson.Content = []domain.ContentBlock{} }
 
-	var isCompleted bool
-	queryStatus := `SELECT EXISTS(SELECT 1 FROM user_lesson_attendance WHERE lesson_id = $1 AND user_id = $2 AND is_attended = true)`
-	_ = r.db.QueryRowContext(ctx, queryStatus, lessonID, userID).Scan(&isCompleted)
+	res := &domain.StudentLessonDetail{Lesson: lesson}
 	
-	return &domain.StudentLessonDetail{Lesson: lesson, IsCompleted: isCompleted}, nil
+	homeworkQuery := `
+		SELECT uas.status, COALESCE(uas.grade, 0), COALESCE(uas.teacher_comment, '')
+		FROM assignments a
+		JOIN user_assignments_submission uas ON a.id = uas.assignment_id
+		WHERE a.lesson_id = $1 AND uas.user_id = $2
+		LIMIT 1`
+	
+	var status string
+	var grade int
+	var comment string
+	err = r.db.QueryRowContext(ctx, homeworkQuery, lessonID, userID).Scan(&status, &grade, &comment)
+	
+	if err == nil {
+		res.AssignmentStatus = status
+		res.TeacherComment = comment
+		res.IsCompleted = (status == "accepted")
+	}
+
+	return res, nil
 }
 
 func (r *LearningRepoImpl) GetAssignmentIDByLesson(ctx context.Context, lessonID string) (string, error) {

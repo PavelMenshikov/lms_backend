@@ -2730,6 +2730,9 @@ const docTemplate = `{
                 "assignment_status": {
                     "type": "string"
                 },
+                "grade": {
+                    "type": "integer"
+                },
                 "is_completed": {
                     "type": "boolean"
                 },

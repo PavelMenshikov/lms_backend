@@ -26,5 +26,14 @@ type EvaluateInput struct {
 }
 
 func (uc *ReviewUseCase) Evaluate(ctx context.Context, input EvaluateInput) error {
+	if input.Status == "accepted" {
+		validGrades := map[int]bool{20: true, 40: true, 60: true, 80: true, 100: true}
+		if !validGrades[input.Grade] {
+			input.Grade = 100 
+		}
+	} else {
+		input.Grade = 0
+	}
+
 	return uc.repo.EvaluateSubmission(ctx, input.SubmissionID, input.Grade, input.Comment, input.Status)
 }
