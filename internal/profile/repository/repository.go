@@ -25,6 +25,8 @@ func NewProfileRepository(db *sql.DB) *ProfileRepoImpl {
 }
 
 func (r *ProfileRepoImpl) GetProfile(ctx context.Context, userID string) (*domain.User, error) {
+	u := &domain.User{}
+	
 	query := `
 		SELECT 
 			u.id, u.first_name, u.last_name, u.first_name || ' ' || u.last_name as full_name,
@@ -45,6 +47,9 @@ func (r *ProfileRepoImpl) GetProfile(ctx context.Context, userID string) (*domai
 		&u.Rating,
 	)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("profile not found")
+		}
 		return nil, err
 	}
 	return u, nil
