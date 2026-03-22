@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"lms_backend/internal/domain"
 )
