@@ -3137,6 +3137,9 @@ const docTemplate = `{
                 "phone": {
                     "type": "string"
                 },
+                "rating": {
+                    "type": "number"
+                },
                 "role": {
                     "$ref": "#/definitions/domain.Role"
                 },

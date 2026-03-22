@@ -348,11 +348,12 @@ func (r *LearningRepoImpl) GetProjectByID(ctx context.Context, projectID string)
 }
 func (r *LearningRepoImpl) GetTeacherCourses(ctx context.Context, teacherID string) ([]*domain.StudentCoursePreview, error) {
 	query := `
-		SELECT c.id, c.title, c.description, c.image_url, c.is_main, 0 as progress_percent
+		SELECT DISTINCT c.id, c.title, c.description, c.image_url, c.is_main, 0 as progress_percent
 		FROM courses c
-		JOIN course_teachers ct ON c.id = ct.course_id
-		WHERE ct.teacher_id = $1 AND c.status != 'archived'
-		ORDER BY c.created_at DESC
+		JOIN streams s ON c.id = s.course_id
+		JOIN groups g ON s.id = g.stream_id
+		WHERE g.teacher_id = $1 AND c.status != 'archived'
+		ORDER BY c.title ASC
 	`
 	rows, err := r.db.QueryContext(ctx, query, teacherID)
 	if err != nil {
@@ -360,16 +361,13 @@ func (r *LearningRepoImpl) GetTeacherCourses(ctx context.Context, teacherID stri
 	}
 	defer rows.Close()
 
-	var courses[]*domain.StudentCoursePreview
+	var courses []*domain.StudentCoursePreview
 	for rows.Next() {
 		c := &domain.StudentCoursePreview{}
 		if err := rows.Scan(&c.ID, &c.Title, &c.Description, &c.ImageURL, &c.IsMain, &c.ProgressPercent); err != nil {
 			return nil, err
 		}
 		courses = append(courses, c)
-	}
-	if courses == nil {
-		courses =[]*domain.StudentCoursePreview{} 
 	}
 	return courses, nil
 }

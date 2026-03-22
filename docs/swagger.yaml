@@ -755,6 +755,8 @@ definitions:
         type: string
       phone:
         type: string
+      rating:
+        type: number
       role:
         $ref: '#/definitions/domain.Role'
       school_name:

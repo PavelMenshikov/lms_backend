@@ -25,15 +25,16 @@ func NewProfileRepository(db *sql.DB) *ProfileRepoImpl {
 }
 
 func (r *ProfileRepoImpl) GetProfile(ctx context.Context, userID string) (*domain.User, error) {
-	u := &domain.User{}
 	query := `
 		SELECT 
-			id, first_name, last_name, first_name || ' ' || last_name as full_name,
-			email, role, created_at,
-			COALESCE(phone, ''), COALESCE(city, ''), COALESCE(language, 'ru'), COALESCE(gender, ''), 
-			COALESCE(birth_date, '0001-01-01 00:00:00Z'), COALESCE(school_name, ''),
-			COALESCE(experience_years, 0), COALESCE(whatsapp_link, ''), COALESCE(telegram_link, ''), COALESCE(avatar_url, '')
-		FROM users WHERE id = $1
+			u.id, u.first_name, u.last_name, u.first_name || ' ' || u.last_name as full_name,
+			u.email, u.role, u.created_at,
+			COALESCE(u.phone, ''), COALESCE(u.city, ''), COALESCE(u.language, 'ru'), COALESCE(u.gender, ''), 
+			COALESCE(u.birth_date, '0001-01-01 00:00:00Z'), COALESCE(u.school_name, ''),
+			COALESCE(u.experience_years, 0), COALESCE(u.whatsapp_link, ''), COALESCE(u.telegram_link, ''), 
+			COALESCE(u.avatar_url, ''),
+			COALESCE((SELECT ROUND(AVG(rating), 1) FROM teacher_reviews WHERE teacher_id = u.id), 0.0) as rating
+		FROM users u WHERE u.id = $1
 	`
 	err := r.db.QueryRowContext(ctx, query, userID).Scan(
 		&u.ID, &u.FirstName, &u.LastName, &u.FullName,
@@ -41,12 +42,10 @@ func (r *ProfileRepoImpl) GetProfile(ctx context.Context, userID string) (*domai
 		&u.Phone, &u.City, &u.Language, &u.Gender,
 		&u.BirthDate, &u.SchoolName,
 		&u.ExperienceYears, &u.Whatsapp, &u.Telegram, &u.AvatarURL,
+		&u.Rating,
 	)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, errors.New("profile not found")
-		}
-		return nil, fmt.Errorf("repository: scan profile error: %w", err)
+		return nil, err
 	}
 	return u, nil
 }

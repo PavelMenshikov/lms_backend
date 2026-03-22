@@ -32,6 +32,7 @@ type User struct {
 	Whatsapp        string    `json:"whatsapp" db:"whatsapp_link"`
 	Telegram        string    `json:"telegram" db:"telegram_link"`
 	AvatarURL       string    `json:"avatar_url" db:"avatar_url"`
+	Rating          float64   `json:"rating" db:"rating"`
 }
 
 type UserFilter struct {
