@@ -143,6 +143,8 @@ func main() {
 			"https://capapi.grtsq.ru",
 			"https://cap.grtsq.ru",
 			"https://cap-education.vercel.app",
+			"http://platform.capedu.kz",
+			"https://platform.capedu.kz",
 		},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "Cookie", "X-System-Secret"},
