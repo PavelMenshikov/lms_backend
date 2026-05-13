@@ -237,6 +237,11 @@ func main() {
 	r.Post("/auth/login", authHandler.Login)
 	r.Post("/auth/logout", authHandler.Logout)
 
+	// Дублирующие endpoints для frontend (через /api/auth)
+	r.Post("/api/auth/register", authHandler.Register)
+	r.Post("/api/auth/login", authHandler.Login)
+	r.Post("/api/auth/logout", authHandler.Logout)
+
 	r.Post("/system/reset-password", func(w http.ResponseWriter, r *http.Request) {
 		secret := os.Getenv("SYSTEM_SECRET")
 		if secret == "" || r.Header.Get("X-System-Secret") != secret {
