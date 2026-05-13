@@ -48,6 +48,44 @@ import (
 	chatRepo "lms_backend/internal/chat/repository"
 	chatUseCase "lms_backend/internal/chat/usecase"
 
+	attendanceHttp "lms_backend/internal/attendance/delivery/http"
+	attendanceRepo "lms_backend/internal/attendance/repository"
+	attendanceUseCase "lms_backend/internal/attendance/usecase"
+
+	freezeHttp "lms_backend/internal/freeze/delivery/http"
+	freezeRepo "lms_backend/internal/freeze/repository"
+	freezeUseCase "lms_backend/internal/freeze/usecase"
+
+	commentHttp "lms_backend/internal/comment/delivery/http"
+	commentRepo "lms_backend/internal/comment/repository"
+	commentUseCase "lms_backend/internal/comment/usecase"
+
+	notificationHttp "lms_backend/internal/notification/delivery/http"
+	notificationRepo "lms_backend/internal/notification/repository"
+	notificationUseCase "lms_backend/internal/notification/usecase"
+
+	accessHttp "lms_backend/internal/access/delivery/http"
+	accessRepo "lms_backend/internal/access/repository"
+	accessUseCase "lms_backend/internal/access/usecase"
+
+	bannerHttp "lms_backend/internal/banner/delivery/http"
+	bannerRepo "lms_backend/internal/banner/repository"
+	bannerUseCase "lms_backend/internal/banner/usecase"
+
+	auditRepo "lms_backend/internal/audit/repository"
+	auditUseCase "lms_backend/internal/audit/usecase"
+
+	statisticsHttp "lms_backend/internal/statistics/delivery/http"
+	statisticsRepo "lms_backend/internal/statistics/repository"
+	statisticsUseCase "lms_backend/internal/statistics/usecase"
+
+	groupsHttp "lms_backend/internal/groups/delivery/http"
+	groupsRepo "lms_backend/internal/groups/repository"
+	groupsUseCase "lms_backend/internal/groups/usecase"
+
+	reportsHttp "lms_backend/internal/reports/delivery/http"
+	reportsService "lms_backend/internal/reports"
+
 	"lms_backend/internal/domain"
 	dbPkg "lms_backend/pkg/database"
 	storageService "lms_backend/pkg/storage"
@@ -130,6 +168,45 @@ func main() {
 	chatRepoImpl := chatRepo.NewChatRepository(db)
 	chatUC := chatUseCase.NewChatUseCase(chatRepoImpl)
 	chatHandler := chatHttp.NewChatHandler(chatUC)
+
+	// Новые модули
+	attendanceRepoImpl := attendanceRepo.NewAttendanceRepository(db)
+	attendanceUC := attendanceUseCase.NewAttendanceUseCase(attendanceRepoImpl)
+	attendanceHandler := attendanceHttp.NewAttendanceHandler(attendanceUC)
+
+	freezeRepoImpl := freezeRepo.NewFreezeRepository(db)
+	freezeUC := freezeUseCase.NewFreezeUseCase(freezeRepoImpl)
+	freezeHandler := freezeHttp.NewFreezeHandler(freezeUC)
+
+	commentRepoImpl := commentRepo.NewCommentRepository(db)
+	commentUC := commentUseCase.NewCommentUseCase(commentRepoImpl)
+	commentHandler := commentHttp.NewCommentHandler(commentUC)
+
+	notificationRepoImpl := notificationRepo.NewNotificationRepository(db)
+	notificationUC := notificationUseCase.NewNotificationUseCase(notificationRepoImpl)
+	notificationHandler := notificationHttp.NewNotificationHandler(notificationUC)
+
+	accessRepoImpl := accessRepo.NewAccessRepository(db)
+	accessUC := accessUseCase.NewAccessUseCase(accessRepoImpl)
+	accessHandler := accessHttp.NewAccessHandler(accessUC)
+
+	bannerRepoImpl := bannerRepo.NewBannerRepository(db)
+	bannerUC := bannerUseCase.NewBannerUseCase(bannerRepoImpl)
+	bannerHandler := bannerHttp.NewBannerHandler(bannerUC)
+
+	auditRepoImpl := auditRepo.NewAuditRepository(db)
+	_ = auditUseCase.NewAuditUseCase(auditRepoImpl) // Для будущего использования
+
+	statisticsRepoImpl := statisticsRepo.NewStatisticsRepository(db)
+	statisticsUC := statisticsUseCase.NewStatisticsUseCase(statisticsRepoImpl)
+	statisticsHandler := statisticsHttp.NewStatisticsHandler(statisticsUC)
+
+	groupsRepoImpl := groupsRepo.NewGroupRepository(db)
+	groupsUC := groupsUseCase.NewGroupUseCase(groupsRepoImpl)
+	groupsHandler := groupsHttp.NewGroupHandler(groupsUC)
+
+	reportsServiceImpl := reportsService.NewReportsService(db)
+	reportsHandler := reportsHttp.NewReportsHandler(reportsServiceImpl)
 
 	r := chi.NewRouter()
 
@@ -254,6 +331,50 @@ func main() {
 		r.Post("/admin/groups", adminHandler.CreateGroup)
 		r.Get("/admin/groups", adminHandler.GetGroups)
 
+		// Groups management (moderator/admin)
+		r.Patch("/api/groups/{groupId}", groupsHandler.UpdateGroup)
+		r.Post("/api/groups/{groupId}/students", groupsHandler.AddStudentToGroup)
+		r.Delete("/api/groups/{groupId}/students/{studentId}", groupsHandler.RemoveStudentFromGroup)
+		r.Patch("/api/students/{studentId}/group", groupsHandler.ChangeStudentGroup)
+		r.Patch("/api/teachers/{teacherId}/group", groupsHandler.ChangeTeacherGroup)
+
+		// Attendance (teacher/curator/moderator)
+		r.Get("/api/attendance/students/{studentId}/calendar", attendanceHandler.GetStudentCalendar)
+		r.Patch("/api/attendance/lessons/{lessonId}", attendanceHandler.MarkLessonAttendance)
+		r.Get("/api/attendance/students/{studentId}/stats", attendanceHandler.GetStudentStats)
+		r.Get("/api/attendance/lessons/{lessonId}", attendanceHandler.GetLessonAttendance)
+
+		// Freeze requests (curator creates, moderator approves)
+		r.Post("/api/freeze-requests", freezeHandler.CreateFreezeRequest)
+		r.Get("/api/freeze-requests", freezeHandler.GetPendingRequests)
+		r.Patch("/api/freeze-requests/{requestId}/approve", freezeHandler.ApproveRequest)
+		r.Patch("/api/freeze-requests/{requestId}/reject", freezeHandler.RejectRequest)
+		r.Get("/api/students/{studentId}/freeze-status", freezeHandler.GetStudentFreezeStatus)
+
+		// Comments (curator → teacher)
+		r.Post("/api/comments", commentHandler.CreateComment)
+		r.Get("/api/comments", commentHandler.GetComments)
+		r.Patch("/api/comments/{commentId}/read", commentHandler.MarkCommentAsRead)
+
+		// Notifications (moderator → curator)
+		r.Post("/api/notifications", notificationHandler.CreateNotification)
+
+		// Access requests
+		r.Get("/api/access-requests", accessHandler.GetPendingRequests)
+		r.Patch("/api/access-requests/{requestId}/approve", accessHandler.ApproveRequest)
+		r.Patch("/api/access-requests/{requestId}/reject", accessHandler.RejectRequest)
+
+		// Statistics
+		r.Get("/api/statistics/students/{studentId}", statisticsHandler.GetStudentStatistics)
+		r.Post("/api/statistics/students/{studentId}/refresh", statisticsHandler.RefreshStudentStatistics)
+
+		// Excel Reports (moderator/admin only)
+		r.Get("/api/reports/lessons.xlsx", reportsHandler.DownloadLessonsReport)
+
+		// Banner management (admin only)
+		r.Post("/api/admin/banner", bannerHandler.CreateBanner)
+		r.Patch("/api/admin/banner/{bannerId}", bannerHandler.UpdateBanner)
+		r.Delete("/api/admin/banner/{bannerId}", bannerHandler.DeleteBanner)
 
 
 		r.Get("/staff/submissions", reviewHandler.GetPendingSubmissions)
@@ -285,6 +406,16 @@ func main() {
 
 		r.Get("/chat/ws", chatHandler.ConnectToChat)
 		r.Get("/chat/history", chatHandler.GetChatHistory)
+
+		// Notifications (для всех авторизованных)
+		r.Get("/api/notifications", notificationHandler.GetNotifications)
+		r.Patch("/api/notifications/{notificationId}/read", notificationHandler.MarkNotificationAsRead)
+
+		// Access requests (для всех авторизованных)
+		r.Post("/api/access-requests", accessHandler.CreateAccessRequest)
+
+		// Active banners (для всех авторизованных)
+		r.Get("/api/banner/active", bannerHandler.GetActiveBanners)
 	})
 
 	r.Get("/swagger/*", httpSwagger.Handler(
