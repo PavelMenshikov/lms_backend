@@ -94,7 +94,7 @@ import (
 // @title Cap Education LMS - API
 // @version 1.0
 // @description API для LMS платформы Cap Education.
-// @host capapi.grtsq.ru
+// @host platform.capedu.kz
 // @BasePath /
 func main() {
 	if err := godotenv.Load(); err != nil {
