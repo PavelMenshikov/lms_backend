@@ -388,6 +388,8 @@ func main() {
 
 	r.Group(func(r chi.Router) {
 		r.Use(authMiddleware.AuthMiddleware)
+
+		// Основные endpoints (без префикса для обратной совместимости)
 		r.Get("/teachers", learningHandler.GetTeachers)
 		r.Get("/teachers/{id}", learningHandler.GetTeacherDetails)
 		r.Post("/teachers/{id}/reviews", learningHandler.AddReview)
@@ -401,16 +403,34 @@ func main() {
 		r.Post("/admin/courses/bulk", adminHandler.CreateFullCourse)
 		r.Get("/tests/{id}", learningHandler.GetTest)
         r.Get("/projects/{id}", learningHandler.GetProject)
-
 		r.Get("/profile", profileHandler.GetProfile)
 		r.Put("/profile", profileHandler.UpdateProfile)
 		r.Put("/profile/teacher/schedule", profileHandler.UpdateTeacherSchedule)
-
 		r.Get("/schedule/weekly", scheduleHandler.GetWeeklySchedule)
 		r.Get("/schedule/monthly", scheduleHandler.GetMonthlySchedule)
-
 		r.Get("/chat/ws", chatHandler.ConnectToChat)
 		r.Get("/chat/history", chatHandler.GetChatHistory)
+
+		// Дублирующие endpoints с префиксом /api (для frontend)
+		r.Get("/api/teachers", learningHandler.GetTeachers)
+		r.Get("/api/teachers/{id}", learningHandler.GetTeacherDetails)
+		r.Post("/api/teachers/{id}/reviews", learningHandler.AddReview)
+		r.Get("/api/teacher/profile", learningHandler.GetTeacherDashboard)
+		r.Get("/api/dashboard/home", dashboardHandler.GetUserHome)
+		r.Get("/api/my-courses", learningHandler.GetMyCourses)
+		r.Get("/api/courses/{id}", learningHandler.GetCourseContent)
+		r.Get("/api/lessons/{id}", learningHandler.GetLessonDetail)
+		r.Post("/api/lessons/{id}/assignment", learningHandler.SubmitAssignment)
+		r.Post("/api/lessons/{id}/complete", learningHandler.CompleteLesson)
+		r.Get("/api/tests/{id}", learningHandler.GetTest)
+		r.Get("/api/projects/{id}", learningHandler.GetProject)
+		r.Get("/api/profile", profileHandler.GetProfile)
+		r.Put("/api/profile", profileHandler.UpdateProfile)
+		r.Put("/api/profile/teacher/schedule", profileHandler.UpdateTeacherSchedule)
+		r.Get("/api/schedule/weekly", scheduleHandler.GetWeeklySchedule)
+		r.Get("/api/schedule/monthly", scheduleHandler.GetMonthlySchedule)
+		r.Get("/api/chat/ws", chatHandler.ConnectToChat)
+		r.Get("/api/chat/history", chatHandler.GetChatHistory)
 
 		// Notifications (для всех авторизованных)
 		r.Get("/api/notifications", notificationHandler.GetNotifications)
