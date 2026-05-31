@@ -79,23 +79,26 @@ type CreateLessonInput struct {
 }
 
 type ExtendedCreateUserInput struct {
-	FullName        string
-	Email           string
-	Role            domain.Role
-	Password        string
-	Phone           string
-	City            string
-	SchoolName      string
-	Language        string
-	Gender          string
-	BirthDate       time.Time
-	ExperienceYears int
-	Whatsapp        string
-	Telegram        string
-	CourseID        string
-	StreamID        string
-	GroupID         string
-	Parents         []ParentInfo
+	FullName               string
+	Email                  string
+	Role                   domain.Role
+	Password               string
+	Phone                  string
+	City                   string
+	SchoolName             string
+	Language               string
+	Gender                 string
+	BirthDate              time.Time
+	ExperienceYears        int
+	Whatsapp               string
+	Telegram               string
+	CourseID               string
+	StreamID               string
+	GroupID                string
+	Parents                []ParentInfo
+	IntroBroadcastURL      string
+	GraduationBroadcastURL string
+	Balance                float64
 }
 
 type ParentInfo struct {
@@ -460,20 +463,23 @@ func (uc *ContentAdminUseCase) CreateFullUser(ctx context.Context, input Extende
 	}
 
 	user := &domain.User{
-		FirstName:       firstName,
-		LastName:        lastName,
-		Email:           input.Email,
-		Password:        string(hashedPass),
-		Role:            input.Role,
-		Phone:           input.Phone,
-		City:            input.City,
-		SchoolName:      input.SchoolName,
-		Language:        input.Language,
-		Gender:          input.Gender,
-		BirthDate:       input.BirthDate,
-		ExperienceYears: input.ExperienceYears,
-		Whatsapp:        input.Whatsapp,
-		Telegram:        input.Telegram,
+		FirstName:              firstName,
+		LastName:               lastName,
+		Email:                  input.Email,
+		Password:               string(hashedPass),
+		Role:                   input.Role,
+		Phone:                  input.Phone,
+		City:                   input.City,
+		SchoolName:             input.SchoolName,
+		Language:               input.Language,
+		Gender:                 input.Gender,
+		BirthDate:              input.BirthDate,
+		ExperienceYears:        input.ExperienceYears,
+		Whatsapp:               input.Whatsapp,
+		Telegram:               input.Telegram,
+		IntroBroadcastURL:      input.IntroBroadcastURL,
+		GraduationBroadcastURL: input.GraduationBroadcastURL,
+		Balance:                input.Balance,
 	}
 
 	userID, err := uc.repo.CreateUser(ctx, user)
@@ -612,6 +618,9 @@ func (uc *ContentAdminUseCase) UpdateUser(ctx context.Context, userID string, in
 		Phone: input.Phone, City: input.City, SchoolName: input.SchoolName, Language: input.Language,
 		Gender: input.Gender, BirthDate: finalBD, ExperienceYears: input.ExperienceYears,
 		Whatsapp: input.Whatsapp, Telegram: input.Telegram,
+		IntroBroadcastURL:      input.IntroBroadcastURL,
+		GraduationBroadcastURL: input.GraduationBroadcastURL,
+		Balance:                input.Balance,
 	}
 
 	if err := uc.repo.UpdateUser(ctx, user); err != nil {

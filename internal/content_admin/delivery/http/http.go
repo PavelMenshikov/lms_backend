@@ -77,23 +77,26 @@ type CreateLessonRequest struct {
 }
 
 type CreateFullUserRequest struct {
-	FullName        string               `json:"full_name" example:"Иван Иванов"`
-	Email           string               `json:"email" example:"student@test.kz"`
-	Password        string               `json:"password" example:"secret123"`
-	Role            domain.Role          `json:"role" example:"student"`
-	Phone           string               `json:"phone" example:"+79998887766"`
-	City            string               `json:"city" example:"Алматы"`
-	SchoolName      string               `json:"school_name" example:"Школа №123"`
-	Language        string               `json:"language" example:"ru"`
-	Gender          string               `json:"gender" example:"male"`
-	BirthDateStr    string               `json:"birth_date" example:"20.01.2000"`
-	Whatsapp        string               `json:"whatsapp" example:"https://wa.me/..."`
-	Telegram        string               `json:"telegram" example:"https://t.me/..."`
-	ExperienceYears int                  `json:"experience_years" example:"5"`
-	CourseID        string               `json:"course_id"`
-	StreamID        string               `json:"stream_id"`
-	GroupID         string               `json:"group_id"`
-	Parents         []usecase.ParentInfo `json:"parents"`
+	FullName               string               `json:"full_name" example:"Иван Иванов"`
+	Email                  string               `json:"email" example:"student@test.kz"`
+	Password               string               `json:"password" example:"secret123"`
+	Role                   domain.Role          `json:"role" example:"student"`
+	Phone                  string               `json:"phone" example:"+79998887766"`
+	City                   string               `json:"city" example:"Алматы"`
+	SchoolName             string               `json:"school_name" example:"Школа №123"`
+	Language               string               `json:"language" example:"ru"`
+	Gender                 string               `json:"gender" example:"male"`
+	BirthDateStr           string               `json:"birth_date" example:"20.01.2000"`
+	Whatsapp               string               `json:"whatsapp" example:"https://wa.me/..."`
+	Telegram               string               `json:"telegram" example:"https://t.me/..."`
+	ExperienceYears        int                  `json:"experience_years" example:"5"`
+	CourseID               string               `json:"course_id"`
+	StreamID               string               `json:"stream_id"`
+	GroupID                string               `json:"group_id"`
+	Parents                []usecase.ParentInfo `json:"parents"`
+	IntroBroadcastURL      string               `json:"intro_broadcast_url"`
+	GraduationBroadcastURL string               `json:"graduation_broadcast_url"`
+	Balance                float64              `json:"balance"`
 }
 
 type EnrollRequest struct {
@@ -646,23 +649,26 @@ func (h *ContentAdminHandler) CreateUser(w http.ResponseWriter, r *http.Request)
 	}
 
 	input := usecase.ExtendedCreateUserInput{
-		FullName:        req.FullName,
-		Email:           req.Email,
-		Password:        req.Password,
-		Role:            req.Role,
-		Phone:           req.Phone,
-		City:            req.City,
-		SchoolName:      req.SchoolName,
-		Language:        req.Language,
-		Gender:          req.Gender,
-		BirthDate:       parseFlexibleDate(req.BirthDateStr),
-		Whatsapp:        req.Whatsapp,
-		Telegram:        req.Telegram,
-		ExperienceYears: req.ExperienceYears,
-		CourseID:        req.CourseID,
-		StreamID:        req.StreamID,
-		GroupID:         req.GroupID,
-		Parents:         req.Parents,
+		FullName:               req.FullName,
+		Email:                  req.Email,
+		Password:               req.Password,
+		Role:                   req.Role,
+		Phone:                  req.Phone,
+		City:                   req.City,
+		SchoolName:             req.SchoolName,
+		Language:               req.Language,
+		Gender:                 req.Gender,
+		BirthDate:              parseFlexibleDate(req.BirthDateStr),
+		Whatsapp:               req.Whatsapp,
+		Telegram:               req.Telegram,
+		ExperienceYears:        req.ExperienceYears,
+		CourseID:               req.CourseID,
+		StreamID:               req.StreamID,
+		GroupID:                req.GroupID,
+		Parents:                req.Parents,
+		IntroBroadcastURL:      req.IntroBroadcastURL,
+		GraduationBroadcastURL: req.GraduationBroadcastURL,
+		Balance:                req.Balance,
 	}
 
 	result, err := h.uc.CreateFullUser(r.Context(), input)
@@ -722,19 +728,22 @@ func (h *ContentAdminHandler) UpdateUser(w http.ResponseWriter, r *http.Request)
 	}
 
 	input := usecase.ExtendedCreateUserInput{
-		FullName:        req.FullName,
-		Email:           req.Email,
-		Role:            req.Role,
-		Phone:           req.Phone,
-		City:            req.City,
-		SchoolName:      req.SchoolName,
-		Language:        req.Language,
-		Gender:          req.Gender,
-		BirthDate:       birthDate,
-		Whatsapp:        req.Whatsapp,
-		Telegram:        req.Telegram,
-		ExperienceYears: req.ExperienceYears,
-		Parents:         req.Parents,
+		FullName:               req.FullName,
+		Email:                  req.Email,
+		Role:                   req.Role,
+		Phone:                  req.Phone,
+		City:                   req.City,
+		SchoolName:             req.SchoolName,
+		Language:               req.Language,
+		Gender:                 req.Gender,
+		BirthDate:              birthDate,
+		Whatsapp:               req.Whatsapp,
+		Telegram:               req.Telegram,
+		ExperienceYears:        req.ExperienceYears,
+		Parents:                req.Parents,
+		IntroBroadcastURL:      req.IntroBroadcastURL,
+		GraduationBroadcastURL: req.GraduationBroadcastURL,
+		Balance:                req.Balance,
 	}
 
 	if err := h.uc.UpdateUser(r.Context(), userID, input); err != nil {

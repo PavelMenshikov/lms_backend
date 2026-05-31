@@ -217,9 +217,9 @@ func (r *ContentAdminRepoImpl) GetLessonsByCourseID(ctx context.Context, courseI
 }
 func (r *ContentAdminRepoImpl) CreateUser(ctx context.Context, u *domain.User) (string, error) {
 	var newID string
-	query := `INSERT INTO users (first_name, last_name, email, password_hash, role, phone, city, language, gender, birth_date, school_name, experience_years, whatsapp_link, telegram_link, avatar_url)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING id`
-	err := r.db.QueryRowContext(ctx, query, u.FirstName, u.LastName, u.Email, u.Password, u.Role, u.Phone, u.City, u.Language, u.Gender, u.BirthDate, u.SchoolName, u.ExperienceYears, u.Whatsapp, u.Telegram, u.AvatarURL).Scan(&newID)
+	query := `INSERT INTO users (first_name, last_name, email, password_hash, role, phone, city, language, gender, birth_date, school_name, experience_years, whatsapp_link, telegram_link, avatar_url, intro_broadcast_url, graduation_broadcast_url, balance)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18) RETURNING id`
+	err := r.db.QueryRowContext(ctx, query, u.FirstName, u.LastName, u.Email, u.Password, u.Role, u.Phone, u.City, u.Language, u.Gender, u.BirthDate, u.SchoolName, u.ExperienceYears, u.Whatsapp, u.Telegram, u.AvatarURL, u.IntroBroadcastURL, u.GraduationBroadcastURL, u.Balance).Scan(&newID)
 	return newID, err
 }
 
@@ -277,13 +277,17 @@ func (r *ContentAdminRepoImpl) GetByID(ctx context.Context, id string) (*domain.
 			email, role, created_at, COALESCE(phone, ''), COALESCE(city, ''), 
 			COALESCE(school_name, ''), COALESCE(language, ''), COALESCE(gender, ''), 
 			COALESCE(birth_date, NOW()), COALESCE(experience_years, 0), 
-			COALESCE(whatsapp_link, ''), COALESCE(telegram_link, ''), COALESCE(avatar_url, '') 
+			COALESCE(whatsapp_link, ''), COALESCE(telegram_link, ''), COALESCE(avatar_url, ''),
+			COALESCE(intro_broadcast_url, ''), COALESCE(graduation_broadcast_url, ''),
+			subscription_end_date, COALESCE(balance, 0), COALESCE(loss_reason, '')
 		FROM users WHERE id = $1
 	`
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
 		&u.ID, &u.FirstName, &u.LastName, &u.FullName, &u.Email, &u.Role, &u.CreatedAt,
 		&u.Phone, &u.City, &u.SchoolName, &u.Language, &u.Gender, &u.BirthDate,
 		&u.ExperienceYears, &u.Whatsapp, &u.Telegram, &u.AvatarURL,
+		&u.IntroBroadcastURL, &u.GraduationBroadcastURL,
+		&u.SubscriptionEndDate, &u.Balance, &u.LossReason,
 	)
 	return u, err
 }
@@ -385,14 +389,18 @@ func (r *ContentAdminRepoImpl) UpdateUser(ctx context.Context, u *domain.User) e
 			first_name = $1, last_name = $2, email = $3, role = $4,
 			phone = $5, city = $6, school_name = $7, experience_years = $8, 
 			whatsapp_link = $9, telegram_link = $10,
-			gender = $11, language = $12, birth_date = $13
-		WHERE id = $14
+			gender = $11, language = $12, birth_date = $13,
+			intro_broadcast_url = $14, graduation_broadcast_url = $15,
+			balance = $16, loss_reason = $17, subscription_end_date = $18
+		WHERE id = $19
 	`
 	_, err := r.db.ExecContext(ctx, query,
 		u.FirstName, u.LastName, u.Email, u.Role,
 		u.Phone, u.City, u.SchoolName, u.ExperienceYears,
 		u.Whatsapp, u.Telegram,
 		u.Gender, u.Language, u.BirthDate,
+		u.IntroBroadcastURL, u.GraduationBroadcastURL,
+		u.Balance, u.LossReason, u.SubscriptionEndDate,
 		u.ID,
 	)
 	return err
@@ -423,7 +431,10 @@ func (r *ContentAdminRepoImpl) GetDetailedStudentList(ctx context.Context, filte
 			COALESCE(u.school_name, '') as school, 
 			COALESCE(u.language, '') as language,
 			COALESCE(u.phone, '') as phone, 
-			u.email
+			u.email,
+			COALESCE(u.intro_broadcast_url, ''),
+			COALESCE(u.graduation_broadcast_url, ''),
+			COALESCE(u.balance, 0)
 		FROM users u
 		LEFT JOIN user_courses uc ON u.id = uc.user_id
 		LEFT JOIN courses c ON uc.course_id = c.id
@@ -455,6 +466,7 @@ func (r *ContentAdminRepoImpl) GetDetailedStudentList(ctx context.Context, filte
 			&item.Status, &item.Course, &item.Group, &item.Curator, &item.Teacher, &item.Stream,
 			&item.Performance, &item.ParentPhone, &item.City, &item.School, &item.Language,
 			&item.Phone, &item.Email,
+			&item.IntroBroadcastURL, &item.GraduationBroadcastURL, &item.Balance,
 		)
 		if err != nil {
 			return nil, err
