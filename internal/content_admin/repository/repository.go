@@ -796,9 +796,37 @@ func (r *ContentAdminRepoImpl) CancelLesson(ctx context.Context, lessonID, reaso
 }
 
 func (r *ContentAdminRepoImpl) SubstituteTeacher(ctx context.Context, lessonID, teacherID string) error {
-	_, err := r.db.ExecContext(ctx,
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+
+	var originalTeacherID string
+	err = tx.QueryRowContext(ctx,
+		`SELECT teacher_id FROM lessons WHERE id = $1 FOR UPDATE`, lessonID,
+	).Scan(&originalTeacherID)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	_, err = tx.ExecContext(ctx,
 		`UPDATE lessons SET substituted_teacher_id = $1 WHERE id = $2`,
 		teacherID, lessonID,
 	)
-	return err
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	_, err = tx.ExecContext(ctx,
+		`INSERT INTO lesson_substitutions (lesson_id, original_teacher_id, substitute_teacher_id) VALUES ($1, $2, $3)`,
+		lessonID, originalTeacherID, teacherID,
+	)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return tx.Commit()
 }

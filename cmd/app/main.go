@@ -32,6 +32,10 @@ import (
 	learningRepo "lms_backend/internal/learning/repository"
 	learningUseCase "lms_backend/internal/learning/usecase"
 
+	teacherDashboardHttp "lms_backend/internal/teacher_dashboard/delivery/http"
+	teacherDashboardRepo "lms_backend/internal/teacher_dashboard/repository"
+	teacherDashboardUseCase "lms_backend/internal/teacher_dashboard/usecase"
+
 	reviewHttp "lms_backend/internal/review/delivery/http"
 	reviewRepo "lms_backend/internal/review/repository"
 	reviewUseCase "lms_backend/internal/review/usecase"
@@ -152,6 +156,10 @@ func main() {
 	learningRepoImpl := learningRepo.NewLearningRepository(db)
 	learningUC := learningUseCase.NewLearningUseCase(learningRepoImpl, s3Client)
 	learningHandler := learningHttp.NewLearningHandler(learningUC)
+
+	teacherDashboardRepoImpl := teacherDashboardRepo.NewTeacherDashboardRepository(db)
+	teacherDashboardUC := teacherDashboardUseCase.NewTeacherDashboardUseCase(teacherDashboardRepoImpl)
+	teacherDashboardHandler := teacherDashboardHttp.NewTeacherDashboardHandler(teacherDashboardUC)
 
 	reviewRepoImpl := reviewRepo.NewReviewRepository(db)
 	reviewUC := reviewUseCase.NewReviewUseCase(reviewRepoImpl)
@@ -435,7 +443,7 @@ func main() {
 		r.Get("/teachers/{id}", learningHandler.GetTeacherDetails)
 		r.Post("/teachers/{id}/reviews", learningHandler.AddReview)
 		r.Get("/teacher/profile", learningHandler.GetTeacherDashboard)
-		r.Get("/teacher/monthly-report", learningHandler.GetTeacherMonthlyReport)
+		r.Get("/teacher/monthly-report", teacherDashboardHandler.GetTeacherMonthlyReport)
 		r.Get("/dashboard/home", dashboardHandler.GetUserHome)
 		r.Get("/my-courses", learningHandler.GetMyCourses)
 		r.Get("/courses/{id}", learningHandler.GetCourseContent)
@@ -458,7 +466,7 @@ func main() {
 		r.Get("/api/teachers/{id}", learningHandler.GetTeacherDetails)
 		r.Post("/api/teachers/{id}/reviews", learningHandler.AddReview)
 		r.Get("/api/teacher/profile", learningHandler.GetTeacherDashboard)
-		r.Get("/api/teacher/monthly-report", learningHandler.GetTeacherMonthlyReport)
+		r.Get("/api/teacher/monthly-report", teacherDashboardHandler.GetTeacherMonthlyReport)
 		r.Get("/api/dashboard/home", dashboardHandler.GetUserHome)
 		r.Get("/api/my-courses", learningHandler.GetMyCourses)
 		r.Get("/api/courses/{id}", learningHandler.GetCourseContent)
