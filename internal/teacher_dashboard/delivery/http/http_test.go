@@ -37,15 +37,15 @@ func TestGetTeacherMonthlyReport(t *testing.T) {
 
 	t.Run("success without params", func(t *testing.T) {
 		expected := &domain.TeacherMonthlyReport{
-			TeacherID:         "teacher-1",
-			Year:              2026,
-			Month:             5,
-			TotalLessons:      10,
+			TeacherID:          "teacher-1",
+			Year:               2026,
+			Month:              5,
+			TotalLessons:       10,
 			SubstitutionsCount: 2,
-			ReplacedCount:     1,
-			AvgRating:         4.5,
-			TotalStudents:     25,
-			AttendanceAvg:     85.5,
+			ReplacedCount:      1,
+			AvgRating:          4.5,
+			TotalStudents:      25,
+			AttendanceAvg:      85.5,
 		}
 		mockRepo.On("GetMonthlyReport", mock.Anything, "teacher-1", 2026, 5).
 			Return(expected, nil).Once()

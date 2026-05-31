@@ -88,6 +88,8 @@ type SubstituteTeacherRequest struct {
 
 type CreateFullUserRequest struct {
 	FullName               string               `json:"full_name" example:"Иван Иванов"`
+	FirstName              string               `json:"first_name" example:"Иван"`
+	LastName               string               `json:"last_name" example:"Иванов"`
 	Email                  string               `json:"email" example:"student@test.kz"`
 	Password               string               `json:"password" example:"secret123"`
 	Role                   domain.Role          `json:"role" example:"student"`
@@ -660,6 +662,8 @@ func (h *ContentAdminHandler) CreateUser(w http.ResponseWriter, r *http.Request)
 
 	input := usecase.ExtendedCreateUserInput{
 		FullName:               req.FullName,
+		FirstName:              req.FirstName,
+		LastName:               req.LastName,
 		Email:                  req.Email,
 		Password:               req.Password,
 		Role:                   req.Role,
@@ -739,6 +743,8 @@ func (h *ContentAdminHandler) UpdateUser(w http.ResponseWriter, r *http.Request)
 
 	input := usecase.ExtendedCreateUserInput{
 		FullName:               req.FullName,
+		FirstName:              req.FirstName,
+		LastName:               req.LastName,
 		Email:                  req.Email,
 		Role:                   req.Role,
 		Phone:                  req.Phone,

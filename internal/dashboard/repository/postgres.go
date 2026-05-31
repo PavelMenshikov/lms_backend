@@ -137,6 +137,45 @@ func (r *DashboardRepositoryImpl) GetAdminCounters(ctx context.Context) (totalSt
 	return
 }
 
+func (r *DashboardRepositoryImpl) GetAllPerformanceStats(ctx context.Context) (*domain.AllPerformanceStats, error) {
+	result := &domain.AllPerformanceStats{}
+	query := `
+		WITH student_scores AS (
+			SELECT user_id, AVG(progress_percent) as score
+			FROM user_courses
+			GROUP BY user_id
+		),
+		student_hw_scores AS (
+			SELECT uas.user_id,
+				COUNT(CASE WHEN uas.status = 'accepted' THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0) as score
+			FROM user_assignments_submission uas
+			GROUP BY uas.user_id
+		),
+		student_att_scores AS (
+			SELECT ula.user_id,
+				COUNT(CASE WHEN ula.status IN ('visited', 'trial') THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0) as score
+			FROM user_lesson_attendance ula
+			GROUP BY ula.user_id
+		)
+		SELECT
+			COALESCE((SELECT COUNT(CASE WHEN score >= 80 THEN 1 END) FROM student_scores), 0),
+			COALESCE((SELECT COUNT(CASE WHEN score >= 50 AND score < 80 THEN 1 END) FROM student_scores), 0),
+			COALESCE((SELECT COUNT(CASE WHEN score < 50 THEN 1 END) FROM student_scores), 0),
+			COALESCE((SELECT COUNT(CASE WHEN score >= 80 THEN 1 END) FROM student_hw_scores), 0),
+			COALESCE((SELECT COUNT(CASE WHEN score >= 50 AND score < 80 THEN 1 END) FROM student_hw_scores), 0),
+			COALESCE((SELECT COUNT(CASE WHEN score < 50 THEN 1 END) FROM student_hw_scores), 0),
+			COALESCE((SELECT COUNT(CASE WHEN score >= 80 THEN 1 END) FROM student_att_scores), 0),
+			COALESCE((SELECT COUNT(CASE WHEN score >= 50 AND score < 80 THEN 1 END) FROM student_att_scores), 0),
+			COALESCE((SELECT COUNT(CASE WHEN score < 50 THEN 1 END) FROM student_att_scores), 0)
+	`
+	err := r.db.QueryRowContext(ctx, query).Scan(
+		&result.CourseZones.Green, &result.CourseZones.Yellow, &result.CourseZones.Red,
+		&result.HomeworkZones.Green, &result.HomeworkZones.Yellow, &result.HomeworkZones.Red,
+		&result.AttendanceZones.Green, &result.AttendanceZones.Yellow, &result.AttendanceZones.Red,
+	)
+	return result, err
+}
+
 func (r *DashboardRepositoryImpl) GetPerformanceStats(ctx context.Context) (domain.PerformanceZones, error) {
 	var zones domain.PerformanceZones
 	query := `
@@ -223,19 +262,21 @@ func (r *DashboardRepositoryImpl) GetCuratorAttendanceStats(ctx context.Context,
 			FROM groups g
 			JOIN user_courses uc ON uc.group_id = g.id
 			WHERE g.curator_id = $1
+		),
+		student_attendance AS (
+			SELECT user_id,
+				COUNT(CASE WHEN status IN ('visited', 'trial') THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0) as pct
+			FROM user_lesson_attendance
+			WHERE user_id IN (SELECT user_id FROM group_students)
+			GROUP BY user_id
 		)
 		SELECT
 			gs.group_id,
 			gs.group_title,
 			COUNT(DISTINCT gs.user_id) as student_count,
-			COALESCE(ROUND(AVG(subq.pct), 2), 0) as avg_attendance
+			COALESCE(ROUND(AVG(sa.pct), 2), 0) as avg_attendance
 		FROM group_students gs
-		LEFT JOIN LATERAL (
-			SELECT
-				COUNT(CASE WHEN ula.status IN ('visited', 'trial') THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0) as pct
-			FROM user_lesson_attendance ula
-			WHERE ula.user_id = gs.user_id
-		) subq ON true
+		LEFT JOIN student_attendance sa ON gs.user_id = sa.user_id
 		GROUP BY gs.group_id, gs.group_title
 		ORDER BY gs.group_title ASC
 	`

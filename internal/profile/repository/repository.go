@@ -34,8 +34,10 @@ func (r *ProfileRepoImpl) GetProfile(ctx context.Context, userID string) (*domai
 			COALESCE(u.birth_date, '0001-01-01 00:00:00Z'), COALESCE(u.school_name, ''),
 			COALESCE(u.experience_years, 0), COALESCE(u.whatsapp_link, ''), COALESCE(u.telegram_link, ''), 
 			COALESCE(u.avatar_url, ''),
-			COALESCE((SELECT ROUND(AVG(rating), 1) FROM teacher_reviews WHERE teacher_id = u.id), 0.0) as rating
-		FROM users u WHERE u.id = $1
+			COALESCE(ROUND(tr.avg_rating, 1), 0.0) as rating
+		FROM users u
+		LEFT JOIN (SELECT teacher_id, AVG(rating) as avg_rating FROM teacher_reviews GROUP BY teacher_id) tr ON tr.teacher_id = u.id
+		WHERE u.id = $1
 	`
 	err := r.db.QueryRowContext(ctx, query, userID).Scan(
 		&u.ID, &u.FirstName, &u.LastName, &u.FullName,

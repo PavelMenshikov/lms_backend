@@ -23,7 +23,9 @@ func NewContentAdminRepoMock() *ContentAdminRepoMock {
 var _ repository.ContentAdminRepository = (*ContentAdminRepoMock)(nil)
 
 func (m *ContentAdminRepoMock) CreateCourse(ctx context.Context, course *domain.Course) (string, error) {
-	return "id", nil
+	id := "id"
+	m.CreatedCourses[id] = course
+	return id, nil
 }
 func (m *ContentAdminRepoMock) UpdateCourseSettings(ctx context.Context, course *domain.Course) error {
 	return nil

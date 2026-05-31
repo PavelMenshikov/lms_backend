@@ -1,3 +1,6 @@
 .env 
 postgres_data/
+*.exe
+*.test
+tmp/
 

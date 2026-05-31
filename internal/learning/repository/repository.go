@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"lms_backend/internal/domain"
+
+	"golang.org/x/sync/errgroup"
 )
 
 type LearningRepository interface {
@@ -71,20 +73,33 @@ func (r *LearningRepoImpl) GetCourseContent(ctx context.Context, courseID, userI
 		RootProjects: []domain.Project{},
 	}
 
-	view.Course = &domain.Course{}
-	err := r.db.QueryRowContext(ctx, "SELECT id, title, description, image_url, is_main FROM courses WHERE id = $1", courseID).
-		Scan(&view.Course.ID, &view.Course.Title, &view.Course.Description, &view.Course.ImageURL, &view.Course.IsMain)
-	if err != nil {
+	eg, egCtx := errgroup.WithContext(ctx)
+
+	eg.Go(func() error {
+		view.Course = &domain.Course{}
+		return r.db.QueryRowContext(egCtx, "SELECT id, title, description, image_url, is_main FROM courses WHERE id = $1", courseID).
+			Scan(&view.Course.ID, &view.Course.Title, &view.Course.Description, &view.Course.ImageURL, &view.Course.IsMain)
+	})
+
+	eg.Go(func() error {
+		rowsM, err := r.db.QueryContext(egCtx, "SELECT id, title, description, order_num FROM modules WHERE course_id = $1 ORDER BY order_num ASC", courseID)
+		if err != nil {
+			return err
+		}
+		defer rowsM.Close()
+		for rowsM.Next() {
+			m := &domain.StudentModuleView{Lessons: []*domain.StudentLessonRef{}}
+			if err := rowsM.Scan(&m.ID, &m.Title, &m.Description, &m.OrderNum); err != nil {
+				return err
+			}
+			view.Modules = append(view.Modules, m)
+		}
+		return nil
+	})
+
+	if err := eg.Wait(); err != nil {
 		return nil, err
 	}
-
-	rowsM, _ := r.db.QueryContext(ctx, "SELECT id, title, description, order_num FROM modules WHERE course_id = $1 ORDER BY order_num ASC", courseID)
-	for rowsM.Next() {
-		m := &domain.StudentModuleView{Lessons: []*domain.StudentLessonRef{}}
-		rowsM.Scan(&m.ID, &m.Title, &m.Description, &m.OrderNum)
-		view.Modules = append(view.Modules, m)
-	}
-	rowsM.Close()
 
 	queryL := `
 		SELECT 
@@ -97,14 +112,20 @@ func (r *LearningRepoImpl) GetCourseContent(ctx context.Context, courseID, userI
 		WHERE l.course_id = $1 AND l.is_published = true
 		ORDER BY l.order_num ASC`
 
-	rowsL, _ := r.db.QueryContext(ctx, queryL, courseID, userID)
+	rowsL, err := r.db.QueryContext(ctx, queryL, courseID, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rowsL.Close()
 
 	allLessonsMap := make(map[string]*domain.StudentLessonRef)
 
 	for rowsL.Next() {
 		var l domain.StudentLessonRef
 		var mid sql.NullString
-		rowsL.Scan(&l.ID, &mid, &l.Title, &l.OrderNum, &l.DurationMin, &l.IsCompleted)
+		if err := rowsL.Scan(&l.ID, &mid, &l.Title, &l.OrderNum, &l.DurationMin, &l.IsCompleted); err != nil {
+			return nil, err
+		}
 
 		l.Tests = []domain.Test{}
 		l.Projects = []domain.Project{}
@@ -120,43 +141,64 @@ func (r *LearningRepoImpl) GetCourseContent(ctx context.Context, courseID, userI
 			view.RootLessons = append(view.RootLessons, allLessonsMap[l.ID])
 		}
 	}
-	rowsL.Close()
 
-	testsQuery := `SELECT id, lesson_id, title, description, passing_score FROM tests WHERE lesson_id IN (SELECT id FROM lessons WHERE course_id = $1)`
-	rowsT, _ := r.db.QueryContext(ctx, testsQuery, courseID)
-	for rowsT.Next() {
-		var t domain.Test
-		var lid sql.NullString
-		rowsT.Scan(&t.ID, &lid, &t.Title, &t.Description, &t.PassingScore)
-		if lid.Valid {
-			s := lid.String
-			t.LessonID = &s
-			if less, ok := allLessonsMap[s]; ok {
-				less.Tests = append(less.Tests, t)
-			}
-		} else {
-			view.RootTests = append(view.RootTests, t)
-		}
-	}
-	rowsT.Close()
+	eg2, egCtx2 := errgroup.WithContext(ctx)
 
-	projQuery := `SELECT id, lesson_id, title, description, max_score FROM projects WHERE lesson_id IN (SELECT id FROM lessons WHERE course_id = $1)`
-	rowsP, _ := r.db.QueryContext(ctx, projQuery, courseID)
-	for rowsP.Next() {
-		var p domain.Project
-		var lid sql.NullString
-		rowsP.Scan(&p.ID, &lid, &p.Title, &p.Description, &p.MaxScore)
-		if lid.Valid {
-			s := lid.String
-			p.LessonID = &s
-			if less, ok := allLessonsMap[s]; ok {
-				less.Projects = append(less.Projects, p)
-			}
-		} else {
-			view.RootProjects = append(view.RootProjects, p)
+	eg2.Go(func() error {
+		testsQuery := `SELECT id, lesson_id, title, description, passing_score FROM tests WHERE lesson_id IN (SELECT id FROM lessons WHERE course_id = $1)`
+		rowsT, err := r.db.QueryContext(egCtx2, testsQuery, courseID)
+		if err != nil {
+			return err
 		}
+		defer rowsT.Close()
+		for rowsT.Next() {
+			var t domain.Test
+			var lid sql.NullString
+			if err := rowsT.Scan(&t.ID, &lid, &t.Title, &t.Description, &t.PassingScore); err != nil {
+				return err
+			}
+			if lid.Valid {
+				s := lid.String
+				t.LessonID = &s
+				if less, ok := allLessonsMap[s]; ok {
+					less.Tests = append(less.Tests, t)
+				}
+			} else {
+				view.RootTests = append(view.RootTests, t)
+			}
+		}
+		return nil
+	})
+
+	eg2.Go(func() error {
+		projQuery := `SELECT id, lesson_id, title, description, max_score FROM projects WHERE lesson_id IN (SELECT id FROM lessons WHERE course_id = $1)`
+		rowsP, err := r.db.QueryContext(egCtx2, projQuery, courseID)
+		if err != nil {
+			return err
+		}
+		defer rowsP.Close()
+		for rowsP.Next() {
+			var p domain.Project
+			var lid sql.NullString
+			if err := rowsP.Scan(&p.ID, &lid, &p.Title, &p.Description, &p.MaxScore); err != nil {
+				return err
+			}
+			if lid.Valid {
+				s := lid.String
+				p.LessonID = &s
+				if less, ok := allLessonsMap[s]; ok {
+					less.Projects = append(less.Projects, p)
+				}
+			} else {
+				view.RootProjects = append(view.RootProjects, p)
+			}
+		}
+		return nil
+	})
+
+	if err := eg2.Wait(); err != nil {
+		return nil, err
 	}
-	rowsP.Close()
 
 	return view, nil
 }
@@ -263,9 +305,10 @@ func (r *LearningRepoImpl) SetLessonAttendance(ctx context.Context, userID, less
 func (r *LearningRepoImpl) GetTeachersList(ctx context.Context) ([]*domain.TeacherPublicInfo, error) {
 	query := `
 		SELECT u.id, u.first_name, u.last_name, COALESCE(u.avatar_url, ''), 
-		       COALESCE((SELECT ROUND(AVG(rating), 1) FROM teacher_reviews WHERE teacher_id = u.id), 0.0) as rating, 
+		       COALESCE(ROUND(tr.avg_rating, 1), 0.0) as rating, 
 		       COALESCE(u.experience_years, 0), u.email, COALESCE(u.city, ''), COALESCE(u.phone, '')
 		FROM users u
+		LEFT JOIN (SELECT teacher_id, AVG(rating) as avg_rating FROM teacher_reviews GROUP BY teacher_id) tr ON tr.teacher_id = u.id
 		WHERE u.role = 'teacher'
 	`
 	rows, err := r.db.QueryContext(ctx, query)
@@ -289,29 +332,33 @@ func (r *LearningRepoImpl) GetTeacherByID(ctx context.Context, id string) (*doma
 
 	query := `
 		SELECT u.id, u.first_name, u.last_name, COALESCE(u.avatar_url, ''), 
-		       COALESCE((SELECT ROUND(AVG(rating), 1) FROM teacher_reviews WHERE teacher_id = u.id), 0.0) as rating, 
-		       COALESCE(u.experience_years, 0), COALESCE(t.bio, ''), u.email, COALESCE(u.city, ''), COALESCE(u.phone, '')
+		       COALESCE(ROUND(tr.avg_rating, 1), 0.0) as rating, 
+		       COALESCE(u.experience_years, 0), COALESCE(t.bio, ''), u.email, COALESCE(u.city, ''), COALESCE(u.phone, ''),
+		       COALESCE(t.working_hours, '{}'::jsonb)
 		FROM users u
 		LEFT JOIN teachers t ON u.id = t.id
+		LEFT JOIN (SELECT teacher_id, AVG(rating) as avg_rating FROM teacher_reviews GROUP BY teacher_id) tr ON tr.teacher_id = u.id
 		WHERE u.id = $1 AND u.role = 'teacher'
 	`
 
+	var scheduleRaw []byte
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
 		&t.ID, &t.FirstName, &t.LastName, &t.AvatarURL,
 		&t.Rating, &t.ExperienceYears, &t.Bio, &t.Email, &t.City, &t.Phone,
+		&scheduleRaw,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	t.Schedule = map[string]interface{}{
-		"monday":    map[string]interface{}{"isOpen": true, "intervals": []map[string]string{{"start": "09:00", "end": "13:00"}, {"start": "14:00", "end": "18:00"}}},
-		"tuesday":   map[string]interface{}{"isOpen": true, "intervals": []map[string]string{{"start": "09:00", "end": "18:00"}}},
-		"wednesday": map[string]interface{}{"isOpen": true, "intervals": []map[string]string{{"start": "09:00", "end": "18:00"}}},
-		"thursday":  map[string]interface{}{"isOpen": true, "intervals": []map[string]string{{"start": "09:00", "end": "18:00"}}},
-		"friday":    map[string]interface{}{"isOpen": true, "intervals": []map[string]string{{"start": "09:00", "end": "17:00"}}},
-		"saturday":  map[string]interface{}{"isOpen": false, "intervals": []interface{}{}},
-		"sunday":    map[string]interface{}{"isOpen": false, "intervals": []interface{}{}},
+	if len(scheduleRaw) > 0 {
+		var schedule map[string]interface{}
+		if err := json.Unmarshal(scheduleRaw, &schedule); err == nil {
+			t.Schedule = schedule
+		}
+	}
+	if t.Schedule == nil {
+		t.Schedule = map[string]interface{}{}
 	}
 
 	return t, nil
@@ -438,6 +485,7 @@ func (r *LearningRepoImpl) GetTeacherSubstitutions(ctx context.Context, teacherI
 		FROM lessons
 		WHERE substituted_teacher_id = $1 AND is_cancelled = FALSE
 		ORDER BY lesson_time ASC
+		LIMIT 50
 	`
 	rows, err := r.db.QueryContext(ctx, query, teacherID)
 	if err != nil {

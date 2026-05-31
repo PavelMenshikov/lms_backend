@@ -124,9 +124,7 @@ func (uc *DashboardUseCase) GetAdminDashboard(ctx context.Context) (*domain.Admi
 		studentsDelta float64
 		totalTeachers int
 		activeCourses int
-		zones         domain.PerformanceZones
-		hwZones       domain.PerformanceZones
-		attZones      domain.PerformanceZones
+		allPerf       *domain.AllPerformanceStats
 		activity      []domain.DailyLessonActivity
 	)
 
@@ -135,15 +133,7 @@ func (uc *DashboardUseCase) GetAdminDashboard(ctx context.Context) (*domain.Admi
 		return err
 	})
 	eg.Go(func() (err error) {
-		zones, err = uc.repo.GetPerformanceStats(egCtx)
-		return err
-	})
-	eg.Go(func() (err error) {
-		hwZones, err = uc.repo.GetHwPerformanceStats(egCtx)
-		return err
-	})
-	eg.Go(func() (err error) {
-		attZones, err = uc.repo.GetAttendancePerformanceStats(egCtx)
+		allPerf, err = uc.repo.GetAllPerformanceStats(egCtx)
 		return err
 	})
 	eg.Go(func() (err error) {
@@ -161,9 +151,9 @@ func (uc *DashboardUseCase) GetAdminDashboard(ctx context.Context) (*domain.Admi
 		NewStudentsMonth:      newStudents,
 		TotalTeachers:         totalTeachers,
 		ActiveCourses:         activeCourses,
-		Performance:           zones,
-		HwPerformance:         hwZones,
-		AttendancePerformance: attZones,
+		Performance:           allPerf.CourseZones,
+		HwPerformance:         allPerf.HomeworkZones,
+		AttendancePerformance: allPerf.AttendanceZones,
 		LessonActivity:        activity,
 		UpdatePeriodMonth:     time.Now().Format("January"),
 	}, nil

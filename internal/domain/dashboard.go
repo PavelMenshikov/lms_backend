@@ -52,6 +52,12 @@ type DailyLessonActivity struct {
 	Individual int    `json:"individual"`
 }
 
+type AllPerformanceStats struct {
+	CourseZones     PerformanceZones `json:"course_zones"`
+	HomeworkZones   PerformanceZones `json:"homework_zones"`
+	AttendanceZones PerformanceZones `json:"attendance_zones"`
+}
+
 type AdminHomeDashboard struct {
 	TotalStudents         int                   `json:"total_students"`
 	StudentsDelta         float64               `json:"students_delta_percent"`

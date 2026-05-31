@@ -12,6 +12,7 @@ type UserDataRepository interface {
 	GetAssignmentsCompletionPercentage(ctx context.Context, userID string) (*domain.StatisticSummary, error)
 	GetUpcomingLessons(ctx context.Context, userID string) ([]domain.UpcomingLesson, error)
 	GetAdminCounters(ctx context.Context) (totalStudents, newStudents int, studentsDelta float64, totalTeachers, activeCourses int, err error)
+	GetAllPerformanceStats(ctx context.Context) (*domain.AllPerformanceStats, error)
 	GetPerformanceStats(ctx context.Context) (domain.PerformanceZones, error)
 	GetHwPerformanceStats(ctx context.Context) (domain.PerformanceZones, error)
 	GetAttendancePerformanceStats(ctx context.Context) (domain.PerformanceZones, error)

@@ -49,6 +49,13 @@ func (m *mockDashboardRepo) GetAdminCounters(ctx context.Context) (totalStudents
 	args := m.Called(ctx)
 	return args.Int(0), args.Int(1), args.Get(2).(float64), args.Int(3), args.Int(4), args.Error(5)
 }
+func (m *mockDashboardRepo) GetAllPerformanceStats(ctx context.Context) (*domain.AllPerformanceStats, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.AllPerformanceStats), args.Error(1)
+}
 func (m *mockDashboardRepo) GetPerformanceStats(ctx context.Context) (domain.PerformanceZones, error) {
 	args := m.Called(ctx)
 	return args.Get(0).(domain.PerformanceZones), args.Error(1)

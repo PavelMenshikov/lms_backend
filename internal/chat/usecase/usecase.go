@@ -8,8 +8,7 @@ import (
 )
 
 type ChatUseCase struct {
-	repo repository.ChatRepository
-	// Храним активные подключения в памяти: map[RoomID][]Channels
+	repo    repository.ChatRepository
 	mu      sync.RWMutex
 	clients map[string]map[chan *domain.ChatMessage]bool
 }

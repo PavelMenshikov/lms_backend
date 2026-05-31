@@ -6,12 +6,14 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
+	"github.com/redis/go-redis/v9"
 	httpSwagger "github.com/swaggo/http-swagger"
 	"golang.org/x/crypto/bcrypt"
 
@@ -124,6 +126,12 @@ func main() {
 		log.Fatal(err)
 	}
 	defer db.Close()
+
+	db.SetMaxOpenConns(25)
+	db.SetMaxIdleConns(10)
+	db.SetConnMaxLifetime(5 * time.Minute)
+	db.SetConnMaxIdleTime(1 * time.Minute)
+
 	log.Println("Успешное подключение к PostgreSQL")
 
 	if err := dbPkg.RunMigrations(db); err != nil {
@@ -145,7 +153,21 @@ func main() {
 	authUsecase := authUseCase.NewAuthUsecase(authRepoImpl)
 	authHandler := authHttp.NewAuthHandler(authUsecase)
 
-	dashboardRepository := dashboardRepo.NewDashboardRepository(db)
+	redisAddr := os.Getenv("REDIS_ADDR")
+	if redisAddr == "" {
+		redisAddr = "localhost:6379"
+	}
+	rdb := redis.NewClient(&redis.Options{
+		Addr:         redisAddr,
+		ReadTimeout:  3 * time.Second,
+		WriteTimeout: 3 * time.Second,
+		PoolSize:     10,
+		MinIdleConns: 3,
+	})
+
+	dashboardRepository := dashboardRepo.NewCachedDashboardRepo(
+		dashboardRepo.NewDashboardRepository(db), rdb,
+	)
 	dashboardUsecase := dashboardUseCase.NewDashboardUseCase(dashboardRepository)
 	dashboardHandler := dashboardHttp.NewDashboardHandler(dashboardUsecase)
 
@@ -177,7 +199,6 @@ func main() {
 	chatUC := chatUseCase.NewChatUseCase(chatRepoImpl)
 	chatHandler := chatHttp.NewChatHandler(chatUC)
 
-	// Новые модули
 	attendanceRepoImpl := attendanceRepo.NewAttendanceRepository(db)
 	attendanceUC := attendanceUseCase.NewAttendanceUseCase(attendanceRepoImpl)
 	attendanceHandler := attendanceHttp.NewAttendanceHandler(attendanceUC)
@@ -203,7 +224,7 @@ func main() {
 	bannerHandler := bannerHttp.NewBannerHandler(bannerUC)
 
 	auditRepoImpl := auditRepo.NewAuditRepository(db)
-	_ = auditUseCase.NewAuditUseCase(auditRepoImpl) // Для будущего использования
+	_ = auditUseCase.NewAuditUseCase(auditRepoImpl)
 
 	statisticsRepoImpl := statisticsRepo.NewStatisticsRepository(db)
 	statisticsUC := statisticsUseCase.NewStatisticsUseCase(statisticsRepoImpl)
@@ -245,7 +266,6 @@ func main() {
 	r.Post("/auth/login", authHandler.Login)
 	r.Post("/auth/logout", authHandler.Logout)
 
-	// Дублирующие endpoints для frontend (через /api/auth)
 	r.Post("/api/auth/register", authHandler.Register)
 	r.Post("/api/auth/login", authHandler.Login)
 	r.Post("/api/auth/logout", authHandler.Logout)
@@ -298,7 +318,6 @@ func main() {
 	r.Group(func(r chi.Router) {
 		r.Use(authMiddleware.AuthMiddleware, authMiddleware.RoleRequiredMiddleware(domain.RoleAdmin, domain.RoleTeacher, domain.RoleModerator, domain.RoleCurator))
 
-		// Admin endpoints (без префикса для обратной совместимости)
 		r.Get("/admin/dashboard/stats", dashboardHandler.GetAdminDashboard)
 		r.Get("/admin/curator/dashboard", dashboardHandler.GetCuratorDashboard)
 		r.Get("/admin/courses", adminHandler.GetAllCourses)
@@ -342,7 +361,6 @@ func main() {
 		r.Get("/admin/groups", adminHandler.GetGroups)
 		r.Post("/admin/courses/bulk", adminHandler.CreateFullCourse)
 
-		// Дублирующие admin endpoints с префиксом /api/admin/ (для frontend)
 		r.Get("/api/admin/dashboard/stats", dashboardHandler.GetAdminDashboard)
 		r.Get("/api/admin/curator/dashboard", dashboardHandler.GetCuratorDashboard)
 		r.Get("/api/admin/courses", adminHandler.GetAllCourses)
@@ -386,47 +404,38 @@ func main() {
 		r.Get("/api/admin/groups", adminHandler.GetGroups)
 		r.Post("/api/admin/courses/bulk", adminHandler.CreateFullCourse)
 
-		// Groups management (moderator/admin)
 		r.Patch("/api/groups/{groupId}", groupsHandler.UpdateGroup)
 		r.Post("/api/groups/{groupId}/students", groupsHandler.AddStudentToGroup)
 		r.Delete("/api/groups/{groupId}/students/{studentId}", groupsHandler.RemoveStudentFromGroup)
 		r.Patch("/api/students/{studentId}/group", groupsHandler.ChangeStudentGroup)
 		r.Patch("/api/teachers/{teacherId}/group", groupsHandler.ChangeTeacherGroup)
 
-		// Attendance (teacher/curator/moderator)
 		r.Get("/api/attendance/students/{studentId}/calendar", attendanceHandler.GetStudentCalendar)
 		r.Patch("/api/attendance/lessons/{lessonId}", attendanceHandler.MarkLessonAttendance)
 		r.Get("/api/attendance/students/{studentId}/stats", attendanceHandler.GetStudentStats)
 		r.Get("/api/attendance/lessons/{lessonId}", attendanceHandler.GetLessonAttendance)
 
-		// Freeze requests (curator creates, moderator approves)
 		r.Post("/api/freeze-requests", freezeHandler.CreateFreezeRequest)
 		r.Get("/api/freeze-requests", freezeHandler.GetPendingRequests)
 		r.Patch("/api/freeze-requests/{requestId}/approve", freezeHandler.ApproveRequest)
 		r.Patch("/api/freeze-requests/{requestId}/reject", freezeHandler.RejectRequest)
 		r.Get("/api/students/{studentId}/freeze-status", freezeHandler.GetStudentFreezeStatus)
 
-		// Comments (curator → teacher)
 		r.Post("/api/comments", commentHandler.CreateComment)
 		r.Get("/api/comments", commentHandler.GetComments)
 		r.Patch("/api/comments/{commentId}/read", commentHandler.MarkCommentAsRead)
 
-		// Notifications (moderator → curator)
 		r.Post("/api/notifications", notificationHandler.CreateNotification)
 
-		// Access requests
 		r.Get("/api/access-requests", accessHandler.GetPendingRequests)
 		r.Patch("/api/access-requests/{requestId}/approve", accessHandler.ApproveRequest)
 		r.Patch("/api/access-requests/{requestId}/reject", accessHandler.RejectRequest)
 
-		// Statistics
 		r.Get("/api/statistics/students/{studentId}", statisticsHandler.GetStudentStatistics)
 		r.Post("/api/statistics/students/{studentId}/refresh", statisticsHandler.RefreshStudentStatistics)
 
-		// Excel Reports (moderator/admin only)
 		r.Get("/api/reports/lessons.xlsx", reportsHandler.DownloadLessonsReport)
 
-		// Banner management (admin only)
 		r.Post("/api/admin/banner", bannerHandler.CreateBanner)
 		r.Patch("/api/admin/banner/{bannerId}", bannerHandler.UpdateBanner)
 		r.Delete("/api/admin/banner/{bannerId}", bannerHandler.DeleteBanner)
@@ -438,7 +447,6 @@ func main() {
 	r.Group(func(r chi.Router) {
 		r.Use(authMiddleware.AuthMiddleware)
 
-		// Основные endpoints (без префикса для обратной совместимости)
 		r.Get("/teachers", learningHandler.GetTeachers)
 		r.Get("/teachers/{id}", learningHandler.GetTeacherDetails)
 		r.Post("/teachers/{id}/reviews", learningHandler.AddReview)
@@ -461,7 +469,6 @@ func main() {
 		r.Get("/chat/ws", chatHandler.ConnectToChat)
 		r.Get("/chat/history", chatHandler.GetChatHistory)
 
-		// Дублирующие endpoints с префиксом /api (для frontend)
 		r.Get("/api/teachers", learningHandler.GetTeachers)
 		r.Get("/api/teachers/{id}", learningHandler.GetTeacherDetails)
 		r.Post("/api/teachers/{id}/reviews", learningHandler.AddReview)
@@ -483,14 +490,11 @@ func main() {
 		r.Get("/api/chat/ws", chatHandler.ConnectToChat)
 		r.Get("/api/chat/history", chatHandler.GetChatHistory)
 
-		// Notifications (для всех авторизованных)
 		r.Get("/api/notifications", notificationHandler.GetNotifications)
 		r.Patch("/api/notifications/{notificationId}/read", notificationHandler.MarkNotificationAsRead)
 
-		// Access requests (для всех авторизованных)
 		r.Post("/api/access-requests", accessHandler.CreateAccessRequest)
 
-		// Active banners (для всех авторизованных)
 		r.Get("/api/banner/active", bannerHandler.GetActiveBanners)
 	})
 

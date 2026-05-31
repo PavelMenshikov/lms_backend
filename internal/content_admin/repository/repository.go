@@ -148,7 +148,7 @@ func (r *ContentAdminRepoImpl) GetLessonIDByOrder(ctx context.Context, courseID 
 }
 
 func (r *ContentAdminRepoImpl) GetAllCourses(ctx context.Context) ([]*domain.Course, error) {
-	rows, err := r.db.QueryContext(ctx, "SELECT id, title, description, is_main, image_url, status, created_at FROM courses ORDER BY created_at DESC")
+	rows, err := r.db.QueryContext(ctx, "SELECT id, title, description, is_main, image_url, status, created_at FROM courses ORDER BY created_at DESC LIMIT 200")
 	if err != nil {
 		return nil, err
 	}
@@ -343,7 +343,25 @@ func (r *ContentAdminRepoImpl) GetCourseIDByStream(ctx context.Context, streamID
 }
 
 func (r *ContentAdminRepoImpl) GetCourseStudents(ctx context.Context, courseID string) ([]*domain.AdminStudentProgress, error) {
-	query := `SELECT u.id, u.first_name || ' ' || u.last_name as full_name, uc.progress_percent, (SELECT COUNT(*) FROM user_lesson_attendance WHERE user_id = u.id AND status IN ('visited', 'trial')), (SELECT COUNT(*) FROM user_assignments_submission WHERE user_id = u.id AND status = 'accepted') FROM users u JOIN user_courses uc ON u.id = uc.user_id WHERE uc.course_id = $1 AND u.role = 'student'`
+	query := `
+		SELECT u.id, u.first_name || ' ' || u.last_name, uc.progress_percent,
+			COALESCE(ula.attended, 0), COALESCE(uas.accepted, 0)
+		FROM users u
+		JOIN user_courses uc ON u.id = uc.user_id AND uc.course_id = $1
+		LEFT JOIN (
+			SELECT user_id, COUNT(*) as attended
+			FROM user_lesson_attendance
+			WHERE status IN ('visited', 'trial')
+			GROUP BY user_id
+		) ula ON u.id = ula.user_id
+		LEFT JOIN (
+			SELECT user_id, COUNT(*) as accepted
+			FROM user_assignments_submission
+			WHERE status = 'accepted'
+			GROUP BY user_id
+		) uas ON u.id = uas.user_id
+		WHERE u.role = 'student'
+	`
 	rows, err := r.db.QueryContext(ctx, query, courseID)
 	if err != nil {
 		return nil, err
@@ -429,7 +447,7 @@ func (r *ContentAdminRepoImpl) GetDetailedStudentList(ctx context.Context, filte
 			COALESCE(STRING_AGG(DISTINCT teach.first_name || ' ' || teach.last_name, ', '), '') as teacher,
 			COALESCE(STRING_AGG(DISTINCT s.title, ', '), '') as stream,
 			COALESCE(AVG(uc.progress_percent)::INT, 0) as performance,
-			COALESCE((SELECT phone FROM users pu JOIN child_parent_link cpl ON pu.id = cpl.parent_id WHERE cpl.child_id = u.id LIMIT 1), '') as parent_phone,
+			COALESCE(MIN(par.phone), '') as parent_phone,
 			COALESCE(u.city, '') as city, 
 			COALESCE(u.school_name, '') as school, 
 			COALESCE(u.language, '') as language,
@@ -445,6 +463,8 @@ func (r *ContentAdminRepoImpl) GetDetailedStudentList(ctx context.Context, filte
 		LEFT JOIN users cur ON g.curator_id = cur.id
 		LEFT JOIN users teach ON g.teacher_id = teach.id
 		LEFT JOIN streams s ON uc.stream_id = s.id
+		LEFT JOIN child_parent_link cpl ON cpl.child_id = u.id
+		LEFT JOIN users par ON par.id = cpl.parent_id
 		WHERE u.role = 'student'`
 
 	args := []interface{}{}
@@ -453,7 +473,7 @@ func (r *ContentAdminRepoImpl) GetDetailedStudentList(ctx context.Context, filte
 		args = append(args, filter.CourseID)
 	}
 
-	query += ` GROUP BY u.id ORDER BY u.created_at DESC`
+	query += ` GROUP BY u.id ORDER BY u.created_at DESC LIMIT 500`
 
 	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -480,7 +500,19 @@ func (r *ContentAdminRepoImpl) GetDetailedStudentList(ctx context.Context, filte
 }
 
 func (r *ContentAdminRepoImpl) GetDetailedTeacherList(ctx context.Context) ([]*domain.TeacherTableItem, error) {
-	query := `SELECT u.id, COALESCE(u.avatar_url, ''), u.first_name || ' ' || u.last_name, u.created_at, u.gender, u.phone, COALESCE((SELECT STRING_AGG(title, ', ') FROM groups WHERE teacher_id = u.id), ''), COALESCE(u.city, ''), u.email, COALESCE(u.experience_years, 0), COALESCE(u.language, '') FROM users u WHERE u.role = 'teacher' ORDER BY u.created_at DESC`
+	query := `
+		SELECT u.id, COALESCE(u.avatar_url, ''), u.first_name || ' ' || u.last_name,
+			u.created_at, u.gender, u.phone,
+			COALESCE(STRING_AGG(g.title, ', '), '') as groups,
+			COALESCE(u.city, ''), u.email, COALESCE(u.experience_years, 0),
+			COALESCE(u.language, '')
+		FROM users u
+		LEFT JOIN groups g ON g.teacher_id = u.id
+		WHERE u.role = 'teacher'
+		GROUP BY u.id
+		ORDER BY u.created_at DESC
+		LIMIT 200
+	`
 	rows, err := r.db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
@@ -496,7 +528,16 @@ func (r *ContentAdminRepoImpl) GetDetailedTeacherList(ctx context.Context) ([]*d
 }
 
 func (r *ContentAdminRepoImpl) GetDetailedCuratorList(ctx context.Context) ([]*domain.CuratorTableItem, error) {
-	query := `SELECT u.id, u.first_name || ' ' || u.last_name, u.created_at, COALESCE((SELECT STRING_AGG(title, ', ') FROM groups WHERE curator_id = u.id), ''), u.phone, u.email FROM users u WHERE u.role = 'curator' ORDER BY u.created_at DESC`
+	query := `
+		SELECT u.id, u.first_name || ' ' || u.last_name, u.created_at,
+			COALESCE(STRING_AGG(g.title, ', '), '') as groups, u.phone, u.email
+		FROM users u
+		LEFT JOIN groups g ON g.curator_id = u.id
+		WHERE u.role = 'curator'
+		GROUP BY u.id
+		ORDER BY u.created_at DESC
+		LIMIT 200
+	`
 	rows, err := r.db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
@@ -528,7 +569,7 @@ func (r *ContentAdminRepoImpl) GetDetailedModeratorList(ctx context.Context) ([]
 }
 
 func (r *ContentAdminRepoImpl) GetAllUsersList(ctx context.Context) ([]*domain.AllUsersTableItem, error) {
-	query := `SELECT id, COALESCE(avatar_url, ''), first_name || ' ' || last_name, role, created_at FROM users ORDER BY created_at DESC`
+	query := `SELECT id, COALESCE(avatar_url, ''), first_name || ' ' || last_name, role, created_at FROM users ORDER BY created_at DESC LIMIT 200`
 	rows, err := r.db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
@@ -556,7 +597,7 @@ func (r *ContentAdminRepoImpl) GetStreamsByCourse(ctx context.Context, courseID 
 		query += " WHERE course_id = $1"
 		args = append(args, courseID)
 	}
-	query += " ORDER BY created_at DESC"
+	query += " ORDER BY created_at DESC LIMIT 200"
 	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
@@ -584,7 +625,7 @@ func (r *ContentAdminRepoImpl) GetGroupsByStream(ctx context.Context, streamID s
 		query += " WHERE stream_id = $1"
 		args = append(args, streamID)
 	}
-	query += " ORDER BY created_at DESC"
+	query += " ORDER BY created_at DESC LIMIT 200"
 	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err

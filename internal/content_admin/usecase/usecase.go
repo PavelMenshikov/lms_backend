@@ -28,11 +28,24 @@ func NewContentAdminUseCase(repo repository.ContentAdminRepository, s3Storage st
 }
 
 func splitName(fullName string) (string, string) {
-	parts := strings.SplitN(strings.TrimSpace(fullName), " ", 2)
-	if len(parts) == 2 {
-		return parts[0], parts[1]
+	fullName = strings.TrimSpace(fullName)
+	if fullName == "" {
+		return "", ""
 	}
-	return fullName, ""
+	// Last space split: "Иван Петров" → Иван / Петров
+	// Handles multi-word first names: "Анна Мария Петрова" → Анна Мария / Петрова
+	lastSpace := strings.LastIndex(fullName, " ")
+	if lastSpace == -1 {
+		return fullName, ""
+	}
+	return fullName[:lastSpace], fullName[lastSpace+1:]
+}
+
+func resolveNames(input ExtendedCreateUserInput) (firstName, lastName string) {
+	if input.FirstName != "" || input.LastName != "" {
+		return input.FirstName, input.LastName
+	}
+	return splitName(input.FullName)
 }
 
 type CreateCourseInput struct {
@@ -80,6 +93,8 @@ type CreateLessonInput struct {
 
 type ExtendedCreateUserInput struct {
 	FullName               string
+	FirstName              string
+	LastName               string
 	Email                  string
 	Role                   domain.Role
 	Password               string
@@ -456,7 +471,7 @@ func (uc *ContentAdminUseCase) CreateLessonsBulk(ctx context.Context, input []Cr
 }
 
 func (uc *ContentAdminUseCase) CreateFullUser(ctx context.Context, input ExtendedCreateUserInput) (map[string]string, error) {
-	firstName, lastName := splitName(input.FullName)
+	firstName, lastName := resolveNames(input)
 	hashedPass, err := bcrypt.GenerateFromPassword([]byte(input.Password), 12)
 	if err != nil {
 		return nil, fmt.Errorf("failed to hash password: %w", err)
@@ -607,7 +622,7 @@ func (uc *ContentAdminUseCase) UpdateUser(ctx context.Context, userID string, in
 		return err
 	}
 
-	firstName, lastName := splitName(input.FullName)
+	firstName, lastName := resolveNames(input)
 	finalBD := input.BirthDate
 	if finalBD.IsZero() {
 		finalBD = existing.BirthDate
