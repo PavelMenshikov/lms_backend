@@ -145,6 +145,9 @@ func (m *ContentAdminRepoMock) GetProjectsByCourseID(ctx context.Context, course
 func (m *ContentAdminRepoMock) UnenrollStudent(ctx context.Context, userID, courseID string) error {
 	return nil
 }
+func (m *ContentAdminRepoMock) LinkTeachersToCourse(ctx context.Context, courseID string, teacherIDs []string) error {
+	return nil
+}
 func (m *ContentAdminRepoMock) GetLessonByID(ctx context.Context, id string) (*domain.Lesson, error) {
 	return nil, nil
 }
@@ -153,4 +156,10 @@ func (m *ContentAdminRepoMock) GetTestByID(ctx context.Context, id string) (*dom
 }
 func (m *ContentAdminRepoMock) GetProjectByID(ctx context.Context, id string) (*domain.Project, error) {
 	return nil, nil
+}
+func (m *ContentAdminRepoMock) CancelLesson(ctx context.Context, lessonID, reason string) error {
+	return nil
+}
+func (m *ContentAdminRepoMock) SubstituteTeacher(ctx context.Context, lessonID, teacherID string) error {
+	return nil
 }

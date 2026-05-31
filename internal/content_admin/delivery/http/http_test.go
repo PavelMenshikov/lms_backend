@@ -6,6 +6,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/go-chi/chi/v5"
@@ -214,4 +215,112 @@ func TestGetLessonHandler(t *testing.T) {
 	var response domain.Lesson
 	json.NewDecoder(w.Body).Decode(&response)
 	assert.Equal(t, "Test Lesson", response.Title)
+}
+
+func TestCancelLessonHandler(t *testing.T) {
+	mockUC := new(MockContentAdminUseCase)
+	handler := &ContentAdminHandler{uc: mockUC}
+
+	t.Run("success", func(t *testing.T) {
+		mockUC.On("CancelLesson", mock.Anything, "lesson-1", "reason-text").Return(nil).Once()
+
+		req := httptest.NewRequest("POST", "/admin/lessons/lesson-1/cancel",
+			strings.NewReader(`{"reason":"reason-text"}`))
+		req.Header.Set("Content-Type", "application/json")
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", "lesson-1")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+		w := httptest.NewRecorder()
+		handler.CancelLesson(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+		var resp map[string]string
+		json.NewDecoder(w.Body).Decode(&resp)
+		assert.Equal(t, "cancelled", resp["status"])
+	})
+
+	t.Run("invalid json", func(t *testing.T) {
+		req := httptest.NewRequest("POST", "/admin/lessons/lesson-1/cancel",
+			strings.NewReader(`{invalid}`))
+		req.Header.Set("Content-Type", "application/json")
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", "lesson-1")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+		w := httptest.NewRecorder()
+		handler.CancelLesson(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+
+	t.Run("usecase error", func(t *testing.T) {
+		mockUC.On("CancelLesson", mock.Anything, "lesson-2", "").Return(assert.AnError).Once()
+
+		req := httptest.NewRequest("POST", "/admin/lessons/lesson-2/cancel",
+			strings.NewReader(`{"reason":""}`))
+		req.Header.Set("Content-Type", "application/json")
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", "lesson-2")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+		w := httptest.NewRecorder()
+		handler.CancelLesson(w, req)
+
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+	})
+}
+
+func TestSubstituteTeacherHandler(t *testing.T) {
+	mockUC := new(MockContentAdminUseCase)
+	handler := &ContentAdminHandler{uc: mockUC}
+
+	t.Run("success", func(t *testing.T) {
+		mockUC.On("SubstituteTeacher", mock.Anything, "lesson-1", "teacher-1").Return(nil).Once()
+
+		req := httptest.NewRequest("POST", "/admin/lessons/lesson-1/substitute",
+			strings.NewReader(`{"teacher_id":"teacher-1"}`))
+		req.Header.Set("Content-Type", "application/json")
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", "lesson-1")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+		w := httptest.NewRecorder()
+		handler.SubstituteTeacher(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+		var resp map[string]string
+		json.NewDecoder(w.Body).Decode(&resp)
+		assert.Equal(t, "substituted", resp["status"])
+	})
+
+	t.Run("invalid json", func(t *testing.T) {
+		req := httptest.NewRequest("POST", "/admin/lessons/lesson-1/substitute",
+			strings.NewReader(`{invalid}`))
+		req.Header.Set("Content-Type", "application/json")
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", "lesson-1")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+		w := httptest.NewRecorder()
+		handler.SubstituteTeacher(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+
+	t.Run("usecase error", func(t *testing.T) {
+		mockUC.On("SubstituteTeacher", mock.Anything, "lesson-2", "teacher-2").Return(assert.AnError).Once()
+
+		req := httptest.NewRequest("POST", "/admin/lessons/lesson-2/substitute",
+			strings.NewReader(`{"teacher_id":"teacher-2"}`))
+		req.Header.Set("Content-Type", "application/json")
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", "lesson-2")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+		w := httptest.NewRecorder()
+		handler.SubstituteTeacher(w, req)
+
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+	})
 }

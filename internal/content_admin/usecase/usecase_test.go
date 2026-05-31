@@ -3,11 +3,9 @@ package usecase_test
 import (
 	"context"
 	"testing"
-	"time"
 
 	"lms_backend/internal/content_admin/mocks"
 	"lms_backend/internal/content_admin/usecase"
-	"lms_backend/internal/domain"
 	s3Mocks "lms_backend/pkg/storage/mocks"
 )
 
