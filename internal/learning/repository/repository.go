@@ -24,6 +24,9 @@ type LearningRepository interface {
 
 	GetTestByID(ctx context.Context, testID string) (*domain.Test, error)
 	GetProjectByID(ctx context.Context, projectID string) (*domain.Project, error)
+	GetTeacherSubstitutions(ctx context.Context, teacherID string) ([]*domain.Lesson, error)
+	GetTeacherUpcomingLessons(ctx context.Context, teacherID string) ([]*domain.Lesson, error)
+	GetTeacherCancelledLessons(ctx context.Context, teacherID string) ([]*domain.Lesson, error)
 }
 
 type LearningRepoImpl struct {
@@ -399,4 +402,86 @@ func (r *LearningRepoImpl) GetTeacherCourses(ctx context.Context, teacherID stri
 		courses = append(courses, c)
 	}
 	return courses, nil
+}
+
+func scanLessons(rows *sql.Rows) ([]*domain.Lesson, error) {
+	var lessons []*domain.Lesson
+	for rows.Next() {
+		l := &domain.Lesson{}
+		var cancelledAt sql.NullTime
+		var cancellationReason sql.NullString
+		var substitutedTeacherID sql.NullString
+		err := rows.Scan(&l.ID, &l.CourseID, &l.ModuleID, &l.TeacherID, &l.Title, &l.LessonTime, &l.DurationMin, &l.OrderNum, &l.IsPublished, &l.VideoURL, &l.PresentationURL, &l.ContentText, &l.HasHomework, &l.IsInteractive, &l.IsCancelled, &cancelledAt, &cancellationReason, &substitutedTeacherID)
+		if err != nil {
+			return nil, err
+		}
+		if cancelledAt.Valid {
+			l.CancelledAt = &cancelledAt.Time
+		}
+		if cancellationReason.Valid {
+			l.CancellationReason = cancellationReason.String
+		}
+		if substitutedTeacherID.Valid {
+			l.SubstitutedTeacherID = &substitutedTeacherID.String
+		}
+		lessons = append(lessons, l)
+	}
+	return lessons, nil
+}
+
+func (r *LearningRepoImpl) GetTeacherSubstitutions(ctx context.Context, teacherID string) ([]*domain.Lesson, error) {
+	query := `
+		SELECT id, course_id, module_id, teacher_id, title, lesson_time, duration_min, order_num,
+		       is_published, COALESCE(video_url, ''), COALESCE(presentation_url, ''), COALESCE(content_text, ''),
+		       COALESCE(has_homework, FALSE), COALESCE(is_interactive, FALSE),
+		       is_cancelled, cancelled_at, cancellation_reason, substituted_teacher_id
+		FROM lessons
+		WHERE substituted_teacher_id = $1 AND is_cancelled = FALSE
+		ORDER BY lesson_time ASC
+	`
+	rows, err := r.db.QueryContext(ctx, query, teacherID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	return scanLessons(rows)
+}
+
+func (r *LearningRepoImpl) GetTeacherUpcomingLessons(ctx context.Context, teacherID string) ([]*domain.Lesson, error) {
+	query := `
+		SELECT id, course_id, module_id, teacher_id, title, lesson_time, duration_min, order_num,
+		       is_published, COALESCE(video_url, ''), COALESCE(presentation_url, ''), COALESCE(content_text, ''),
+		       COALESCE(has_homework, FALSE), COALESCE(is_interactive, FALSE),
+		       is_cancelled, cancelled_at, cancellation_reason, substituted_teacher_id
+		FROM lessons
+		WHERE (teacher_id = $1 OR substituted_teacher_id = $1)
+		  AND lesson_time > NOW() AND is_cancelled = FALSE
+		ORDER BY lesson_time ASC
+		LIMIT 20
+	`
+	rows, err := r.db.QueryContext(ctx, query, teacherID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	return scanLessons(rows)
+}
+
+func (r *LearningRepoImpl) GetTeacherCancelledLessons(ctx context.Context, teacherID string) ([]*domain.Lesson, error) {
+	query := `
+		SELECT id, course_id, module_id, teacher_id, title, lesson_time, duration_min, order_num,
+		       is_published, COALESCE(video_url, ''), COALESCE(presentation_url, ''), COALESCE(content_text, ''),
+		       COALESCE(has_homework, FALSE), COALESCE(is_interactive, FALSE),
+		       is_cancelled, cancelled_at, cancellation_reason, substituted_teacher_id
+		FROM lessons
+		WHERE teacher_id = $1 AND is_cancelled = TRUE
+		ORDER BY cancelled_at DESC
+		LIMIT 20
+	`
+	rows, err := r.db.QueryContext(ctx, query, teacherID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	return scanLessons(rows)
 }

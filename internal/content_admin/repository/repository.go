@@ -59,6 +59,8 @@ type ContentAdminRepository interface {
 	UnenrollStudent(ctx context.Context, userID, courseID string) error
 	LinkTeachersToCourse(ctx context.Context, courseID string, teacherIDs []string) error
 	GetLessonByID(ctx context.Context, id string) (*domain.Lesson, error)
+	CancelLesson(ctx context.Context, lessonID, reason string) error
+	SubstituteTeacher(ctx context.Context, lessonID, teacherID string) error
 }
 
 type ContentAdminRepoImpl struct {
@@ -783,4 +785,20 @@ func (r *ContentAdminRepoImpl) LinkTeachersToCourse(ctx context.Context, courseI
 		}
 	}
 	return tx.Commit()
+}
+
+func (r *ContentAdminRepoImpl) CancelLesson(ctx context.Context, lessonID, reason string) error {
+	_, err := r.db.ExecContext(ctx,
+		`UPDATE lessons SET is_cancelled = TRUE, cancelled_at = NOW(), cancellation_reason = $1 WHERE id = $2`,
+		reason, lessonID,
+	)
+	return err
+}
+
+func (r *ContentAdminRepoImpl) SubstituteTeacher(ctx context.Context, lessonID, teacherID string) error {
+	_, err := r.db.ExecContext(ctx,
+		`UPDATE lessons SET substituted_teacher_id = $1 WHERE id = $2`,
+		teacherID, lessonID,
+	)
+	return err
 }

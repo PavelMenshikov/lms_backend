@@ -826,3 +826,11 @@ func (uc *ContentAdminUseCase) GetProject(ctx context.Context, id string) (*doma
 func (uc *ContentAdminUseCase) LinkTeachersToCourse(ctx context.Context, courseID string, teacherIDs []string) error {
 	return uc.repo.LinkTeachersToCourse(ctx, courseID, teacherIDs)
 }
+
+func (uc *ContentAdminUseCase) CancelLesson(ctx context.Context, lessonID, reason string) error {
+	return uc.repo.CancelLesson(ctx, lessonID, reason)
+}
+
+func (uc *ContentAdminUseCase) SubstituteTeacher(ctx context.Context, lessonID, teacherID string) error {
+	return uc.repo.SubstituteTeacher(ctx, lessonID, teacherID)
+}

@@ -36,7 +36,10 @@ type TeacherPublicInfo struct {
 	Reviews         []*TeacherReview `json:"reviews"`
 }
 type TeacherDashboardData struct {
-	Profile         *TeacherPublicInfo      `json:"profile"`
-	AssignedCourses []*StudentCoursePreview `json:"assigned_courses"`
-	MyReviews       []*TeacherReview        `json:"my_reviews"`
+	Profile          *TeacherPublicInfo      `json:"profile"`
+	AssignedCourses  []*StudentCoursePreview `json:"assigned_courses"`
+	MyReviews        []*TeacherReview        `json:"my_reviews"`
+	Substitutions    []*Lesson               `json:"substitutions,omitempty"`
+	CancelledLessons []*Lesson               `json:"cancelled_lessons,omitempty"`
+	UpcomingLessons  []*Lesson               `json:"upcoming_lessons,omitempty"`
 }

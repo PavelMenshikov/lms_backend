@@ -56,6 +56,8 @@ type ContentAdminService interface {
 	GetTest(ctx context.Context, id string) (*domain.Test, error)
 	GetProject(ctx context.Context, id string) (*domain.Project, error)
 	LinkTeachersToCourse(ctx context.Context, courseID string, teacherIDs []string) error
+	CancelLesson(ctx context.Context, lessonID, reason string) error
+	SubstituteTeacher(ctx context.Context, lessonID, teacherID string) error
 }
 
 type ContentAdminHandler struct {
@@ -74,6 +76,14 @@ type CreateLessonRequest struct {
 	OrderNum    int                   `json:"order_num"`
 	ContentText string                `json:"content_text"`
 	Content     []domain.ContentBlock `json:"content"`
+}
+
+type CancelLessonRequest struct {
+	Reason string `json:"reason"`
+}
+
+type SubstituteTeacherRequest struct {
+	TeacherID string `json:"teacher_id"`
 }
 
 type CreateFullUserRequest struct {
@@ -1096,6 +1106,50 @@ func (h *ContentAdminHandler) GetLesson(w http.ResponseWriter, r *http.Request) 
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(lesson)
+}
+
+// CancelLesson godoc
+// @Summary ADMIN: Отменить урок
+// @Tags Admin-Content
+// @Accept json
+// @Param id path string true "Lesson ID"
+// @Param request body CancelLessonRequest true "Причина отмены"
+// @Success 200 {object} map[string]string
+// @Router /admin/lessons/{id}/cancel [post]
+func (h *ContentAdminHandler) CancelLesson(w http.ResponseWriter, r *http.Request) {
+	lessonID := chi.URLParam(r, "id")
+	var req CancelLessonRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if err := h.uc.CancelLesson(r.Context(), lessonID, req.Reason); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(map[string]string{"status": "cancelled"})
+}
+
+// SubstituteTeacher godoc
+// @Summary ADMIN: Заменить преподавателя на уроке
+// @Tags Admin-Content
+// @Accept json
+// @Param id path string true "Lesson ID"
+// @Param request body SubstituteTeacherRequest true "ID нового преподавателя"
+// @Success 200 {object} map[string]string
+// @Router /admin/lessons/{id}/substitute [post]
+func (h *ContentAdminHandler) SubstituteTeacher(w http.ResponseWriter, r *http.Request) {
+	lessonID := chi.URLParam(r, "id")
+	var req SubstituteTeacherRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if err := h.uc.SubstituteTeacher(r.Context(), lessonID, req.TeacherID); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(map[string]string{"status": "substituted"})
 }
 
 // GetTest godoc

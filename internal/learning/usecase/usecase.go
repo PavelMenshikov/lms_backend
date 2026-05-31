@@ -129,9 +129,26 @@ func (uc *LearningUseCase) GetTeacherDashboard(ctx context.Context, teacherID st
 
 	courses, _ := uc.repo.GetTeacherCourses(ctx, teacherID)
 
+	substitutions, _ := uc.repo.GetTeacherSubstitutions(ctx, teacherID)
+	cancelledLessons, _ := uc.repo.GetTeacherCancelledLessons(ctx, teacherID)
+	upcomingLessons, _ := uc.repo.GetTeacherUpcomingLessons(ctx, teacherID)
+
+	if substitutions == nil {
+		substitutions = []*domain.Lesson{}
+	}
+	if cancelledLessons == nil {
+		cancelledLessons = []*domain.Lesson{}
+	}
+	if upcomingLessons == nil {
+		upcomingLessons = []*domain.Lesson{}
+	}
+
 	return &domain.TeacherDashboardData{
-		Profile:         profile,
-		AssignedCourses: courses,
-		MyReviews:       reviews,
+		Profile:          profile,
+		AssignedCourses:  courses,
+		MyReviews:        reviews,
+		Substitutions:    substitutions,
+		CancelledLessons: cancelledLessons,
+		UpcomingLessons:  upcomingLessons,
 	}, nil
 }
