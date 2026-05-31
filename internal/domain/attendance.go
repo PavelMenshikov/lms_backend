@@ -11,6 +11,16 @@ const (
 	AttendanceStatusFreeze          AttendanceStatus = "FREEZE"
 )
 
+type LessonAttendanceStatus string
+
+const (
+	LessonAttVisited      LessonAttendanceStatus = "visited"
+	LessonAttMissingValid LessonAttendanceStatus = "missing_valid"
+	LessonAttMissingInval LessonAttendanceStatus = "missing_invalid"
+	LessonAttFrozen       LessonAttendanceStatus = "frozen"
+	LessonAttTrial        LessonAttendanceStatus = "trial"
+)
+
 type AttendanceRecord struct {
 	ID        string           `json:"id" db:"id"`
 	LessonID  string           `json:"lesson_id" db:"lesson_id"`

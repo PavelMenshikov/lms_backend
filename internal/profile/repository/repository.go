@@ -10,7 +10,7 @@ import (
 type ProfileRepository interface {
 	GetProfile(ctx context.Context, userID string) (*domain.User, error)
 	UpdateProfile(ctx context.Context, user *domain.User) error
-	UpdateTeacherSchedule(ctx context.Context, userID string, scheduleJSON[]byte) error
+	UpdateTeacherSchedule(ctx context.Context, userID string, scheduleJSON []byte) error
 }
 
 type ProfileRepoImpl struct {
@@ -25,7 +25,7 @@ func NewProfileRepository(db *sql.DB) *ProfileRepoImpl {
 
 func (r *ProfileRepoImpl) GetProfile(ctx context.Context, userID string) (*domain.User, error) {
 	u := &domain.User{}
-	
+
 	query := `
 		SELECT 
 			u.id, u.first_name, u.last_name, u.first_name || ' ' || u.last_name as full_name,
@@ -75,7 +75,7 @@ func (r *ProfileRepoImpl) UpdateProfile(ctx context.Context, u *domain.User) err
 	}
 	return nil
 }
-func (r *ProfileRepoImpl) UpdateTeacherSchedule(ctx context.Context, userID string, scheduleJSON[]byte) error {
+func (r *ProfileRepoImpl) UpdateTeacherSchedule(ctx context.Context, userID string, scheduleJSON []byte) error {
 	query := `
 		INSERT INTO teachers (id, working_hours) 
 		VALUES ($1, $2)

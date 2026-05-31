@@ -22,14 +22,14 @@ type EvaluateInput struct {
 	SubmissionID string
 	Grade        int
 	Comment      string
-	Status       string 
+	Status       string
 }
 
 func (uc *ReviewUseCase) Evaluate(ctx context.Context, input EvaluateInput) error {
 	if input.Status == "accepted" {
 		validGrades := map[int]bool{20: true, 40: true, 60: true, 80: true, 100: true}
 		if !validGrades[input.Grade] {
-			input.Grade = 100 
+			input.Grade = 100
 		}
 	} else {
 		input.Grade = 0

@@ -54,7 +54,7 @@ func (h *ReviewHandler) GetPendingSubmissions(w http.ResponseWriter, r *http.Req
 // @Router /staff/submissions/{id}/evaluate [post]
 func (h *ReviewHandler) EvaluateSubmission(w http.ResponseWriter, r *http.Request) {
 	userCtx := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
-	
+
 	if userCtx.Role == domain.RoleCurator {
 		http.Error(w, "Forbidden: Curators cannot evaluate homework", http.StatusForbidden)
 		return

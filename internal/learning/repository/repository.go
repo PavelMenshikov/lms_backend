@@ -3,8 +3,8 @@ package repository
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"encoding/json"
+	"fmt"
 	"lms_backend/internal/domain"
 )
 
@@ -14,7 +14,7 @@ type LearningRepository interface {
 	GetLessonDetail(ctx context.Context, lessonID, userID string) (*domain.StudentLessonDetail, error)
 	GetAssignmentIDByLesson(ctx context.Context, lessonID string) (string, error)
 	SaveSubmission(ctx context.Context, userID, assignmentID, text string, files []string) error
-	MarkLessonComplete(ctx context.Context, userID, lessonID string) error
+	SetLessonAttendance(ctx context.Context, userID, lessonID, status, recordingURL, teacherComment string) error
 
 	GetTeachersList(ctx context.Context) ([]*domain.TeacherPublicInfo, error)
 	GetTeacherByID(ctx context.Context, id string) (*domain.TeacherPublicInfo, error)
@@ -23,8 +23,7 @@ type LearningRepository interface {
 	GetTeacherCourses(ctx context.Context, teacherID string) ([]*domain.StudentCoursePreview, error)
 
 	GetTestByID(ctx context.Context, testID string) (*domain.Test, error)
-    GetProjectByID(ctx context.Context, projectID string) (*domain.Project, error)
-	
+	GetProjectByID(ctx context.Context, projectID string) (*domain.Project, error)
 }
 
 type LearningRepoImpl struct {
@@ -64,9 +63,9 @@ func (r *LearningRepoImpl) GetMyCourses(ctx context.Context, userID string) ([]*
 func (r *LearningRepoImpl) GetCourseContent(ctx context.Context, courseID, userID string) (*domain.StudentCourseView, error) {
 	view := &domain.StudentCourseView{
 		Modules:      []*domain.StudentModuleView{},
-		RootLessons:[]*domain.StudentLessonRef{},
+		RootLessons:  []*domain.StudentLessonRef{},
 		RootTests:    []domain.Test{},
-		RootProjects:[]domain.Project{},
+		RootProjects: []domain.Project{},
 	}
 
 	view.Course = &domain.Course{}
@@ -78,7 +77,7 @@ func (r *LearningRepoImpl) GetCourseContent(ctx context.Context, courseID, userI
 
 	rowsM, _ := r.db.QueryContext(ctx, "SELECT id, title, description, order_num FROM modules WHERE course_id = $1 ORDER BY order_num ASC", courseID)
 	for rowsM.Next() {
-		m := &domain.StudentModuleView{Lessons:[]*domain.StudentLessonRef{}}
+		m := &domain.StudentModuleView{Lessons: []*domain.StudentLessonRef{}}
 		rowsM.Scan(&m.ID, &m.Title, &m.Description, &m.OrderNum)
 		view.Modules = append(view.Modules, m)
 	}
@@ -87,24 +86,24 @@ func (r *LearningRepoImpl) GetCourseContent(ctx context.Context, courseID, userI
 	queryL := `
 		SELECT 
 			l.id, l.module_id, l.title, l.order_num, l.duration_min,
-			CASE WHEN ula.is_attended = true OR uas.status = 'accepted' THEN true ELSE false END as is_completed
+			CASE WHEN ula.status IN ('visited', 'trial') OR uas.status = 'accepted' THEN true ELSE false END as is_completed
 		FROM lessons l
 		LEFT JOIN user_lesson_attendance ula ON l.id = ula.lesson_id AND ula.user_id = $2
 		LEFT JOIN assignments a ON l.id = a.lesson_id
 		LEFT JOIN user_assignments_submission uas ON a.id = uas.assignment_id AND uas.user_id = $2
 		WHERE l.course_id = $1 AND l.is_published = true
 		ORDER BY l.order_num ASC`
-	
+
 	rowsL, _ := r.db.QueryContext(ctx, queryL, courseID, userID)
-	
+
 	allLessonsMap := make(map[string]*domain.StudentLessonRef)
 
 	for rowsL.Next() {
 		var l domain.StudentLessonRef
 		var mid sql.NullString
 		rowsL.Scan(&l.ID, &mid, &l.Title, &l.OrderNum, &l.DurationMin, &l.IsCompleted)
-		
-		l.Tests =[]domain.Test{}
+
+		l.Tests = []domain.Test{}
 		l.Projects = []domain.Project{}
 		allLessonsMap[l.ID] = &l
 
@@ -165,34 +164,57 @@ func (r *LearningRepoImpl) GetLessonDetail(ctx context.Context, lessonID, userID
 
 	query := `SELECT id, title, video_url, presentation_url, content_text, content, duration_min 
               FROM lessons WHERE id = $1 AND is_published = true`
-	
+
 	err := r.db.QueryRowContext(ctx, query, lessonID).Scan(
-		&lesson.ID, &lesson.Title, &lesson.VideoURL, &lesson.PresentationURL, 
+		&lesson.ID, &lesson.Title, &lesson.VideoURL, &lesson.PresentationURL,
 		&lesson.ContentText, &contentRaw, &lesson.DurationMin,
 	)
-	if err != nil { return nil, fmt.Errorf("lesson not found: %w", err) }
+	if err != nil {
+		return nil, fmt.Errorf("lesson not found: %w", err)
+	}
 
-	if len(contentRaw) > 0 { _ = json.Unmarshal(contentRaw, &lesson.Content) }
-	if lesson.Content == nil { lesson.Content = []domain.ContentBlock{} }
+	if len(contentRaw) > 0 {
+		_ = json.Unmarshal(contentRaw, &lesson.Content)
+	}
+	if lesson.Content == nil {
+		lesson.Content = []domain.ContentBlock{}
+	}
 
 	res := &domain.StudentLessonDetail{Lesson: lesson}
-	
+
+	attendanceQuery := `
+		SELECT COALESCE(status::text, ''), COALESCE(recording_url, ''), COALESCE(comment_teacher, '')
+		FROM user_lesson_attendance
+		WHERE lesson_id = $1 AND user_id = $2`
+
+	var attStatus, recURL, attComment string
+	if err := r.db.QueryRowContext(ctx, attendanceQuery, lessonID, userID).Scan(&attStatus, &recURL, &attComment); err == nil {
+		res.AttendanceStatus = attStatus
+		res.RecordingURL = recURL
+		res.IsCompleted = (attStatus == "visited" || attStatus == "trial")
+	}
+
 	homeworkQuery := `
 		SELECT uas.status, COALESCE(uas.grade, 0), COALESCE(uas.teacher_comment, '')
 		FROM assignments a
 		JOIN user_assignments_submission uas ON a.id = uas.assignment_id
 		WHERE a.lesson_id = $1 AND uas.user_id = $2
 		LIMIT 1`
-	
-	var status string
+
+	var hwStatus string
 	var grade int
-	var comment string
-	err = r.db.QueryRowContext(ctx, homeworkQuery, lessonID, userID).Scan(&status, &grade, &comment)
-	
+	var hwComment string
+	err = r.db.QueryRowContext(ctx, homeworkQuery, lessonID, userID).Scan(&hwStatus, &grade, &hwComment)
+
 	if err == nil {
-		res.AssignmentStatus = status
-		res.TeacherComment = comment
-		res.IsCompleted = (status == "accepted")
+		res.AssignmentStatus = hwStatus
+		if hwComment != "" {
+			res.TeacherComment = hwComment
+		}
+		res.Grade = grade
+		if !res.IsCompleted && hwStatus == "accepted" {
+			res.IsCompleted = true
+		}
 	}
 
 	return res, nil
@@ -205,7 +227,7 @@ func (r *LearningRepoImpl) GetAssignmentIDByLesson(ctx context.Context, lessonID
 	return id, err
 }
 
-func (r *LearningRepoImpl) SaveSubmission(ctx context.Context, userID, assignmentID, text string, files[]string) error {
+func (r *LearningRepoImpl) SaveSubmission(ctx context.Context, userID, assignmentID, text string, files []string) error {
 	filesJSON, _ := json.Marshal(files)
 	query := `
 		INSERT INTO user_assignments_submission (user_id, assignment_id, submission_text, submission_files, status, submitted_at)
@@ -222,9 +244,16 @@ func (r *LearningRepoImpl) SaveSubmission(ctx context.Context, userID, assignmen
 	return err
 }
 
-func (r *LearningRepoImpl) MarkLessonComplete(ctx context.Context, userID, lessonID string) error {
-	query := `INSERT INTO user_lesson_attendance (user_id, lesson_id, is_attended) VALUES ($1, $2, true) ON CONFLICT (user_id, lesson_id) DO NOTHING`
-	_, err := r.db.ExecContext(ctx, query, userID, lessonID)
+func (r *LearningRepoImpl) SetLessonAttendance(ctx context.Context, userID, lessonID, status, recordingURL, teacherComment string) error {
+	query := `
+		INSERT INTO user_lesson_attendance (user_id, lesson_id, status, recording_url, comment_teacher)
+		VALUES ($1, $2, $3::attendance_status, NULLIF($4, ''), NULLIF($5, ''))
+		ON CONFLICT (user_id, lesson_id) DO UPDATE SET
+			status = $3::attendance_status,
+			recording_url = COALESCE(NULLIF($4, ''), user_lesson_attendance.recording_url),
+			comment_teacher = COALESCE(NULLIF($5, ''), user_lesson_attendance.comment_teacher)
+	`
+	_, err := r.db.ExecContext(ctx, query, userID, lessonID, status, recordingURL, teacherComment)
 	return err
 }
 
@@ -241,7 +270,7 @@ func (r *LearningRepoImpl) GetTeachersList(ctx context.Context) ([]*domain.Teach
 		return nil, err
 	}
 	defer rows.Close()
-	var teachers[]*domain.TeacherPublicInfo
+	var teachers []*domain.TeacherPublicInfo
 	for rows.Next() {
 		t := &domain.TeacherPublicInfo{}
 		if err := rows.Scan(&t.ID, &t.FirstName, &t.LastName, &t.AvatarURL, &t.Rating, &t.ExperienceYears, &t.Email, &t.City, &t.Phone); err != nil {
@@ -254,7 +283,7 @@ func (r *LearningRepoImpl) GetTeachersList(ctx context.Context) ([]*domain.Teach
 
 func (r *LearningRepoImpl) GetTeacherByID(ctx context.Context, id string) (*domain.TeacherPublicInfo, error) {
 	t := &domain.TeacherPublicInfo{}
-	
+
 	query := `
 		SELECT u.id, u.first_name, u.last_name, COALESCE(u.avatar_url, ''), 
 		       COALESCE((SELECT ROUND(AVG(rating), 1) FROM teacher_reviews WHERE teacher_id = u.id), 0.0) as rating, 
@@ -263,9 +292,9 @@ func (r *LearningRepoImpl) GetTeacherByID(ctx context.Context, id string) (*doma
 		LEFT JOIN teachers t ON u.id = t.id
 		WHERE u.id = $1 AND u.role = 'teacher'
 	`
-	
+
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
-		&t.ID, &t.FirstName, &t.LastName, &t.AvatarURL, 
+		&t.ID, &t.FirstName, &t.LastName, &t.AvatarURL,
 		&t.Rating, &t.ExperienceYears, &t.Bio, &t.Email, &t.City, &t.Phone,
 	)
 	if err != nil {
@@ -281,7 +310,7 @@ func (r *LearningRepoImpl) GetTeacherByID(ctx context.Context, id string) (*doma
 		"saturday":  map[string]interface{}{"isOpen": false, "intervals": []interface{}{}},
 		"sunday":    map[string]interface{}{"isOpen": false, "intervals": []interface{}{}},
 	}
-	
+
 	return t, nil
 }
 

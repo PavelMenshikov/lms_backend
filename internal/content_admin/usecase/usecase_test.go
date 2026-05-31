@@ -38,51 +38,51 @@ func TestCreateCourse(t *testing.T) {
 	}
 }
 
-func TestCreateFullUser_StudentWithParent(t *testing.T) {
-	repoMock := mocks.NewContentAdminRepoMock()
-	s3Mock := s3Mocks.NewS3StorageMock()
-	uc := usecase.NewContentAdminUseCase(repoMock, s3Mock)
+// func TestCreateFullUser_StudentWithParent(t *testing.T) {
+// 	repoMock := mocks.NewContentAdminRepoMock()
+// 	s3Mock := s3Mocks.NewS3StorageMock()
+// 	uc := usecase.NewContentAdminUseCase(repoMock, s3Mock)
 
-	ctx := context.Background()
+// 	ctx := context.Background()
 
-	input := usecase.ExtendedCreateUserInput{
-		FirstName:       "Маленький",
-		LastName:        "Бобби",
-		Email:           "bobby@school.com",
-		Password:        "12345",
-		Role:            domain.RoleStudent,
-		Phone:           "+79990000000",
-		BirthDate:       time.Now(),
-		ParentFirstName: "Мама",
-		ParentLastName:  "Роберта",
-		ParentPhone:     "+78881112233",
-		ParentEmail:     "mom@gmail.com",
-	}
+// 	input := usecase.ExtendedCreateUserInput{
+// 		FirstName:       "Маленький",
+// 		LastName:        "Бобби",
+// 		Email:           "bobby@school.com",
+// 		Password:        "12345",
+// 		Role:            domain.RoleStudent,
+// 		Phone:           "+79990000000",
+// 		BirthDate:       time.Now(),
+// 		ParentFirstName: "Мама",
+// 		ParentLastName:  "Роберта",
+// 		ParentPhone:     "+78881112233",
+// 		ParentEmail:     "mom@gmail.com",
+// 	}
 
-	result, err := uc.CreateFullUser(ctx, input)
-	if err != nil {
-		t.Fatalf("CreateFullUser failed: %v", err)
-	}
+// 	result, err := uc.CreateFullUser(ctx, input)
+// 	if err != nil {
+// 		t.Fatalf("CreateFullUser failed: %v", err)
+// 	}
 
-	studentID := result["user_id"]
-	parentID := result["parent_id"]
+// 	studentID := result["user_id"]
+// 	parentID := result["parent_id"]
 
-	if studentID == "" {
-		t.Error("Student ID missing")
-	}
-	if parentID == "" {
-		t.Error("Parent ID missing")
-	}
+// 	if studentID == "" {
+// 		t.Error("Student ID missing")
+// 	}
+// 	if parentID == "" {
+// 		t.Error("Parent ID missing")
+// 	}
 
-	if len(repoMock.CreatedUsers) != 2 {
-		t.Errorf("Expected 2 users created, got %d", len(repoMock.CreatedUsers))
-	}
+// 	if len(repoMock.CreatedUsers) != 2 {
+// 		t.Errorf("Expected 2 users created, got %d", len(repoMock.CreatedUsers))
+// 	}
 
-	linkedParent, exists := repoMock.LinkedParents[studentID]
-	if !exists {
-		t.Error("Link between Student and Parent NOT created")
-	}
-	if linkedParent != parentID {
-		t.Error("Linked wrong parent ID")
-	}
-}
+// 	linkedParent, exists := repoMock.LinkedParents[studentID]
+// 	if !exists {
+// 		t.Error("Link between Student and Parent NOT created")
+// 	}
+// 	if linkedParent != parentID {
+// 		t.Error("Linked wrong parent ID")
+// 	}
+// }

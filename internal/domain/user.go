@@ -43,25 +43,25 @@ type UserFilter struct {
 }
 
 type StudentTableItem struct {
-	ID              string    `json:"id"`
-	Photo           string    `json:"photo"`
-	FullName        string    `json:"full_name"`
-	CreatedAt       time.Time `json:"created_at"`
-	Gender          string    `json:"gender"`
-	Age             int       `json:"age"`
-	Status          string    `json:"status"`
-	Course          string    `json:"course"`
-	Group           string    `json:"group"`
-	Curator         string    `json:"curator"`
-	Teacher         string    `json:"teacher"`
-	Stream          string    `json:"stream"`
-	Performance     int       `json:"performance"`
-	ParentPhone     string    `json:"parent_phone"`
-	City            string    `json:"city"`
-	School          string    `json:"school"`
-	Language        string    `json:"language"`
-	Phone           string    `json:"phone"`
-	Email           string    `json:"email"`
+	ID          string    `json:"id"`
+	Photo       string    `json:"photo"`
+	FullName    string    `json:"full_name"`
+	CreatedAt   time.Time `json:"created_at"`
+	Gender      string    `json:"gender"`
+	Age         int       `json:"age"`
+	Status      string    `json:"status"`
+	Course      string    `json:"course"`
+	Group       string    `json:"group"`
+	Curator     string    `json:"curator"`
+	Teacher     string    `json:"teacher"`
+	Stream      string    `json:"stream"`
+	Performance int       `json:"performance"`
+	ParentPhone string    `json:"parent_phone"`
+	City        string    `json:"city"`
+	School      string    `json:"school"`
+	Language    string    `json:"language"`
+	Phone       string    `json:"phone"`
+	Email       string    `json:"email"`
 }
 
 type TeacherTableItem struct {

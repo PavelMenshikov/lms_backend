@@ -18,11 +18,11 @@ func NewNotificationHandler(uc usecase.NotificationUseCase) *NotificationHandler
 }
 
 type CreateNotificationRequest struct {
-	RecipientID string                   `json:"recipient_id"`
-	Title       string                   `json:"title"`
-	Content     string                   `json:"content"`
-	Type        domain.NotificationType  `json:"type"`
-	LinkURL     *string                  `json:"link_url,omitempty"`
+	RecipientID string                  `json:"recipient_id"`
+	Title       string                  `json:"title"`
+	Content     string                  `json:"content"`
+	Type        domain.NotificationType `json:"type"`
+	LinkURL     *string                 `json:"link_url,omitempty"`
 }
 
 // CreateNotification godoc

@@ -12,11 +12,11 @@ type StudentCoursePreview struct {
 }
 
 type StudentCourseView struct {
-	Course       *Course             `json:"course"`
+	Course       *Course              `json:"course"`
 	Modules      []*StudentModuleView `json:"modules"`
 	RootLessons  []*StudentLessonRef  `json:"root_lessons"`
-	RootTests    []Test              `json:"root_tests"`
-	RootProjects []Project           `json:"root_projects"`
+	RootTests    []Test               `json:"root_tests"`
+	RootProjects []Project            `json:"root_projects"`
 }
 
 type StudentModuleView struct {
@@ -34,8 +34,8 @@ type StudentLessonRef struct {
 	DurationMin int       `json:"duration_min"`
 	IsCompleted bool      `json:"is_completed"`
 	IsLocked    bool      `json:"is_locked"`
-	Tests[]Test    `json:"tests"` 
-	Projects[]Project `json:"projects"` 
+	Tests       []Test    `json:"tests"`
+	Projects    []Project `json:"projects"`
 }
 
 type StudentLessonDetail struct {
@@ -44,6 +44,8 @@ type StudentLessonDetail struct {
 	PreviousLessonID string            `json:"previous_lesson_id,omitempty"`
 	NextLessonID     string            `json:"next_lesson_id,omitempty"`
 	IsCompleted      bool              `json:"is_completed"`
+	AttendanceStatus string            `json:"attendance_status,omitempty"`
+	RecordingURL     string            `json:"recording_url,omitempty"`
 	AssignmentStatus string            `json:"assignment_status,omitempty"`
 	TeacherComment   string            `json:"teacher_comment,omitempty"`
 	Grade            int               `json:"grade,omitempty"`
@@ -64,7 +66,7 @@ type SubmissionRecord struct {
 	CourseTitle    string    `json:"course_title"`
 	ModuleOrder    int       `json:"module_order"`
 	LessonOrder    int       `json:"lesson_order"`
-	LessonTitle    string    `json:"lesson_title"`	
+	LessonTitle    string    `json:"lesson_title"`
 	Text           string    `json:"submission_text"`
 	Files          []string  `json:"submission_files"`
 	Status         string    `json:"status"`

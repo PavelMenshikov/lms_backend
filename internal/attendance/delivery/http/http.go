@@ -19,10 +19,10 @@ func NewAttendanceHandler(uc usecase.AttendanceUseCase) *AttendanceHandler {
 }
 
 type MarkAttendanceRequest struct {
-	StudentID string                   `json:"student_id"`
-	Status    domain.AttendanceStatus  `json:"status"`
-	Reason    *string                  `json:"reason,omitempty"`
-	Comment   *string                  `json:"comment,omitempty"`
+	StudentID string                  `json:"student_id"`
+	Status    domain.AttendanceStatus `json:"status"`
+	Reason    *string                 `json:"reason,omitempty"`
+	Comment   *string                 `json:"comment,omitempty"`
 }
 
 type UpdateAttendanceRequest struct {

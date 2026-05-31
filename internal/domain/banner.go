@@ -5,10 +5,10 @@ import "time"
 type BannerType string
 
 const (
-	BannerTypeInfo        BannerType = "INFO"
-	BannerTypeWarning     BannerType = "WARNING"
+	BannerTypeInfo         BannerType = "INFO"
+	BannerTypeWarning      BannerType = "WARNING"
 	BannerTypeAnnouncement BannerType = "ANNOUNCEMENT"
-	BannerTypePromotion   BannerType = "PROMOTION"
+	BannerTypePromotion    BannerType = "PROMOTION"
 )
 
 type Banner struct {

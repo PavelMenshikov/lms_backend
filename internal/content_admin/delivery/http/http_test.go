@@ -11,8 +11,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	"lms_backend/internal/domain"
 	"lms_backend/internal/content_admin/usecase"
+	"lms_backend/internal/domain"
 )
 
 type MockContentAdminUseCase struct {
@@ -39,7 +39,7 @@ func TestGetLessonHandler(t *testing.T) {
 	mockUC.On("GetLesson", mock.Anything, "test-uuid").Return(expectedLesson, nil)
 
 	req := httptest.NewRequest("GET", "/admin/lessons/test-uuid", nil)
-	
+
 	rctx := chi.NewRouteContext()
 	rctx.URLParams.Add("id", "test-uuid")
 	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
@@ -49,7 +49,7 @@ func TestGetLessonHandler(t *testing.T) {
 	handler.GetLesson(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
-	
+
 	var response domain.Lesson
 	json.NewDecoder(w.Body).Decode(&response)
 	assert.Equal(t, "Test Lesson", response.Title)

@@ -64,8 +64,16 @@ func (uc *LearningUseCase) SubmitAssignment(ctx context.Context, input SubmitAss
 	return uc.repo.SaveSubmission(ctx, input.UserID, assignmentID, input.TextAnswer, []string{fileURL})
 }
 
-func (uc *LearningUseCase) CompleteLesson(ctx context.Context, lessonID, userID string) error {
-	return uc.repo.MarkLessonComplete(ctx, userID, lessonID)
+type SetAttendanceInput struct {
+	LessonID       string
+	UserID         string
+	Status         string
+	RecordingURL   string
+	TeacherComment string
+}
+
+func (uc *LearningUseCase) SetLessonAttendance(ctx context.Context, input SetAttendanceInput) error {
+	return uc.repo.SetLessonAttendance(ctx, input.UserID, input.LessonID, input.Status, input.RecordingURL, input.TeacherComment)
 }
 
 func (uc *LearningUseCase) GetTeachers(ctx context.Context) ([]*domain.TeacherPublicInfo, error) {
@@ -116,7 +124,7 @@ func (uc *LearningUseCase) GetTeacherDashboard(ctx context.Context, teacherID st
 
 	reviews, _ := uc.repo.GetTeacherReviews(ctx, teacherID)
 	if reviews == nil {
-		reviews =[]*domain.TeacherReview{}
+		reviews = []*domain.TeacherReview{}
 	}
 
 	courses, _ := uc.repo.GetTeacherCourses(ctx, teacherID)

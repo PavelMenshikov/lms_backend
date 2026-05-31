@@ -75,7 +75,6 @@ type AdminCourseStats struct {
 	SuccessRateBreakdown map[string]int `json:"success_rate_breakdown"`
 }
 
-
 type AdminStudentProgress struct {
 	UserID          string    `json:"user_id"`
 	FullName        string    `json:"full_name"`

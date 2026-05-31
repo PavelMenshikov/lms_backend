@@ -53,7 +53,7 @@ func (r *DashboardRepositoryImpl) GetAttendancePercentage(ctx context.Context, u
 	stats := &domain.StatisticSummary{}
 	query := `
 		SELECT 
-			ROUND(COUNT(CASE WHEN is_attended = true THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0), 2) as percentage
+			ROUND(COUNT(CASE WHEN status IN ('visited', 'trial') THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0), 2) as percentage
 		FROM user_lesson_attendance 
 		WHERE user_id = $1
 	`

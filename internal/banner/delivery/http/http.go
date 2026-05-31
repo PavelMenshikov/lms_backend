@@ -19,25 +19,25 @@ func NewBannerHandler(uc usecase.BannerUseCase) *BannerHandler {
 }
 
 type CreateBannerRequest struct {
-	Title       string             `json:"title"`
-	Content     string             `json:"content"`
-	Type        domain.BannerType  `json:"type"`
-	IsActive    bool               `json:"is_active"`
-	Priority    int                `json:"priority"`
-	StartDate   *time.Time         `json:"start_date,omitempty"`
-	EndDate     *time.Time         `json:"end_date,omitempty"`
-	TargetRoles []string           `json:"target_roles,omitempty"`
+	Title       string            `json:"title"`
+	Content     string            `json:"content"`
+	Type        domain.BannerType `json:"type"`
+	IsActive    bool              `json:"is_active"`
+	Priority    int               `json:"priority"`
+	StartDate   *time.Time        `json:"start_date,omitempty"`
+	EndDate     *time.Time        `json:"end_date,omitempty"`
+	TargetRoles []string          `json:"target_roles,omitempty"`
 }
 
 type UpdateBannerRequest struct {
-	Title       string             `json:"title"`
-	Content     string             `json:"content"`
-	Type        domain.BannerType  `json:"type"`
-	IsActive    bool               `json:"is_active"`
-	Priority    int                `json:"priority"`
-	StartDate   *time.Time         `json:"start_date,omitempty"`
-	EndDate     *time.Time         `json:"end_date,omitempty"`
-	TargetRoles []string           `json:"target_roles,omitempty"`
+	Title       string            `json:"title"`
+	Content     string            `json:"content"`
+	Type        domain.BannerType `json:"type"`
+	IsActive    bool              `json:"is_active"`
+	Priority    int               `json:"priority"`
+	StartDate   *time.Time        `json:"start_date,omitempty"`
+	EndDate     *time.Time        `json:"end_date,omitempty"`
+	TargetRoles []string          `json:"target_roles,omitempty"`
 }
 
 // GetActiveBanners godoc

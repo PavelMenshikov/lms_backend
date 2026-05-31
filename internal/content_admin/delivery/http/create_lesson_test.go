@@ -8,28 +8,32 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"lms_backend/internal/content_admin/usecase"
-	"lms_backend/internal/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"lms_backend/internal/content_admin/usecase"
+	"lms_backend/internal/domain"
 )
 
 type mockService struct {
 	mock.Mock
-	ContentAdminService 
+	ContentAdminService
 }
 
 func (m *mockService) CreateCourse(ctx context.Context, input usecase.CreateCourseInput) (string, error) {
-	args := m.Called(ctx, input); return args.String(0), args.Error(1)
+	args := m.Called(ctx, input)
+	return args.String(0), args.Error(1)
 }
 func (m *mockService) CreateLesson(ctx context.Context, input usecase.CreateLessonInput) (string, error) {
-	args := m.Called(ctx, input); return args.String(0), args.Error(1)
+	args := m.Called(ctx, input)
+	return args.String(0), args.Error(1)
 }
 func (m *mockService) GetLesson(ctx context.Context, id string) (*domain.Lesson, error) {
-	args := m.Called(ctx, id); return args.Get(0).(*domain.Lesson), args.Error(1)
+	args := m.Called(ctx, id)
+	return args.Get(0).(*domain.Lesson), args.Error(1)
 }
 func (m *mockService) UpdateLesson(ctx context.Context, id string, input usecase.CreateLessonInput) error {
-	args := m.Called(ctx, id, input); return args.Error(0)
+	args := m.Called(ctx, id, input)
+	return args.Error(0)
 }
 
 func TestCreateLesson_JSON(t *testing.T) {

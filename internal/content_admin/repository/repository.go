@@ -3,8 +3,8 @@ package repository
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"encoding/json"
+	"fmt"
 
 	"lms_backend/internal/domain"
 )
@@ -27,7 +27,7 @@ type ContentAdminRepository interface {
 	GetUsers(ctx context.Context, filter domain.UserFilter) ([]*domain.User, error)
 	GetByID(ctx context.Context, id string) (*domain.User, error)
 	GetTestByID(ctx context.Context, id string) (*domain.Test, error)
-    GetProjectByID(ctx context.Context, id string) (*domain.Project, error)
+	GetProjectByID(ctx context.Context, id string) (*domain.Project, error)
 	GetParentsByStudentID(ctx context.Context, studentID string) ([]domain.User, error)
 	LinkParentToStudent(ctx context.Context, studentID, parentID string) error
 	EnrollStudentExtended(ctx context.Context, userID, courseID, streamID, groupID string) error
@@ -57,7 +57,7 @@ type ContentAdminRepository interface {
 	GetTestsByCourseID(ctx context.Context, courseID string) ([]domain.Test, error)
 	GetProjectsByCourseID(ctx context.Context, courseID string) ([]domain.Project, error)
 	UnenrollStudent(ctx context.Context, userID, courseID string) error
-	LinkTeachersToCourse(ctx context.Context, courseID string, teacherIDs[]string) error
+	LinkTeachersToCourse(ctx context.Context, courseID string, teacherIDs []string) error
 	GetLessonByID(ctx context.Context, id string) (*domain.Lesson, error)
 }
 
@@ -110,21 +110,21 @@ func (r *ContentAdminRepoImpl) CreateLesson(ctx context.Context, lesson *domain.
 
 	query := `INSERT INTO lessons (course_id, module_id, teacher_id, title, lesson_time, order_num, video_url, presentation_url, content_text, content, is_published)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id`
-	
-	err = r.db.QueryRowContext(ctx, query, 
-		lesson.CourseID, 
-		lesson.ModuleID, 
-		tid, 
-		lesson.Title, 
-		lesson.LessonTime, 
-		lesson.OrderNum, 
-		lesson.VideoURL, 
-		lesson.PresentationURL, 
+
+	err = r.db.QueryRowContext(ctx, query,
+		lesson.CourseID,
+		lesson.ModuleID,
+		tid,
+		lesson.Title,
+		lesson.LessonTime,
+		lesson.OrderNum,
+		lesson.VideoURL,
+		lesson.PresentationURL,
 		lesson.ContentText,
-		contentJSON, 
+		contentJSON,
 		lesson.IsPublished,
 	).Scan(&newID)
-	
+
 	return newID, err
 }
 
@@ -204,7 +204,7 @@ func (r *ContentAdminRepoImpl) GetLessonsByCourseID(ctx context.Context, courseI
 		if tid.Valid {
 			l.TeacherID = tid.String
 		}
-		
+
 		if len(contentRaw) > 0 {
 			_ = json.Unmarshal(contentRaw, &l.Content)
 		} else {
@@ -336,7 +336,7 @@ func (r *ContentAdminRepoImpl) GetCourseIDByStream(ctx context.Context, streamID
 }
 
 func (r *ContentAdminRepoImpl) GetCourseStudents(ctx context.Context, courseID string) ([]*domain.AdminStudentProgress, error) {
-	query := `SELECT u.id, u.first_name || ' ' || u.last_name as full_name, uc.progress_percent, (SELECT COUNT(*) FROM user_lesson_attendance WHERE user_id = u.id AND is_attended = true), (SELECT COUNT(*) FROM user_assignments_submission WHERE user_id = u.id AND status = 'accepted') FROM users u JOIN user_courses uc ON u.id = uc.user_id WHERE uc.course_id = $1 AND u.role = 'student'`
+	query := `SELECT u.id, u.first_name || ' ' || u.last_name as full_name, uc.progress_percent, (SELECT COUNT(*) FROM user_lesson_attendance WHERE user_id = u.id AND status IN ('visited', 'trial')), (SELECT COUNT(*) FROM user_assignments_submission WHERE user_id = u.id AND status = 'accepted') FROM users u JOIN user_courses uc ON u.id = uc.user_id WHERE uc.course_id = $1 AND u.role = 'student'`
 	rows, err := r.db.QueryContext(ctx, query, courseID)
 	if err != nil {
 		return nil, err
@@ -702,7 +702,7 @@ func (r *ContentAdminRepoImpl) UpdateLesson(ctx context.Context, lesson *domain.
 		SET title = $1, order_num = $2, video_url = $3, presentation_url = $4, 
 		    content_text = $5, content = $6, is_published = $7, module_id = $8, teacher_id = $9
 		WHERE id = $10`
-	
+
 	var tid sql.NullString
 	if lesson.TeacherID != "" {
 		tid = sql.NullString{String: lesson.TeacherID, Valid: true}
@@ -722,7 +722,7 @@ func (r *ContentAdminRepoImpl) GetLessonByID(ctx context.Context, id string) (*d
 	query := `SELECT id, course_id, module_id, teacher_id, title, lesson_time, duration_min, order_num, is_published, video_url, presentation_url, content_text, content 
               FROM lessons WHERE id = $1`
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
-		&l.ID, &l.CourseID, &mid, &tid, &l.Title, &l.LessonTime, &l.DurationMin, &l.OrderNum, 
+		&l.ID, &l.CourseID, &mid, &tid, &l.Title, &l.LessonTime, &l.DurationMin, &l.OrderNum,
 		&l.IsPublished, &l.VideoURL, &l.PresentationURL, &l.ContentText, &contentRaw,
 	)
 	if err != nil {
@@ -753,9 +753,11 @@ func (r *ContentAdminRepoImpl) GetProjectByID(ctx context.Context, id string) (*
 		Scan(&p.ID, &p.LessonID, &p.Title, &p.Description, &p.MaxScore, &p.CreatedAt)
 	return p, err
 }
-func (r *ContentAdminRepoImpl) LinkTeachersToCourse(ctx context.Context, courseID string, teacherIDs[]string) error {
+func (r *ContentAdminRepoImpl) LinkTeachersToCourse(ctx context.Context, courseID string, teacherIDs []string) error {
 	tx, err := r.db.BeginTx(ctx, nil)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	if _, err := tx.ExecContext(ctx, "DELETE FROM course_teachers WHERE course_id = $1", courseID); err != nil {
 		tx.Rollback()

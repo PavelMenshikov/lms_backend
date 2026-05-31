@@ -83,8 +83,8 @@ import (
 	groupsRepo "lms_backend/internal/groups/repository"
 	groupsUseCase "lms_backend/internal/groups/usecase"
 
-	reportsHttp "lms_backend/internal/reports/delivery/http"
 	reportsService "lms_backend/internal/reports"
+	reportsHttp "lms_backend/internal/reports/delivery/http"
 
 	"lms_backend/internal/domain"
 	dbPkg "lms_backend/pkg/database"
@@ -301,7 +301,7 @@ func main() {
 		r.Post("/admin/modules", adminHandler.CreateModule)
 		r.Delete("/admin/modules/{id}", adminHandler.DeleteModule)
 		r.Get("/admin/tests/{id}", adminHandler.GetTest)
-        r.Get("/admin/projects/{id}", adminHandler.GetProject)
+		r.Get("/admin/projects/{id}", adminHandler.GetProject)
 		r.Post("/admin/lessons", adminHandler.CreateLesson)
 		r.Get("/admin/lessons/{id}", adminHandler.GetLesson)
 		r.Put("/admin/lessons/{id}", adminHandler.UpdateLesson)
@@ -417,7 +417,6 @@ func main() {
 		r.Patch("/api/admin/banner/{bannerId}", bannerHandler.UpdateBanner)
 		r.Delete("/api/admin/banner/{bannerId}", bannerHandler.DeleteBanner)
 
-
 		r.Get("/staff/submissions", reviewHandler.GetPendingSubmissions)
 		r.Post("/staff/submissions/{id}/evaluate", reviewHandler.EvaluateSubmission)
 	})
@@ -435,10 +434,10 @@ func main() {
 		r.Get("/courses/{id}", learningHandler.GetCourseContent)
 		r.Get("/lessons/{id}", learningHandler.GetLessonDetail)
 		r.Post("/lessons/{id}/assignment", learningHandler.SubmitAssignment)
-		r.Post("/lessons/{id}/complete", learningHandler.CompleteLesson)
+		r.Post("/lessons/{id}/attendance", learningHandler.SetLessonAttendance)
 		r.Post("/admin/courses/bulk", adminHandler.CreateFullCourse)
 		r.Get("/tests/{id}", learningHandler.GetTest)
-        r.Get("/projects/{id}", learningHandler.GetProject)
+		r.Get("/projects/{id}", learningHandler.GetProject)
 		r.Get("/profile", profileHandler.GetProfile)
 		r.Put("/profile", profileHandler.UpdateProfile)
 		r.Put("/profile/teacher/schedule", profileHandler.UpdateTeacherSchedule)
@@ -457,7 +456,7 @@ func main() {
 		r.Get("/api/courses/{id}", learningHandler.GetCourseContent)
 		r.Get("/api/lessons/{id}", learningHandler.GetLessonDetail)
 		r.Post("/api/lessons/{id}/assignment", learningHandler.SubmitAssignment)
-		r.Post("/api/lessons/{id}/complete", learningHandler.CompleteLesson)
+		r.Post("/api/lessons/{id}/attendance", learningHandler.SetLessonAttendance)
 		r.Get("/api/tests/{id}", learningHandler.GetTest)
 		r.Get("/api/projects/{id}", learningHandler.GetProject)
 		r.Get("/api/profile", profileHandler.GetProfile)
@@ -480,7 +479,7 @@ func main() {
 	})
 
 	r.Get("/swagger/*", httpSwagger.Handler(
-		httpSwagger.URL("/docs/swagger.json"), 
+		httpSwagger.URL("/docs/swagger.json"),
 	))
 	r.Get("/docs/*", func(w http.ResponseWriter, r *http.Request) {
 		http.StripPrefix("/docs/", http.FileServer(http.Dir("./docs"))).ServeHTTP(w, r)

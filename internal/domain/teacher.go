@@ -29,14 +29,14 @@ type TeacherPublicInfo struct {
 	Rating          float64          `json:"rating"`
 	ExperienceYears int              `json:"experience_years"`
 	Bio             string           `json:"bio"`
-	Email           string           `json:"email"`    
-	City            string           `json:"city"`     
-	Phone           string           `json:"phone"`    
-	Schedule        interface{}      `json:"schedule"` 
-	Reviews[]*TeacherReview `json:"reviews"`
+	Email           string           `json:"email"`
+	City            string           `json:"city"`
+	Phone           string           `json:"phone"`
+	Schedule        interface{}      `json:"schedule"`
+	Reviews         []*TeacherReview `json:"reviews"`
 }
 type TeacherDashboardData struct {
 	Profile         *TeacherPublicInfo      `json:"profile"`
 	AssignedCourses []*StudentCoursePreview `json:"assigned_courses"`
-	MyReviews[]*TeacherReview        `json:"my_reviews"`
+	MyReviews       []*TeacherReview        `json:"my_reviews"`
 }

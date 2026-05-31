@@ -6,8 +6,8 @@ import (
 	"net/http"
 
 	authMiddleware "lms_backend/internal/auth/delivery/middleware"
-	"lms_backend/internal/profile/usecase"
 	_ "lms_backend/internal/domain"
+	"lms_backend/internal/profile/usecase"
 )
 
 type ProfileHandler struct {
@@ -100,6 +100,7 @@ func (h *ProfileHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"status": "profile updated"})
 }
+
 // UpdateTeacherSchedule godoc
 // @Summary USER: Сохранить график работы учителя
 // @Tags Profile
@@ -109,7 +110,7 @@ func (h *ProfileHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} map[string]string
 // @Router /profile/teacher/schedule [put]
 func (h *ProfileHandler) UpdateTeacherSchedule(w http.ResponseWriter, r *http.Request) {
-	userData := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)	
+	userData := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
 	var rawData map[string]interface{}
 	if err := json.NewDecoder(r.Body).Decode(&rawData); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -121,6 +122,6 @@ func (h *ProfileHandler) UpdateTeacherSchedule(w http.ResponseWriter, r *http.Re
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	
+
 	json.NewEncoder(w).Encode(map[string]string{"status": "schedule updated"})
 }

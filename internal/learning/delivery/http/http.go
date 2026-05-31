@@ -8,8 +8,8 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	authMiddleware "lms_backend/internal/auth/delivery/middleware"
-	"lms_backend/internal/learning/usecase"
 	"lms_backend/internal/domain"
+	"lms_backend/internal/learning/usecase"
 )
 
 type LearningHandler struct {
@@ -116,24 +116,46 @@ func (h *LearningHandler) SubmitAssignment(w http.ResponseWriter, r *http.Reques
 	json.NewEncoder(w).Encode(map[string]string{"status": "submitted"})
 }
 
-// CompleteLesson godoc
-// @Summary УЧЕНИК: Завершить урок (без ДЗ)
-// @Description Отметить урок как пройденный (для уроков без обязательного ДЗ).
+type SetAttendanceRequest struct {
+	Status         string `json:"status"`
+	RecordingURL   string `json:"recording_url,omitempty"`
+	TeacherComment string `json:"teacher_comment,omitempty"`
+}
+
+// SetLessonAttendance godoc
+// @Summary УЧЕНИК: Отметить посещение урока
+// @Description Отметить урок с указанием статуса посещения, ссылки на запись и комментария.
 // @Tags Student-Learning
+// @Accept json
 // @Produce json
 // @Param id path string true "ID урока"
+// @Param body body SetAttendanceRequest true "Данные посещения"
 // @Success 200 {object} map[string]string
-// @Router /lessons/{id}/complete [post]
-func (h *LearningHandler) CompleteLesson(w http.ResponseWriter, r *http.Request) {
+// @Router /lessons/{id}/attendance [post]
+func (h *LearningHandler) SetLessonAttendance(w http.ResponseWriter, r *http.Request) {
 	userCtxData := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
 	lessonID := chi.URLParam(r, "id")
-	err := h.uc.CompleteLesson(r.Context(), lessonID, userCtxData.UserID)
-	if err != nil {
+
+	var req SetAttendanceRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	input := usecase.SetAttendanceInput{
+		LessonID:       lessonID,
+		UserID:         userCtxData.UserID,
+		Status:         req.Status,
+		RecordingURL:   req.RecordingURL,
+		TeacherComment: req.TeacherComment,
+	}
+	if err := h.uc.SetLessonAttendance(r.Context(), input); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"status": "completed"})
+	json.NewEncoder(w).Encode(map[string]string{"status": "saved"})
 }
 
 // GetTeachers godoc
@@ -207,6 +229,7 @@ func (h *LearningHandler) AddReview(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusCreated)
 }
+
 // GetTest godoc
 // @Summary USER: Детали теста
 // @Tags Student-Learning
@@ -242,6 +265,7 @@ func (h *LearningHandler) GetProject(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(proj)
 }
+
 // GetTeacherDashboard godoc
 // @Summary ТИЧЕР: Дашборд ЛК
 // @Tags Teacher-Dashboard

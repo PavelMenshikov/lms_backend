@@ -3,8 +3,8 @@ package repository
 import (
 	"context"
 	"database/sql"
-	"encoding/json" 
-	"fmt"           
+	"encoding/json"
+	"fmt"
 	"lms_backend/internal/domain"
 )
 
@@ -47,16 +47,18 @@ func (r *ReviewRepoImpl) GetPendingSubmissions(ctx context.Context, staffID stri
 	query += " ORDER BY uas.submitted_at ASC"
 
 	rows, err := r.db.QueryContext(ctx, query)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	defer rows.Close()
 
-	var records[]*domain.SubmissionRecord
+	var records []*domain.SubmissionRecord
 	for rows.Next() {
 		rec := &domain.SubmissionRecord{}
-		var filesRaw[]byte
+		var filesRaw []byte
 		rows.Scan(
-			&rec.ID, &rec.UserID, &rec.StudentName, &rec.CourseTitle, &rec.ModuleOrder, 
-			&rec.LessonOrder, &rec.LessonTitle, &rec.Text, &filesRaw, &rec.Status, 
+			&rec.ID, &rec.UserID, &rec.StudentName, &rec.CourseTitle, &rec.ModuleOrder,
+			&rec.LessonOrder, &rec.LessonTitle, &rec.Text, &filesRaw, &rec.Status,
 			&rec.Grade, &rec.TeacherComment, &rec.SubmittedAt,
 		)
 		json.Unmarshal(filesRaw, &rec.Files)

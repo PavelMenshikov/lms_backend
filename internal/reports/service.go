@@ -22,19 +22,19 @@ func NewReportsService(db *sql.DB) ReportsService {
 }
 
 type LessonReportRow struct {
-	Date              string
-	Time              string
-	Course            string
-	Group             string
-	Student           string
-	Teacher           string
-	LessonStatus      string
-	AttendanceStatus  string
-	Reason            string
-	Comment           string
-	Freeze            string
-	ChangedBy         string
-	ChangedAt         string
+	Date             string
+	Time             string
+	Course           string
+	Group            string
+	Student          string
+	Teacher          string
+	LessonStatus     string
+	AttendanceStatus string
+	Reason           string
+	Comment          string
+	Freeze           string
+	ChangedBy        string
+	ChangedAt        string
 }
 
 func (s *reportsService) GenerateLessonsReport(ctx context.Context, startDate, endDate time.Time) (*excelize.File, error) {

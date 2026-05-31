@@ -1,9 +1,9 @@
 package repository
 
 import (
-    "testing"
+	"testing"
 )
 
 func BenchmarkGetLessons(b *testing.B) {
-    b.Skip("Skip benchmark until test DB setup is ready")
+	b.Skip("Skip benchmark until test DB setup is ready")
 }

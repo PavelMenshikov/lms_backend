@@ -55,7 +55,7 @@ type UpdateCourseSettingsInput struct {
 	IsDiscordMandatory  bool
 	IsAntiCopyEnabled   bool
 	FileHeader          *multipart.FileHeader
-	TeacherIDs[]string
+	TeacherIDs          []string
 }
 
 type CreateModuleInput struct {
@@ -77,7 +77,6 @@ type CreateLessonInput struct {
 	ContentText      string
 	Content          []domain.ContentBlock
 }
-
 
 type ExtendedCreateUserInput struct {
 	FullName        string
@@ -159,7 +158,6 @@ type LessonBulkInput struct {
 	Content     []domain.ContentBlock
 }
 
-
 func (uc *ContentAdminUseCase) UploadMedia(ctx context.Context, fileHeader *multipart.FileHeader) (string, error) {
 	if fileHeader == nil {
 		return "", errors.New("no file provided")
@@ -230,7 +228,9 @@ func (uc *ContentAdminUseCase) UpdateCourseSettings(ctx context.Context, input U
 
 	if input.FileHeader != nil {
 		file, err := input.FileHeader.Open()
-		if err != nil { return err }
+		if err != nil {
+			return err
+		}
 		defer file.Close()
 
 		s3Key := fmt.Sprintf("course_previews/%s_%s", input.CourseID, input.FileHeader.Filename)
@@ -513,7 +513,9 @@ func (uc *ContentAdminUseCase) CreateFullUser(ctx context.Context, input Extende
 		courseID := input.CourseID
 		if courseID == "" && input.StreamID != "" {
 			derived, err := uc.repo.GetCourseIDByStream(ctx, input.StreamID)
-			if err == nil { courseID = derived }
+			if err == nil {
+				courseID = derived
+			}
 		}
 		if courseID != "" || input.StreamID != "" || input.GroupID != "" {
 			_ = uc.repo.EnrollStudentExtended(ctx, userID, courseID, input.StreamID, input.GroupID)
@@ -575,9 +577,15 @@ func (uc *ContentAdminUseCase) GetUserInfo(ctx context.Context, userID string) (
 	if user.Role == domain.RoleStudent {
 		enrollment, err := uc.repo.GetStudentEnrollment(ctx, userID)
 		if err == nil && enrollment != nil {
-			if val, ok := enrollment["course_id"]; ok { res["course_id"] = val }
-			if val, ok := enrollment["stream_id"]; ok { res["stream_id"] = val }
-			if val, ok := enrollment["group_id"]; ok { res["group_id"] = val }
+			if val, ok := enrollment["course_id"]; ok {
+				res["course_id"] = val
+			}
+			if val, ok := enrollment["stream_id"]; ok {
+				res["stream_id"] = val
+			}
+			if val, ok := enrollment["group_id"]; ok {
+				res["group_id"] = val
+			}
 		}
 		parents, err := uc.repo.GetParentsByStudentID(ctx, userID)
 		if err == nil && parents != nil {
@@ -589,11 +597,15 @@ func (uc *ContentAdminUseCase) GetUserInfo(ctx context.Context, userID string) (
 
 func (uc *ContentAdminUseCase) UpdateUser(ctx context.Context, userID string, input ExtendedCreateUserInput) error {
 	existing, err := uc.repo.GetByID(ctx, userID)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	firstName, lastName := splitName(input.FullName)
 	finalBD := input.BirthDate
-	if finalBD.IsZero() { finalBD = existing.BirthDate }
+	if finalBD.IsZero() {
+		finalBD = existing.BirthDate
+	}
 
 	user := &domain.User{
 		ID: userID, FirstName: firstName, LastName: lastName, Email: input.Email, Role: input.Role,
@@ -602,7 +614,9 @@ func (uc *ContentAdminUseCase) UpdateUser(ctx context.Context, userID string, in
 		Whatsapp: input.Whatsapp, Telegram: input.Telegram,
 	}
 
-	if err := uc.repo.UpdateUser(ctx, user); err != nil { return err }
+	if err := uc.repo.UpdateUser(ctx, user); err != nil {
+		return err
+	}
 
 	if input.Role == domain.RoleStudent && len(input.Parents) > 0 {
 		_ = uc.repo.UnlinkAllParents(ctx, userID)
@@ -611,18 +625,24 @@ func (uc *ContentAdminUseCase) UpdateUser(ctx context.Context, userID string, in
 			if targetEmail == "" && pInfo.Phone != "" {
 				cleanPhone := strings.ReplaceAll(strings.ReplaceAll(pInfo.Phone, " ", ""), "+", "")
 				targetEmail = fmt.Sprintf("p_%s_%s@capedu.local", userID[:5], cleanPhone)
-			} else if targetEmail == "" { continue }
+			} else if targetEmail == "" {
+				continue
+			}
 
 			var pID string
 			existingP, err := uc.repo.GetByEmail(ctx, targetEmail)
-			if err == nil { pID = existingP.ID } else {
+			if err == nil {
+				pID = existingP.ID
+			} else {
 				pFirst, pLast := splitName(pInfo.FullName)
 				pPass := generateSecurePassword()
 				hash, _ := bcrypt.GenerateFromPassword([]byte(pPass), 12)
 				newP := &domain.User{FirstName: pFirst, LastName: pLast, Email: targetEmail, Phone: pInfo.Phone, Password: string(hash), Role: domain.RoleParent, City: input.City}
 				pID, _ = uc.repo.CreateUser(ctx, newP)
 			}
-			if pID != "" { _ = uc.repo.LinkParentToStudent(ctx, userID, pID) }
+			if pID != "" {
+				_ = uc.repo.LinkParentToStudent(ctx, userID, pID)
+			}
 		}
 	}
 	return nil

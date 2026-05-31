@@ -24,7 +24,7 @@ type Course struct {
 	IsProjectMandatory  bool         `json:"is_project_mandatory" db:"is_project_mandatory"`
 	IsDiscordMandatory  bool         `json:"is_discord_mandatory" db:"is_discord_mandatory"`
 	IsAntiCopyEnabled   bool         `json:"is_anti_copy_enabled" db:"is_anti_copy_enabled"`
-	TeacherIDs[]string     `json:"teacher_ids" db:"-"`
+	TeacherIDs          []string     `json:"teacher_ids" db:"-"`
 }
 
 type Module struct {
@@ -35,12 +35,10 @@ type Module struct {
 	Description string `json:"description" db:"description"`
 }
 
-
 type ContentBlock struct {
 	Type    string      `json:"type"`
 	Content interface{} `json:"content"`
 }
-
 
 type Lesson struct {
 	ID              string         `json:"id" db:"id"`
@@ -55,7 +53,7 @@ type Lesson struct {
 	VideoURL        string         `json:"video_url" db:"video_url"`
 	PresentationURL string         `json:"presentation_url" db:"presentation_url"`
 	ContentText     string         `json:"content_text" db:"content_text"`
-	Content         []ContentBlock `json:"content" db:"content"` 
+	Content         []ContentBlock `json:"content" db:"content"`
 	HasHomework     bool           `json:"has_homework" db:"has_homework"`
 	IsInteractive   bool           `json:"is_interactive" db:"is_interactive"`
 	Tests           []Test         `json:"tests"`

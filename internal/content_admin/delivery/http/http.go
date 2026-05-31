@@ -1,6 +1,7 @@
 package http
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"mime/multipart"
@@ -8,14 +9,12 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"context"
 
 	"github.com/go-chi/chi/v5"
 
 	"lms_backend/internal/content_admin/usecase"
 	"lms_backend/internal/domain"
 )
-
 
 type ContentAdminService interface {
 	CreateCourse(ctx context.Context, input usecase.CreateCourseInput) (string, error)
@@ -56,7 +55,7 @@ type ContentAdminService interface {
 	GetLesson(ctx context.Context, lessonID string) (*domain.Lesson, error)
 	GetTest(ctx context.Context, id string) (*domain.Test, error)
 	GetProject(ctx context.Context, id string) (*domain.Project, error)
-	LinkTeachersToCourse(ctx context.Context, courseID string, teacherIDs[]string) error
+	LinkTeachersToCourse(ctx context.Context, courseID string, teacherIDs []string) error
 }
 
 type ContentAdminHandler struct {
@@ -69,8 +68,8 @@ func NewContentAdminHandler(uc ContentAdminService) *ContentAdminHandler {
 
 type CreateLessonRequest struct {
 	CourseID    string                `json:"course_id"`
-	ModuleID    *string               `json:"module_id"` 
-	TeacherID   *string               `json:"teacher_id"` 
+	ModuleID    *string               `json:"module_id"`
+	TeacherID   *string               `json:"teacher_id"`
 	Title       string                `json:"title"`
 	OrderNum    int                   `json:"order_num"`
 	ContentText string                `json:"content_text"`
@@ -259,7 +258,7 @@ func (h *ContentAdminHandler) UpdateCourseSettings(w http.ResponseWriter, r *htt
 		fileHeader = header
 	}
 
-	var tIDs[]string
+	var tIDs []string
 	teacherIDsRaw := r.FormValue("teacher_ids")
 	if teacherIDsRaw != "" {
 		tIDs = strings.Split(teacherIDsRaw, ",")
@@ -460,7 +459,6 @@ func (h *ContentAdminHandler) CreateLesson(w http.ResponseWriter, r *http.Reques
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"id": id})
 }
-
 
 // DeleteLesson godoc
 // @Summary ADMIN: Удаление урока
@@ -774,7 +772,7 @@ func (h *ContentAdminHandler) DeleteUser(w http.ResponseWriter, r *http.Request)
 func (h *ContentAdminHandler) GetUsersList(w http.ResponseWriter, r *http.Request) {
 	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-	
+
 	filter := domain.UserFilter{
 		Role:   domain.Role(r.URL.Query().Get("role")),
 		Limit:  limit,
@@ -1017,6 +1015,7 @@ func parseFlexibleDate(dateStr string) time.Time {
 	log.Printf("[DEBUG_DATE_FAIL] Input: '%s'", dateStr)
 	return time.Time{}
 }
+
 // UnenrollStudent godoc
 // @Summary ADMIN: Удалить ученика с курса
 // @Tags Admin-Users
@@ -1030,6 +1029,7 @@ func (h *ContentAdminHandler) UnenrollStudent(w http.ResponseWriter, r *http.Req
 	}
 	w.WriteHeader(http.StatusOK)
 }
+
 // UpdateLesson godoc
 // @Summary ADMIN: Редактировать урок
 // @Tags Admin-Content
@@ -1070,6 +1070,7 @@ func (h *ContentAdminHandler) UpdateLesson(w http.ResponseWriter, r *http.Reques
 	}
 	json.NewEncoder(w).Encode(map[string]string{"status": "updated"})
 }
+
 // GetLesson godoc
 // @Summary ADMIN: Получить данные урока для редактора
 // @Tags Admin-Content
