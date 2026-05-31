@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"lms_backend/internal/domain"
 )
@@ -778,8 +779,16 @@ func (r *ContentAdminRepoImpl) LinkTeachersToCourse(ctx context.Context, courseI
 		return err
 	}
 
-	for _, tID := range teacherIDs {
-		if _, err := tx.ExecContext(ctx, "INSERT INTO course_teachers (course_id, teacher_id) VALUES ($1, $2)", courseID, tID); err != nil {
+	if len(teacherIDs) > 0 {
+		valueStrs := make([]string, 0, len(teacherIDs))
+		args := make([]interface{}, 0, 1+len(teacherIDs))
+		args = append(args, courseID)
+		for i, tID := range teacherIDs {
+			valueStrs = append(valueStrs, fmt.Sprintf("($1, $%d)", i+2))
+			args = append(args, tID)
+		}
+		query := fmt.Sprintf("INSERT INTO course_teachers (course_id, teacher_id) VALUES %s", strings.Join(valueStrs, ", "))
+		if _, err := tx.ExecContext(ctx, query, args...); err != nil {
 			tx.Rollback()
 			return err
 		}

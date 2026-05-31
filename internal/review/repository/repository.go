@@ -40,13 +40,17 @@ func (r *ReviewRepoImpl) GetPendingSubmissions(ctx context.Context, staffID stri
 		LEFT JOIN course_teachers ct ON c.id = ct.course_id
 		WHERE 1=1
 	`
+	var args []interface{}
+	argIdx := 1
 	if role == "teacher" {
-		query += fmt.Sprintf(" AND ct.teacher_id = '%s'", staffID)
+		query += fmt.Sprintf(" AND ct.teacher_id = $%d", argIdx)
+		args = append(args, staffID)
+		argIdx++
 	}
 
 	query += " ORDER BY uas.submitted_at ASC"
 
-	rows, err := r.db.QueryContext(ctx, query)
+	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}

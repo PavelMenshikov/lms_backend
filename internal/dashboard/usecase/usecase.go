@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"golang.org/x/sync/errgroup"
+
 	"lms_backend/internal/dashboard/repository"
 	"lms_backend/internal/domain"
 )
@@ -16,63 +18,142 @@ func NewDashboardUseCase(repo repository.UserDataRepository) *DashboardUseCase {
 	return &DashboardUseCase{repo: repo}
 }
 
+type homeData struct {
+	lastLesson   *domain.LastLesson
+	coursesCount int
+	attendance   *domain.StatisticSummary
+	assignments  *domain.StatisticSummary
+	upcoming     []domain.UpcomingLesson
+}
+
 func (uc *DashboardUseCase) GetUserHomeData(ctx context.Context, user *domain.User) (*domain.HomeDashboard, error) {
-	lastLesson, _ := uc.repo.GetLastLessonData(ctx, user.ID)
-	coursesCount, _ := uc.repo.GetActiveCoursesCount(ctx, user.ID)
-	attendance, _ := uc.repo.GetAttendancePercentage(ctx, user.ID)
-	assignments, _ := uc.repo.GetAssignmentsCompletionPercentage(ctx, user.ID)
-	upcoming, _ := uc.repo.GetUpcomingLessons(ctx, user.ID)
+	eg, egCtx := errgroup.WithContext(ctx)
+
+	var d homeData
+	eg.Go(func() (err error) {
+		d.lastLesson, err = uc.repo.GetLastLessonData(egCtx, user.ID)
+		return err
+	})
+	eg.Go(func() (err error) {
+		d.coursesCount, err = uc.repo.GetActiveCoursesCount(egCtx, user.ID)
+		return err
+	})
+	eg.Go(func() (err error) {
+		d.attendance, err = uc.repo.GetAttendancePercentage(egCtx, user.ID)
+		return err
+	})
+	eg.Go(func() (err error) {
+		d.assignments, err = uc.repo.GetAssignmentsCompletionPercentage(egCtx, user.ID)
+		return err
+	})
+	eg.Go(func() (err error) {
+		d.upcoming, err = uc.repo.GetUpcomingLessons(egCtx, user.ID)
+		return err
+	})
+
+	if err := eg.Wait(); err != nil {
+		return nil, err
+	}
 
 	return &domain.HomeDashboard{
 		UserRole:           user.Role,
 		User:               user,
-		LastLessonData:     lastLesson,
-		ActiveCoursesCount: coursesCount,
-		AttendanceStats:    attendance,
-		AssignmentStats:    assignments,
-		UpcomingLessons:    upcoming,
+		LastLessonData:     d.lastLesson,
+		ActiveCoursesCount: d.coursesCount,
+		AttendanceStats:    d.attendance,
+		AssignmentStats:    d.assignments,
+		UpcomingLessons:    d.upcoming,
 	}, nil
 }
 
+type curatorData struct {
+	groups     []domain.Group
+	attendance []domain.CuratorGroupAttendance
+	homework   []domain.CuratorHomeworkStats
+	zones      domain.PerformanceZones
+}
+
 func (uc *DashboardUseCase) GetCuratorDashboard(ctx context.Context, curatorID string) (*domain.CuratorDashboardData, error) {
-	groups, err := uc.repo.GetCuratorGroups(ctx, curatorID)
-	if err != nil {
+	eg, egCtx := errgroup.WithContext(ctx)
+
+	var d curatorData
+	eg.Go(func() (err error) {
+		d.groups, err = uc.repo.GetCuratorGroups(egCtx, curatorID)
+		if err == nil && d.groups == nil {
+			d.groups = []domain.Group{}
+		}
+		return err
+	})
+	eg.Go(func() (err error) {
+		d.attendance, err = uc.repo.GetCuratorAttendanceStats(egCtx, curatorID)
+		if err == nil && d.attendance == nil {
+			d.attendance = []domain.CuratorGroupAttendance{}
+		}
+		return err
+	})
+	eg.Go(func() (err error) {
+		d.homework, err = uc.repo.GetCuratorHomeworkStats(egCtx, curatorID)
+		if err == nil && d.homework == nil {
+			d.homework = []domain.CuratorHomeworkStats{}
+		}
+		return err
+	})
+	eg.Go(func() (err error) {
+		d.zones, err = uc.repo.GetCuratorPerformanceZones(egCtx, curatorID)
+		return err
+	})
+
+	if err := eg.Wait(); err != nil {
 		return nil, err
 	}
-	if groups == nil {
-		groups = []domain.Group{}
-	}
-
-	attendance, _ := uc.repo.GetCuratorAttendanceStats(ctx, curatorID)
-	if attendance == nil {
-		attendance = []domain.CuratorGroupAttendance{}
-	}
-
-	homework, _ := uc.repo.GetCuratorHomeworkStats(ctx, curatorID)
-	if homework == nil {
-		homework = []domain.CuratorHomeworkStats{}
-	}
-
-	zones, _ := uc.repo.GetCuratorPerformanceZones(ctx, curatorID)
 
 	return &domain.CuratorDashboardData{
-		Groups:            groups,
-		AttendanceByGroup: attendance,
-		HomeworkByGroup:   homework,
-		Performance:       zones,
+		Groups:            d.groups,
+		AttendanceByGroup: d.attendance,
+		HomeworkByGroup:   d.homework,
+		Performance:       d.zones,
 	}, nil
 }
 
 func (uc *DashboardUseCase) GetAdminDashboard(ctx context.Context) (*domain.AdminHomeDashboard, error) {
-	totalStudents, newStudents, studentsDelta, totalTeachers, activeCourses, err := uc.repo.GetAdminCounters(ctx)
-	if err != nil {
+	eg, egCtx := errgroup.WithContext(ctx)
+
+	var (
+		totalStudents int
+		newStudents   int
+		studentsDelta float64
+		totalTeachers int
+		activeCourses int
+		zones         domain.PerformanceZones
+		hwZones       domain.PerformanceZones
+		attZones      domain.PerformanceZones
+		activity      []domain.DailyLessonActivity
+	)
+
+	eg.Go(func() (err error) {
+		totalStudents, newStudents, studentsDelta, totalTeachers, activeCourses, err = uc.repo.GetAdminCounters(egCtx)
+		return err
+	})
+	eg.Go(func() (err error) {
+		zones, err = uc.repo.GetPerformanceStats(egCtx)
+		return err
+	})
+	eg.Go(func() (err error) {
+		hwZones, err = uc.repo.GetHwPerformanceStats(egCtx)
+		return err
+	})
+	eg.Go(func() (err error) {
+		attZones, err = uc.repo.GetAttendancePerformanceStats(egCtx)
+		return err
+	})
+	eg.Go(func() (err error) {
+		activity, err = uc.repo.GetLessonActivity(egCtx)
+		return err
+	})
+
+	if err := eg.Wait(); err != nil {
 		return nil, err
 	}
-
-	zones, _ := uc.repo.GetPerformanceStats(ctx)
-	hwZones, _ := uc.repo.GetHwPerformanceStats(ctx)
-	attZones, _ := uc.repo.GetAttendancePerformanceStats(ctx)
-	activity, _ := uc.repo.GetLessonActivity(ctx)
 
 	return &domain.AdminHomeDashboard{
 		TotalStudents:         totalStudents,

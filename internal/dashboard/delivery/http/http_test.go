@@ -92,11 +92,11 @@ func (m *mockDashboardRepo) GetCuratorPerformanceZones(ctx context.Context, cura
 }
 
 func TestGetCuratorDashboard(t *testing.T) {
-	mockRepo := new(mockDashboardRepo)
-	uc := usecase.NewDashboardUseCase(mockRepo)
-	handler := NewDashboardHandler(uc)
-
 	t.Run("success", func(t *testing.T) {
+		mockRepo := new(mockDashboardRepo)
+		uc := usecase.NewDashboardUseCase(mockRepo)
+		handler := NewDashboardHandler(uc)
+
 		expectedGroups := []domain.Group{{ID: "g1", Title: "Group A"}}
 		expectedAttendance := []domain.CuratorGroupAttendance{{
 			GroupID: "g1", GroupTitle: "Group A",
@@ -107,7 +107,7 @@ func TestGetCuratorDashboard(t *testing.T) {
 			AvgCompletion: 70, TotalSubmitted: 7, TotalAccepted: 5,
 		}}
 		expectedZones := domain.PerformanceZones{
-			Green:  50, Yellow: 30, Red: 20,
+			Green: 50, Yellow: 30, Red: 20,
 		}
 
 		mockRepo.On("GetCuratorGroups", mock.Anything, "curator-1").Return(expectedGroups, nil).Once()
@@ -136,7 +136,14 @@ func TestGetCuratorDashboard(t *testing.T) {
 	})
 
 	t.Run("usecase error", func(t *testing.T) {
+		mockRepo := new(mockDashboardRepo)
+		uc := usecase.NewDashboardUseCase(mockRepo)
+		handler := NewDashboardHandler(uc)
+
 		mockRepo.On("GetCuratorGroups", mock.Anything, "curator-2").Return(nil, assert.AnError).Once()
+		mockRepo.On("GetCuratorAttendanceStats", mock.Anything, "curator-2").Return([]domain.CuratorGroupAttendance{}, nil).Maybe()
+		mockRepo.On("GetCuratorHomeworkStats", mock.Anything, "curator-2").Return([]domain.CuratorHomeworkStats{}, nil).Maybe()
+		mockRepo.On("GetCuratorPerformanceZones", mock.Anything, "curator-2").Return(domain.PerformanceZones{}, nil).Maybe()
 
 		req := httptest.NewRequest("GET", "/admin/curator/dashboard", nil)
 		req = req.WithContext(context.WithValue(req.Context(),
