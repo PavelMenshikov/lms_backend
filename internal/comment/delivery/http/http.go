@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	authMiddleware "lms_backend/internal/auth/delivery/middleware"
 )
 
 type CommentHandler struct {
@@ -37,7 +38,8 @@ func (h *CommentHandler) CreateComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID := r.Context().Value("user_id").(string)
+	userCtxData := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	userID := userCtxData.UserID
 
 	err := h.uc.CreateComment(r.Context(), req.StudentID, req.LessonID, userID, req.RecipientID, req.Content, req.ParentCommentID)
 	if err != nil {

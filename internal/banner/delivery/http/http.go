@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	authMiddleware "lms_backend/internal/auth/delivery/middleware"
 )
 
 type BannerHandler struct {
@@ -75,7 +76,8 @@ func (h *BannerHandler) CreateBanner(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID := r.Context().Value("user_id").(string)
+	userCtxData := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	userID := userCtxData.UserID
 
 	err := h.uc.CreateBanner(r.Context(), req.Title, req.Content, req.Type, req.IsActive, req.Priority, req.StartDate, req.EndDate, req.TargetRoles, userID)
 	if err != nil {

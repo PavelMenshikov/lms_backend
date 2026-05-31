@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	authMiddleware "lms_backend/internal/auth/delivery/middleware"
 )
 
 type NotificationHandler struct {
@@ -38,7 +39,8 @@ func (h *NotificationHandler) CreateNotification(w http.ResponseWriter, r *http.
 		return
 	}
 
-	userID := r.Context().Value("user_id").(string)
+	userCtxData := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	userID := userCtxData.UserID
 
 	err := h.uc.CreateNotification(r.Context(), req.RecipientID, &userID, req.Title, req.Content, req.Type, req.LinkURL)
 	if err != nil {
@@ -56,7 +58,8 @@ func (h *NotificationHandler) CreateNotification(w http.ResponseWriter, r *http.
 // @Success 200 {array} domain.Notification
 // @Router /api/notifications [get]
 func (h *NotificationHandler) GetNotifications(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value("user_id").(string)
+	userCtxData := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	userID := userCtxData.UserID
 
 	notifications, err := h.uc.GetUserNotifications(r.Context(), userID)
 	if err != nil {

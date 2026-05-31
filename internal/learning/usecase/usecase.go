@@ -113,6 +113,10 @@ func (uc *LearningUseCase) GetTest(ctx context.Context, testID string) (*domain.
 	return uc.repo.GetTestByID(ctx, testID)
 }
 
+func (uc *LearningUseCase) GetTeacherMonthlyReport(ctx context.Context, teacherID string, year, month int) (*domain.TeacherMonthlyReport, error) {
+	return uc.repo.GetTeacherMonthlyReport(ctx, teacherID, year, month)
+}
+
 func (uc *LearningUseCase) GetProject(ctx context.Context, projectID string) (*domain.Project, error) {
 	return uc.repo.GetProjectByID(ctx, projectID)
 }

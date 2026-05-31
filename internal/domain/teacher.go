@@ -35,6 +35,18 @@ type TeacherPublicInfo struct {
 	Schedule        interface{}      `json:"schedule"`
 	Reviews         []*TeacherReview `json:"reviews"`
 }
+type TeacherMonthlyReport struct {
+	TeacherID          string  `json:"teacher_id"`
+	Year               int     `json:"year"`
+	Month              int     `json:"month"`
+	TotalLessons       int     `json:"total_lessons"`
+	SubstitutionsCount int     `json:"substitutions_count"`
+	ReplacedCount      int     `json:"replaced_count"`
+	AvgRating          float64 `json:"avg_rating"`
+	TotalStudents      int     `json:"total_students"`
+	AttendanceAvg      float64 `json:"attendance_avg_percent"`
+}
+
 type TeacherDashboardData struct {
 	Profile          *TeacherPublicInfo      `json:"profile"`
 	AssignedCourses  []*StudentCoursePreview `json:"assigned_courses"`

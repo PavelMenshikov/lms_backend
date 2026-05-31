@@ -3,6 +3,7 @@ package http
 import (
 	"encoding/json"
 	"lms_backend/internal/attendance/usecase"
+	authMiddleware "lms_backend/internal/auth/delivery/middleware"
 	"lms_backend/internal/domain"
 	"net/http"
 	"time"
@@ -94,8 +95,8 @@ func (h *AttendanceHandler) MarkLessonAttendance(w http.ResponseWriter, r *http.
 		return
 	}
 
-	// Получаем ID пользователя из контекста (должен быть установлен middleware)
-	userID := r.Context().Value("user_id").(string)
+	userCtxData := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	userID := userCtxData.UserID
 
 	err := h.uc.MarkAttendance(r.Context(), lessonID, req.StudentID, req.Status, req.Reason, req.Comment, userID)
 	if err != nil {

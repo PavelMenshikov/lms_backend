@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	authMiddleware "lms_backend/internal/auth/delivery/middleware"
 )
 
 type AccessHandler struct {
@@ -39,7 +40,8 @@ func (h *AccessHandler) CreateAccessRequest(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	userID := r.Context().Value("user_id").(string)
+	userCtxData := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	userID := userCtxData.UserID
 
 	err := h.uc.CreateRequest(r.Context(), userID, req.ResourceType, req.ResourceID, req.Reason)
 	if err != nil {
@@ -83,7 +85,8 @@ func (h *AccessHandler) ApproveRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID := r.Context().Value("user_id").(string)
+	userCtxData := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	userID := userCtxData.UserID
 
 	err := h.uc.ApproveRequest(r.Context(), requestID, userID, req.ReviewComment)
 	if err != nil {
@@ -111,7 +114,8 @@ func (h *AccessHandler) RejectRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID := r.Context().Value("user_id").(string)
+	userCtxData := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	userID := userCtxData.UserID
 
 	err := h.uc.RejectRequest(r.Context(), requestID, userID, req.ReviewComment)
 	if err != nil {

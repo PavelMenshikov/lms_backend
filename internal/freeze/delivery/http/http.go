@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	authMiddleware "lms_backend/internal/auth/delivery/middleware"
 )
 
 type FreezeHandler struct {
@@ -53,7 +54,8 @@ func (h *FreezeHandler) CreateFreezeRequest(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	userID := r.Context().Value("user_id").(string)
+	userCtxData := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	userID := userCtxData.UserID
 
 	err = h.uc.CreateRequest(r.Context(), req.StudentID, userID, startDate, endDate, req.Reason)
 	if err != nil {
@@ -97,7 +99,8 @@ func (h *FreezeHandler) ApproveRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID := r.Context().Value("user_id").(string)
+	userCtxData := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	userID := userCtxData.UserID
 
 	err := h.uc.ApproveRequest(r.Context(), requestID, userID, req.ReviewComment)
 	if err != nil {
@@ -125,7 +128,8 @@ func (h *FreezeHandler) RejectRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID := r.Context().Value("user_id").(string)
+	userCtxData := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	userID := userCtxData.UserID
 
 	err := h.uc.RejectRequest(r.Context(), requestID, userID, req.ReviewComment)
 	if err != nil {
