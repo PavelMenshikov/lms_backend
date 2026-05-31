@@ -292,6 +292,7 @@ func main() {
 
 		// Admin endpoints (без префикса для обратной совместимости)
 		r.Get("/admin/dashboard/stats", dashboardHandler.GetAdminDashboard)
+		r.Get("/admin/curator/dashboard", dashboardHandler.GetCuratorDashboard)
 		r.Get("/admin/courses", adminHandler.GetAllCourses)
 		r.Post("/admin/courses", adminHandler.CreateCourse)
 		r.Put("/admin/courses/{id}/settings", adminHandler.UpdateCourseSettings)
@@ -335,6 +336,7 @@ func main() {
 
 		// Дублирующие admin endpoints с префиксом /api/admin/ (для frontend)
 		r.Get("/api/admin/dashboard/stats", dashboardHandler.GetAdminDashboard)
+		r.Get("/api/admin/curator/dashboard", dashboardHandler.GetCuratorDashboard)
 		r.Get("/api/admin/courses", adminHandler.GetAllCourses)
 		r.Post("/api/admin/courses", adminHandler.CreateCourse)
 		r.Put("/api/admin/courses/{id}/settings", adminHandler.UpdateCourseSettings)

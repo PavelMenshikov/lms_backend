@@ -34,6 +34,35 @@ func (uc *DashboardUseCase) GetUserHomeData(ctx context.Context, user *domain.Us
 	}, nil
 }
 
+func (uc *DashboardUseCase) GetCuratorDashboard(ctx context.Context, curatorID string) (*domain.CuratorDashboardData, error) {
+	groups, err := uc.repo.GetCuratorGroups(ctx, curatorID)
+	if err != nil {
+		return nil, err
+	}
+	if groups == nil {
+		groups = []domain.Group{}
+	}
+
+	attendance, _ := uc.repo.GetCuratorAttendanceStats(ctx, curatorID)
+	if attendance == nil {
+		attendance = []domain.CuratorGroupAttendance{}
+	}
+
+	homework, _ := uc.repo.GetCuratorHomeworkStats(ctx, curatorID)
+	if homework == nil {
+		homework = []domain.CuratorHomeworkStats{}
+	}
+
+	zones, _ := uc.repo.GetCuratorPerformanceZones(ctx, curatorID)
+
+	return &domain.CuratorDashboardData{
+		Groups:            groups,
+		AttendanceByGroup: attendance,
+		HomeworkByGroup:   homework,
+		Performance:       zones,
+	}, nil
+}
+
 func (uc *DashboardUseCase) GetAdminDashboard(ctx context.Context) (*domain.AdminHomeDashboard, error) {
 	totalStudents, newStudents, studentsDelta, totalTeachers, activeCourses, err := uc.repo.GetAdminCounters(ctx)
 	if err != nil {

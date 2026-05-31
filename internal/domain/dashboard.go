@@ -85,3 +85,25 @@ type AdminStudentProgress struct {
 	LessonsAttended int       `json:"lessons_attended"`
 	HomeworksDone   int       `json:"homeworks_done"`
 }
+
+type CuratorGroupAttendance struct {
+	GroupID      string  `json:"group_id"`
+	GroupTitle   string  `json:"group_title"`
+	StudentCount int     `json:"student_count"`
+	AvgAttendance float64 `json:"avg_attendance_percent"`
+}
+
+type CuratorHomeworkStats struct {
+	GroupID         string  `json:"group_id"`
+	GroupTitle      string  `json:"group_title"`
+	AvgCompletion   float64 `json:"avg_completion_percent"`
+	TotalSubmitted  int     `json:"total_submitted"`
+	TotalAccepted   int     `json:"total_accepted"`
+}
+
+type CuratorDashboardData struct {
+	Groups             []Group                 `json:"groups"`
+	AttendanceByGroup  []CuratorGroupAttendance `json:"attendance_by_group"`
+	HomeworkByGroup    []CuratorHomeworkStats  `json:"homework_by_group"`
+	Performance        PerformanceZones        `json:"performance_zones"`
+}

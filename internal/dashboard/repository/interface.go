@@ -14,4 +14,8 @@ type UserDataRepository interface {
 	GetAdminCounters(ctx context.Context) (totalStudents, newStudents int, studentsDelta float64, totalTeachers, activeCourses int, err error)
 	GetPerformanceStats(ctx context.Context) (domain.PerformanceZones, error)
 	GetLessonActivity(ctx context.Context) ([]domain.DailyLessonActivity, error)
+	GetCuratorGroups(ctx context.Context, curatorID string) ([]domain.Group, error)
+	GetCuratorAttendanceStats(ctx context.Context, curatorID string) ([]domain.CuratorGroupAttendance, error)
+	GetCuratorHomeworkStats(ctx context.Context, curatorID string) ([]domain.CuratorHomeworkStats, error)
+	GetCuratorPerformanceZones(ctx context.Context, curatorID string) (domain.PerformanceZones, error)
 }

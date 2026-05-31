@@ -155,6 +155,123 @@ func (r *DashboardRepositoryImpl) GetPerformanceStats(ctx context.Context) (doma
 	return zones, err
 }
 
+func (r *DashboardRepositoryImpl) GetCuratorGroups(ctx context.Context, curatorID string) ([]domain.Group, error) {
+	query := `
+		SELECT id, stream_id, COALESCE(curator_id, ''), COALESCE(teacher_id, ''), title, created_at
+		FROM groups
+		WHERE curator_id = $1
+		ORDER BY title ASC
+	`
+	rows, err := r.db.QueryContext(ctx, query, curatorID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var groups []domain.Group
+	for rows.Next() {
+		var g domain.Group
+		if err := rows.Scan(&g.ID, &g.StreamID, &g.CuratorID, &g.TeacherID, &g.Title, &g.CreatedAt); err != nil {
+			return nil, err
+		}
+		groups = append(groups, g)
+	}
+	return groups, nil
+}
+
+func (r *DashboardRepositoryImpl) GetCuratorAttendanceStats(ctx context.Context, curatorID string) ([]domain.CuratorGroupAttendance, error) {
+	query := `
+		WITH group_students AS (
+			SELECT g.id as group_id, g.title as group_title, uc.user_id
+			FROM groups g
+			JOIN user_courses uc ON uc.group_id = g.id
+			WHERE g.curator_id = $1
+		)
+		SELECT
+			gs.group_id,
+			gs.group_title,
+			COUNT(DISTINCT gs.user_id) as student_count,
+			COALESCE(ROUND(AVG(subq.pct), 2), 0) as avg_attendance
+		FROM group_students gs
+		LEFT JOIN LATERAL (
+			SELECT
+				COUNT(CASE WHEN ula.status IN ('visited', 'trial') THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0) as pct
+			FROM user_lesson_attendance ula
+			WHERE ula.user_id = gs.user_id
+		) subq ON true
+		GROUP BY gs.group_id, gs.group_title
+		ORDER BY gs.group_title ASC
+	`
+	rows, err := r.db.QueryContext(ctx, query, curatorID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var stats []domain.CuratorGroupAttendance
+	for rows.Next() {
+		var s domain.CuratorGroupAttendance
+		if err := rows.Scan(&s.GroupID, &s.GroupTitle, &s.StudentCount, &s.AvgAttendance); err != nil {
+			return nil, err
+		}
+		stats = append(stats, s)
+	}
+	return stats, nil
+}
+
+func (r *DashboardRepositoryImpl) GetCuratorHomeworkStats(ctx context.Context, curatorID string) ([]domain.CuratorHomeworkStats, error) {
+	query := `
+		WITH group_homework AS (
+			SELECT g.id as group_id, g.title as group_title, uas.user_id, uas.status
+			FROM groups g
+			JOIN user_courses uc ON uc.group_id = g.id
+			JOIN user_assignments_submission uas ON uas.user_id = uc.user_id
+			WHERE g.curator_id = $1
+		)
+		SELECT
+			gh.group_id,
+			gh.group_title,
+			COUNT(*) as total_submitted,
+			COUNT(CASE WHEN gh.status = 'accepted' THEN 1 END) as total_accepted,
+			ROUND(COUNT(CASE WHEN gh.status = 'accepted' THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0), 2) as avg_completion
+		FROM group_homework gh
+		GROUP BY gh.group_id, gh.group_title
+		ORDER BY gh.group_title ASC
+	`
+	rows, err := r.db.QueryContext(ctx, query, curatorID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var stats []domain.CuratorHomeworkStats
+	for rows.Next() {
+		var s domain.CuratorHomeworkStats
+		if err := rows.Scan(&s.GroupID, &s.GroupTitle, &s.TotalSubmitted, &s.TotalAccepted, &s.AvgCompletion); err != nil {
+			return nil, err
+		}
+		stats = append(stats, s)
+	}
+	return stats, nil
+}
+
+func (r *DashboardRepositoryImpl) GetCuratorPerformanceZones(ctx context.Context, curatorID string) (domain.PerformanceZones, error) {
+	var zones domain.PerformanceZones
+	query := `
+		WITH curator_students AS (
+			SELECT DISTINCT uc.user_id, AVG(uc.progress_percent) as score
+			FROM groups g
+			JOIN user_courses uc ON uc.group_id = g.id
+			WHERE g.curator_id = $1
+			GROUP BY uc.user_id
+		)
+		SELECT
+			COUNT(CASE WHEN score >= 80 THEN 1 END) as green,
+			COUNT(CASE WHEN score >= 50 AND score < 80 THEN 1 END) as yellow,
+			COUNT(CASE WHEN score < 50 THEN 1 END) as red
+		FROM curator_students
+	`
+	err := r.db.QueryRowContext(ctx, query, curatorID).Scan(&zones.Green, &zones.Yellow, &zones.Red)
+	return zones, err
+}
+
 func (r *DashboardRepositoryImpl) GetLessonActivity(ctx context.Context) ([]domain.DailyLessonActivity, error) {
 	query := `
 		SELECT 

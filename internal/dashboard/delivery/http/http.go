@@ -42,6 +42,26 @@ func (h *DashboardHandler) GetUserHome(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(data)
 }
 
+// GetCuratorDashboard godoc
+// @Summary CURATOR: Дашборд куратора
+// @Description Возвращает группы, посещаемость, ДЗ и успеваемость для куратора.
+// @Tags Curator-Stats
+// @Produce json
+// @Success 200 {object} domain.CuratorDashboardData
+// @Router /admin/curator/dashboard [get]
+func (h *DashboardHandler) GetCuratorDashboard(w http.ResponseWriter, r *http.Request) {
+	userCtxData := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+
+	data, err := h.uc.GetCuratorDashboard(r.Context(), userCtxData.UserID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(data)
+}
+
 // GetAdminDashboard godoc
 // @Summary ADMIN: Статистика главной страницы
 // @Description Возвращает агрегированные данные для админ-панели (счетчики, графики, успеваемость).
