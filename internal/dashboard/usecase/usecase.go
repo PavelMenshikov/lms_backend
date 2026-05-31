@@ -70,16 +70,20 @@ func (uc *DashboardUseCase) GetAdminDashboard(ctx context.Context) (*domain.Admi
 	}
 
 	zones, _ := uc.repo.GetPerformanceStats(ctx)
+	hwZones, _ := uc.repo.GetHwPerformanceStats(ctx)
+	attZones, _ := uc.repo.GetAttendancePerformanceStats(ctx)
 	activity, _ := uc.repo.GetLessonActivity(ctx)
 
 	return &domain.AdminHomeDashboard{
-		TotalStudents:     totalStudents,
-		StudentsDelta:     studentsDelta,
-		NewStudentsMonth:  newStudents,
-		TotalTeachers:     totalTeachers,
-		ActiveCourses:     activeCourses,
-		Performance:       zones,
-		LessonActivity:    activity,
-		UpdatePeriodMonth: time.Now().Format("January"),
+		TotalStudents:         totalStudents,
+		StudentsDelta:         studentsDelta,
+		NewStudentsMonth:      newStudents,
+		TotalTeachers:         totalTeachers,
+		ActiveCourses:         activeCourses,
+		Performance:           zones,
+		HwPerformance:         hwZones,
+		AttendancePerformance: attZones,
+		LessonActivity:        activity,
+		UpdatePeriodMonth:     time.Now().Format("January"),
 	}, nil
 }

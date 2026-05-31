@@ -1,5 +1,40 @@
 basePath: /
 definitions:
+  domain.AccessRequest:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      reason:
+        type: string
+      resource_id:
+        type: string
+      resource_type:
+        type: string
+      review_comment:
+        type: string
+      reviewed_at:
+        type: string
+      reviewed_by:
+        type: string
+      status:
+        $ref: '#/definitions/domain.AccessRequestStatus'
+      updated_at:
+        type: string
+      user_id:
+        type: string
+    type: object
+  domain.AccessRequestStatus:
+    enum:
+    - PENDING
+    - APPROVED
+    - REJECTED
+    type: string
+    x-enum-varnames:
+    - AccessRequestStatusPending
+    - AccessRequestStatusApproved
+    - AccessRequestStatusRejected
   domain.AdminCourseStats:
     properties:
       average_lag_lessons:
@@ -25,6 +60,10 @@ definitions:
     properties:
       active_courses:
         type: integer
+      attendance_performance_zones:
+        $ref: '#/definitions/domain.PerformanceZones'
+      hw_performance_zones:
+        $ref: '#/definitions/domain.PerformanceZones'
       lesson_activity:
         items:
           $ref: '#/definitions/domain.DailyLessonActivity'
@@ -76,6 +115,84 @@ definitions:
       role:
         $ref: '#/definitions/domain.Role'
     type: object
+  domain.AttendanceRecord:
+    properties:
+      comment:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      lesson_id:
+        type: string
+      marked_at:
+        type: string
+      marked_by:
+        type: string
+      reason:
+        type: string
+      status:
+        $ref: '#/definitions/domain.AttendanceStatus'
+      student_id:
+        type: string
+      updated_at:
+        type: string
+      updated_by:
+        type: string
+    type: object
+  domain.AttendanceStatus:
+    enum:
+    - ATTENDED
+    - ABSENT_EXCUSED
+    - ABSENT_UNEXCUSED
+    - FREEZE
+    type: string
+    x-enum-varnames:
+    - AttendanceStatusAttended
+    - AttendanceStatusAbsentExcused
+    - AttendanceStatusAbsentUnexcused
+    - AttendanceStatusFreeze
+  domain.Banner:
+    properties:
+      content:
+        type: string
+      created_at:
+        type: string
+      created_by:
+        type: string
+      end_date:
+        type: string
+      id:
+        type: string
+      is_active:
+        type: boolean
+      priority:
+        type: integer
+      start_date:
+        type: string
+      target_roles:
+        items:
+          type: string
+        type: array
+      title:
+        type: string
+      type:
+        $ref: '#/definitions/domain.BannerType'
+      updated_at:
+        type: string
+    type: object
+  domain.BannerType:
+    enum:
+    - INFO
+    - WARNING
+    - ANNOUNCEMENT
+    - PROMOTION
+    type: string
+    x-enum-varnames:
+    - BannerTypeInfo
+    - BannerTypeWarning
+    - BannerTypeAnnouncement
+    - BannerTypePromotion
   domain.ChatMessage:
     properties:
       created_at:
@@ -97,6 +214,31 @@ definitions:
       sender_role:
         $ref: '#/definitions/domain.Role'
       student_id:
+        type: string
+    type: object
+  domain.Comment:
+    properties:
+      author_id:
+        type: string
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      is_read:
+        type: boolean
+      lesson_id:
+        type: string
+      parent_comment_id:
+        type: string
+      read_at:
+        type: string
+      recipient_id:
+        type: string
+      student_id:
+        type: string
+      updated_at:
         type: string
     type: object
   domain.ContentBlock:
@@ -169,6 +311,47 @@ definitions:
           $ref: '#/definitions/domain.Test'
         type: array
     type: object
+  domain.CuratorDashboardData:
+    properties:
+      attendance_by_group:
+        items:
+          $ref: '#/definitions/domain.CuratorGroupAttendance'
+        type: array
+      groups:
+        items:
+          $ref: '#/definitions/domain.Group'
+        type: array
+      homework_by_group:
+        items:
+          $ref: '#/definitions/domain.CuratorHomeworkStats'
+        type: array
+      performance_zones:
+        $ref: '#/definitions/domain.PerformanceZones'
+    type: object
+  domain.CuratorGroupAttendance:
+    properties:
+      avg_attendance_percent:
+        type: number
+      group_id:
+        type: string
+      group_title:
+        type: string
+      student_count:
+        type: integer
+    type: object
+  domain.CuratorHomeworkStats:
+    properties:
+      avg_completion_percent:
+        type: number
+      group_id:
+        type: string
+      group_title:
+        type: string
+      total_accepted:
+        type: integer
+      total_submitted:
+        type: integer
+    type: object
   domain.CuratorTableItem:
     properties:
       created_at:
@@ -195,6 +378,64 @@ definitions:
       trial:
         type: integer
     type: object
+  domain.FreezePeriod:
+    properties:
+      created_at:
+        type: string
+      created_by:
+        type: string
+      end_date:
+        type: string
+      freeze_request_id:
+        type: string
+      id:
+        type: string
+      is_active:
+        type: boolean
+      start_date:
+        type: string
+      student_id:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  domain.FreezeRequest:
+    properties:
+      created_at:
+        type: string
+      end_date:
+        type: string
+      id:
+        type: string
+      reason:
+        type: string
+      requested_by:
+        type: string
+      review_comment:
+        type: string
+      reviewed_at:
+        type: string
+      reviewed_by:
+        type: string
+      start_date:
+        type: string
+      status:
+        $ref: '#/definitions/domain.FreezeStatus'
+      student_id:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  domain.FreezeStatus:
+    enum:
+    - PENDING
+    - APPROVED
+    - REJECTED
+    type: string
+    x-enum-varnames:
+    - FreezeStatusPending
+    - FreezeStatusApproved
+    - FreezeStatusRejected
   domain.Group:
     properties:
       created_at:
@@ -246,6 +487,10 @@ definitions:
     type: object
   domain.Lesson:
     properties:
+      cancellation_reason:
+        type: string
+      cancelled_at:
+        type: string
       content:
         items:
           $ref: '#/definitions/domain.ContentBlock'
@@ -260,6 +505,8 @@ definitions:
         type: boolean
       id:
         type: string
+      is_cancelled:
+        type: boolean
       is_interactive:
         type: boolean
       is_published:
@@ -276,6 +523,8 @@ definitions:
         items:
           $ref: '#/definitions/domain.Project'
         type: array
+      substituted_teacher_id:
+        type: string
       teacher_id:
         type: string
       tests:
@@ -348,6 +597,45 @@ definitions:
       year:
         type: integer
     type: object
+  domain.Notification:
+    properties:
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      is_read:
+        type: boolean
+      link_url:
+        type: string
+      metadata:
+        type: string
+      read_at:
+        type: string
+      recipient_id:
+        type: string
+      sender_id:
+        type: string
+      title:
+        type: string
+      type:
+        $ref: '#/definitions/domain.NotificationType'
+      updated_at:
+        type: string
+    type: object
+  domain.NotificationType:
+    enum:
+    - INFO
+    - WARNING
+    - ERROR
+    - SUCCESS
+    type: string
+    x-enum-varnames:
+    - NotificationTypeInfo
+    - NotificationTypeWarning
+    - NotificationTypeError
+    - NotificationTypeSuccess
   domain.PerformanceZones:
     properties:
       green_count:
@@ -487,6 +775,8 @@ definitions:
     properties:
       assignment_status:
         type: string
+      attendance_status:
+        type: string
       grade:
         type: integer
       is_completed:
@@ -500,6 +790,8 @@ definitions:
       next_lesson_id:
         type: string
       previous_lesson_id:
+        type: string
+      recording_url:
         type: string
       teacher_comment:
         type: string
@@ -542,10 +834,41 @@ definitions:
       title:
         type: string
     type: object
+  domain.StudentStatistics:
+    properties:
+      absent_excused:
+        type: integer
+      absent_unexcused:
+        type: integer
+      attended_lessons:
+        type: integer
+      created_at:
+        type: string
+      current_freeze_end_date:
+        type: string
+      freeze_days:
+        type: integer
+      id:
+        type: string
+      last_attendance_date:
+        type: string
+      remaining_excused:
+        type: integer
+      remaining_lessons:
+        type: integer
+      student_id:
+        type: string
+      total_lessons:
+        type: integer
+      updated_at:
+        type: string
+    type: object
   domain.StudentTableItem:
     properties:
       age:
         type: integer
+      balance:
+        type: number
       city:
         type: string
       course:
@@ -560,9 +883,13 @@ definitions:
         type: string
       gender:
         type: string
+      graduation_broadcast_url:
+        type: string
       group:
         type: string
       id:
+        type: string
+      intro_broadcast_url:
         type: string
       language:
         type: string
@@ -620,12 +947,45 @@ definitions:
         items:
           $ref: '#/definitions/domain.StudentCoursePreview'
         type: array
+      cancelled_lessons:
+        items:
+          $ref: '#/definitions/domain.Lesson'
+        type: array
       my_reviews:
         items:
           $ref: '#/definitions/domain.TeacherReview'
         type: array
       profile:
         $ref: '#/definitions/domain.TeacherPublicInfo'
+      substitutions:
+        items:
+          $ref: '#/definitions/domain.Lesson'
+        type: array
+      upcoming_lessons:
+        items:
+          $ref: '#/definitions/domain.Lesson'
+        type: array
+    type: object
+  domain.TeacherMonthlyReport:
+    properties:
+      attendance_avg_percent:
+        type: number
+      avg_rating:
+        type: number
+      month:
+        type: integer
+      replaced_count:
+        type: integer
+      substitutions_count:
+        type: integer
+      teacher_id:
+        type: string
+      total_lessons:
+        type: integer
+      total_students:
+        type: integer
+      year:
+        type: integer
     type: object
   domain.TeacherPublicInfo:
     properties:
@@ -731,6 +1091,8 @@ definitions:
     properties:
       avatar_url:
         type: string
+      balance:
+        type: number
       birth_date:
         type: string
       city:
@@ -747,11 +1109,17 @@ definitions:
         type: string
       gender:
         type: string
+      graduation_broadcast_url:
+        type: string
       id:
+        type: string
+      intro_broadcast_url:
         type: string
       language:
         type: string
       last_name:
+        type: string
+      loss_reason:
         type: string
       phone:
         type: string
@@ -760,6 +1128,8 @@ definitions:
       role:
         $ref: '#/definitions/domain.Role'
       school_name:
+        type: string
+      subscription_end_date:
         type: string
       telegram:
         type: string
@@ -779,8 +1149,79 @@ definitions:
       start_date:
         type: string
     type: object
+  http.AddStudentRequest:
+    properties:
+      student_id:
+        type: string
+    type: object
+  http.CancelLessonRequest:
+    properties:
+      reason:
+        type: string
+    type: object
+  http.ChangeGroupRequest:
+    properties:
+      group_id:
+        type: string
+    type: object
+  http.CreateAccessRequestReq:
+    properties:
+      reason:
+        type: string
+      resource_id:
+        type: string
+      resource_type:
+        type: string
+    type: object
+  http.CreateBannerRequest:
+    properties:
+      content:
+        type: string
+      end_date:
+        type: string
+      is_active:
+        type: boolean
+      priority:
+        type: integer
+      start_date:
+        type: string
+      target_roles:
+        items:
+          type: string
+        type: array
+      title:
+        type: string
+      type:
+        $ref: '#/definitions/domain.BannerType'
+    type: object
+  http.CreateCommentRequest:
+    properties:
+      content:
+        type: string
+      lesson_id:
+        type: string
+      parent_comment_id:
+        type: string
+      recipient_id:
+        type: string
+      student_id:
+        type: string
+    type: object
+  http.CreateFreezeRequestReq:
+    properties:
+      end_date:
+        type: string
+      reason:
+        type: string
+      start_date:
+        type: string
+      student_id:
+        type: string
+    type: object
   http.CreateFullUserRequest:
     properties:
+      balance:
+        type: number
       birth_date:
         example: 20.01.2000
         type: string
@@ -801,7 +1242,11 @@ definitions:
       gender:
         example: male
         type: string
+      graduation_broadcast_url:
+        type: string
       group_id:
+        type: string
+      intro_broadcast_url:
         type: string
       language:
         example: ru
@@ -881,6 +1326,19 @@ definitions:
         example: Основы синтаксиса
         type: string
     type: object
+  http.CreateNotificationRequest:
+    properties:
+      content:
+        type: string
+      link_url:
+        type: string
+      recipient_id:
+        type: string
+      title:
+        type: string
+      type:
+        $ref: '#/definitions/domain.NotificationType'
+    type: object
   http.CreateProjectRequest:
     properties:
       course_id:
@@ -956,12 +1414,75 @@ definitions:
         example: capedu123
         type: string
     type: object
+  http.MarkAttendanceRequest:
+    properties:
+      comment:
+        type: string
+      reason:
+        type: string
+      status:
+        $ref: '#/definitions/domain.AttendanceStatus'
+      student_id:
+        type: string
+    type: object
+  http.ReviewAccessRequestReq:
+    properties:
+      review_comment:
+        type: string
+    type: object
+  http.ReviewFreezeRequestReq:
+    properties:
+      review_comment:
+        type: string
+    type: object
   http.ReviewRequest:
     properties:
       comment:
         type: string
       rating:
         type: integer
+    type: object
+  http.SetAttendanceRequest:
+    properties:
+      recording_url:
+        type: string
+      status:
+        type: string
+      teacher_comment:
+        type: string
+    type: object
+  http.SubstituteTeacherRequest:
+    properties:
+      teacher_id:
+        type: string
+    type: object
+  http.UpdateBannerRequest:
+    properties:
+      content:
+        type: string
+      end_date:
+        type: string
+      is_active:
+        type: boolean
+      priority:
+        type: integer
+      start_date:
+        type: string
+      target_roles:
+        items:
+          type: string
+        type: array
+      title:
+        type: string
+      type:
+        $ref: '#/definitions/domain.BannerType'
+    type: object
+  http.UpdateGroupRequest:
+    properties:
+      name:
+        type: string
+      teacher_id:
+        type: string
     type: object
   usecase.CreateBulkCourseInput:
     properties:
@@ -1035,7 +1556,7 @@ definitions:
         example: "+77001112233"
         type: string
     type: object
-host: capapi.grtsq.ru
+host: platform.capedu.kz
 info:
   contact: {}
   description: API для LMS платформы Cap Education.
@@ -1242,6 +1763,19 @@ paths:
       summary: 'ADMIN: Создание курса со всей структурой (Модули + Уроки)'
       tags:
       - Admin-Content
+  /admin/curator/dashboard:
+    get:
+      description: Возвращает группы, посещаемость, ДЗ и успеваемость для куратора.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.CuratorDashboardData'
+      summary: 'CURATOR: Дашборд куратора'
+      tags:
+      - Curator-Stats
   /admin/curators/detailed:
     get:
       produces:
@@ -1421,6 +1955,58 @@ paths:
               type: string
             type: object
       summary: 'ADMIN: Редактировать урок'
+      tags:
+      - Admin-Content
+  /admin/lessons/{id}/cancel:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Lesson ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Причина отмены
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/http.CancelLessonRequest'
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: 'ADMIN: Отменить урок'
+      tags:
+      - Admin-Content
+  /admin/lessons/{id}/substitute:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Lesson ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: ID нового преподавателя
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/http.SubstituteTeacherRequest'
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: 'ADMIN: Заменить преподавателя на уроке'
       tags:
       - Admin-Content
   /admin/lessons/bulk:
@@ -1824,6 +2410,609 @@ paths:
       summary: 'ADMIN: Показать всех пользователей (Таблица)'
       tags:
       - Admin-Users
+  /api/access-requests:
+    get:
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.AccessRequest'
+            type: array
+      summary: Получить список ожидающих запросов доступа
+      tags:
+      - Access
+    post:
+      parameters:
+      - description: Access request data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/http.CreateAccessRequestReq'
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Создать запрос доступа
+      tags:
+      - Access
+  /api/access-requests/{requestId}/approve:
+    patch:
+      parameters:
+      - description: Request ID
+        in: path
+        name: requestId
+        required: true
+        type: string
+      - description: Review data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/http.ReviewAccessRequestReq'
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Одобрить запрос доступа
+      tags:
+      - Access
+  /api/access-requests/{requestId}/reject:
+    patch:
+      parameters:
+      - description: Request ID
+        in: path
+        name: requestId
+        required: true
+        type: string
+      - description: Review data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/http.ReviewAccessRequestReq'
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Отклонить запрос доступа
+      tags:
+      - Access
+  /api/admin/banner:
+    post:
+      parameters:
+      - description: Banner data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/http.CreateBannerRequest'
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Создать баннер (только admin)
+      tags:
+      - Banner
+  /api/admin/banner/{bannerId}:
+    delete:
+      parameters:
+      - description: Banner ID
+        in: path
+        name: bannerId
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Удалить баннер (только admin)
+      tags:
+      - Banner
+    patch:
+      parameters:
+      - description: Banner ID
+        in: path
+        name: bannerId
+        required: true
+        type: string
+      - description: Banner data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/http.UpdateBannerRequest'
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Обновить баннер (только admin)
+      tags:
+      - Banner
+  /api/attendance/lessons/{lessonId}:
+    get:
+      parameters:
+      - description: Lesson ID
+        in: path
+        name: lessonId
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.AttendanceRecord'
+            type: array
+      summary: Получить посещаемость урока
+      tags:
+      - Attendance
+    patch:
+      parameters:
+      - description: Lesson ID
+        in: path
+        name: lessonId
+        required: true
+        type: string
+      - description: Attendance data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/http.MarkAttendanceRequest'
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Отметить посещаемость урока
+      tags:
+      - Attendance
+  /api/attendance/students/{studentId}/calendar:
+    get:
+      parameters:
+      - description: Student ID
+        in: path
+        name: studentId
+        required: true
+        type: string
+      - description: Start date (YYYY-MM-DD)
+        in: query
+        name: start_date
+        type: string
+      - description: End date (YYYY-MM-DD)
+        in: query
+        name: end_date
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.AttendanceRecord'
+            type: array
+      summary: Получить календарь посещаемости ученика
+      tags:
+      - Attendance
+  /api/attendance/students/{studentId}/stats:
+    get:
+      parameters:
+      - description: Student ID
+        in: path
+        name: studentId
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: integer
+            type: object
+      summary: Получить статистику посещаемости ученика
+      tags:
+      - Attendance
+  /api/banner/active:
+    get:
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.Banner'
+            type: array
+      summary: Получить активные баннеры
+      tags:
+      - Banner
+  /api/comments:
+    get:
+      parameters:
+      - description: Student ID
+        in: query
+        name: studentId
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.Comment'
+            type: array
+      summary: Получить комментарии по ученику
+      tags:
+      - Comments
+    post:
+      parameters:
+      - description: Comment data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/http.CreateCommentRequest'
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Создать комментарий
+      tags:
+      - Comments
+  /api/comments/{commentId}/read:
+    patch:
+      parameters:
+      - description: Comment ID
+        in: path
+        name: commentId
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Отметить комментарий как прочитанный
+      tags:
+      - Comments
+  /api/freeze-requests:
+    get:
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.FreezeRequest'
+            type: array
+      summary: Получить список ожидающих запросов на заморозку
+      tags:
+      - Freeze
+    post:
+      parameters:
+      - description: Freeze request data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/http.CreateFreezeRequestReq'
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Создать запрос на заморозку
+      tags:
+      - Freeze
+  /api/freeze-requests/{requestId}/approve:
+    patch:
+      parameters:
+      - description: Request ID
+        in: path
+        name: requestId
+        required: true
+        type: string
+      - description: Review data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/http.ReviewFreezeRequestReq'
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Одобрить запрос на заморозку
+      tags:
+      - Freeze
+  /api/freeze-requests/{requestId}/reject:
+    patch:
+      parameters:
+      - description: Request ID
+        in: path
+        name: requestId
+        required: true
+        type: string
+      - description: Review data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/http.ReviewFreezeRequestReq'
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Отклонить запрос на заморозку
+      tags:
+      - Freeze
+  /api/groups/{groupId}:
+    patch:
+      parameters:
+      - description: Group ID
+        in: path
+        name: groupId
+        required: true
+        type: string
+      - description: Group data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/http.UpdateGroupRequest'
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Изменить группу (moderator/admin)
+      tags:
+      - Groups
+  /api/groups/{groupId}/students:
+    post:
+      parameters:
+      - description: Group ID
+        in: path
+        name: groupId
+        required: true
+        type: string
+      - description: Student data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/http.AddStudentRequest'
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Добавить ученика в группу (moderator/admin)
+      tags:
+      - Groups
+  /api/groups/{groupId}/students/{studentId}:
+    delete:
+      parameters:
+      - description: Group ID
+        in: path
+        name: groupId
+        required: true
+        type: string
+      - description: Student ID
+        in: path
+        name: studentId
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Удалить ученика из группы (moderator/admin)
+      tags:
+      - Groups
+  /api/notifications:
+    get:
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.Notification'
+            type: array
+      summary: Получить уведомления пользователя
+      tags:
+      - Notifications
+    post:
+      parameters:
+      - description: Notification data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/http.CreateNotificationRequest'
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Создать уведомление
+      tags:
+      - Notifications
+  /api/notifications/{notificationId}/read:
+    patch:
+      parameters:
+      - description: Notification ID
+        in: path
+        name: notificationId
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Отметить уведомление как прочитанное
+      tags:
+      - Notifications
+  /api/reports/lessons.xlsx:
+    get:
+      parameters:
+      - description: Start date (YYYY-MM-DD)
+        in: query
+        name: start_date
+        type: string
+      - description: End date (YYYY-MM-DD)
+        in: query
+        name: end_date
+        type: string
+      produces:
+      - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+      summary: Скачать Excel-отчёт по занятиям (только moderator/admin)
+      tags:
+      - Reports
+  /api/statistics/students/{studentId}:
+    get:
+      parameters:
+      - description: Student ID
+        in: path
+        name: studentId
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.StudentStatistics'
+      summary: Получить статистику ученика
+      tags:
+      - Statistics
+  /api/statistics/students/{studentId}/refresh:
+    post:
+      parameters:
+      - description: Student ID
+        in: path
+        name: studentId
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.StudentStatistics'
+      summary: Пересчитать статистику ученика
+      tags:
+      - Statistics
+  /api/students/{studentId}/freeze-status:
+    get:
+      parameters:
+      - description: Student ID
+        in: path
+        name: studentId
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.FreezePeriod'
+      summary: Получить статус заморозки ученика
+      tags:
+      - Freeze
+  /api/students/{studentId}/group:
+    patch:
+      parameters:
+      - description: Student ID
+        in: path
+        name: studentId
+        required: true
+        type: string
+      - description: New group data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/http.ChangeGroupRequest'
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Изменить группу ученика (moderator/admin)
+      tags:
+      - Groups
+  /api/teachers/{teacherId}/group:
+    patch:
+      parameters:
+      - description: Teacher ID
+        in: path
+        name: teacherId
+        required: true
+        type: string
+      - description: New group data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/http.ChangeGroupRequest'
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Изменить группу учителя (moderator/admin)
+      tags:
+      - Groups
   /auth/login:
     post:
       consumes:
@@ -2016,15 +3205,24 @@ paths:
       summary: 'УЧЕНИК: Сдать домашнее задание'
       tags:
       - Student-Learning
-  /lessons/{id}/complete:
+  /lessons/{id}/attendance:
     post:
-      description: Отметить урок как пройденный (для уроков без обязательного ДЗ).
+      consumes:
+      - application/json
+      description: Отметить урок с указанием статуса посещения, ссылки на запись и
+        комментария.
       parameters:
       - description: ID урока
         in: path
         name: id
         required: true
         type: string
+      - description: Данные посещения
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/http.SetAttendanceRequest'
       produces:
       - application/json
       responses:
@@ -2034,7 +3232,7 @@ paths:
             additionalProperties:
               type: string
             type: object
-      summary: 'УЧЕНИК: Завершить урок (без ДЗ)'
+      summary: 'УЧЕНИК: Отметить посещение урока'
       tags:
       - Student-Learning
   /my-courses:
@@ -2242,6 +3440,25 @@ paths:
       summary: 'STAFF: Проверить ДЗ'
       tags:
       - Staff-Review
+  /teacher/monthly-report:
+    get:
+      parameters:
+      - description: 'Year (default: current)'
+        in: query
+        name: year
+        type: integer
+      - description: 'Month 1-12 (default: current)'
+        in: query
+        name: month
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.TeacherMonthlyReport'
+      summary: 'TEACHER: Месячный отчёт'
+      tags:
+      - Teacher
   /teacher/profile:
     get:
       produces:

@@ -6,7 +6,7 @@
         "contact": {},
         "version": "1.0"
     },
-    "host": "capapi.grtsq.ru",
+    "host": "platform.capedu.kz",
     "basePath": "/",
     "paths": {
         "/admin/courses": {
@@ -314,6 +314,26 @@
                 }
             }
         },
+        "/admin/curator/dashboard": {
+            "get": {
+                "description": "Возвращает группы, посещаемость, ДЗ и успеваемость для куратора.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Curator-Stats"
+                ],
+                "summary": "CURATOR: Дашборд куратора",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/domain.CuratorDashboardData"
+                        }
+                    }
+                }
+            }
+        },
         "/admin/curators/detailed": {
             "get": {
                 "produces": [
@@ -616,6 +636,86 @@
                 "responses": {
                     "200": {
                         "description": "OK"
+                    }
+                }
+            }
+        },
+        "/admin/lessons/{id}/cancel": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin-Content"
+                ],
+                "summary": "ADMIN: Отменить урок",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Lesson ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Причина отмены",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.CancelLessonRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/lessons/{id}/substitute": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin-Content"
+                ],
+                "summary": "ADMIN: Заменить преподавателя на уроке",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Lesson ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "ID нового преподавателя",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.SubstituteTeacherRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
                     }
                 }
             }
@@ -1211,6 +1311,941 @@
                 }
             }
         },
+        "/api/access-requests": {
+            "get": {
+                "tags": [
+                    "Access"
+                ],
+                "summary": "Получить список ожидающих запросов доступа",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/domain.AccessRequest"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Access"
+                ],
+                "summary": "Создать запрос доступа",
+                "parameters": [
+                    {
+                        "description": "Access request data",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.CreateAccessRequestReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/access-requests/{requestId}/approve": {
+            "patch": {
+                "tags": [
+                    "Access"
+                ],
+                "summary": "Одобрить запрос доступа",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Request ID",
+                        "name": "requestId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Review data",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.ReviewAccessRequestReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/access-requests/{requestId}/reject": {
+            "patch": {
+                "tags": [
+                    "Access"
+                ],
+                "summary": "Отклонить запрос доступа",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Request ID",
+                        "name": "requestId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Review data",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.ReviewAccessRequestReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/admin/banner": {
+            "post": {
+                "tags": [
+                    "Banner"
+                ],
+                "summary": "Создать баннер (только admin)",
+                "parameters": [
+                    {
+                        "description": "Banner data",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.CreateBannerRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/admin/banner/{bannerId}": {
+            "delete": {
+                "tags": [
+                    "Banner"
+                ],
+                "summary": "Удалить баннер (только admin)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Banner ID",
+                        "name": "bannerId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "Banner"
+                ],
+                "summary": "Обновить баннер (только admin)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Banner ID",
+                        "name": "bannerId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Banner data",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.UpdateBannerRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/attendance/lessons/{lessonId}": {
+            "get": {
+                "tags": [
+                    "Attendance"
+                ],
+                "summary": "Получить посещаемость урока",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Lesson ID",
+                        "name": "lessonId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/domain.AttendanceRecord"
+                            }
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "Attendance"
+                ],
+                "summary": "Отметить посещаемость урока",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Lesson ID",
+                        "name": "lessonId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Attendance data",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.MarkAttendanceRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/attendance/students/{studentId}/calendar": {
+            "get": {
+                "tags": [
+                    "Attendance"
+                ],
+                "summary": "Получить календарь посещаемости ученика",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Student ID",
+                        "name": "studentId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Start date (YYYY-MM-DD)",
+                        "name": "start_date",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "End date (YYYY-MM-DD)",
+                        "name": "end_date",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/domain.AttendanceRecord"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/attendance/students/{studentId}/stats": {
+            "get": {
+                "tags": [
+                    "Attendance"
+                ],
+                "summary": "Получить статистику посещаемости ученика",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Student ID",
+                        "name": "studentId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/banner/active": {
+            "get": {
+                "tags": [
+                    "Banner"
+                ],
+                "summary": "Получить активные баннеры",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/domain.Banner"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/comments": {
+            "get": {
+                "tags": [
+                    "Comments"
+                ],
+                "summary": "Получить комментарии по ученику",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Student ID",
+                        "name": "studentId",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/domain.Comment"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Comments"
+                ],
+                "summary": "Создать комментарий",
+                "parameters": [
+                    {
+                        "description": "Comment data",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.CreateCommentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/comments/{commentId}/read": {
+            "patch": {
+                "tags": [
+                    "Comments"
+                ],
+                "summary": "Отметить комментарий как прочитанный",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Comment ID",
+                        "name": "commentId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/freeze-requests": {
+            "get": {
+                "tags": [
+                    "Freeze"
+                ],
+                "summary": "Получить список ожидающих запросов на заморозку",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/domain.FreezeRequest"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Freeze"
+                ],
+                "summary": "Создать запрос на заморозку",
+                "parameters": [
+                    {
+                        "description": "Freeze request data",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.CreateFreezeRequestReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/freeze-requests/{requestId}/approve": {
+            "patch": {
+                "tags": [
+                    "Freeze"
+                ],
+                "summary": "Одобрить запрос на заморозку",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Request ID",
+                        "name": "requestId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Review data",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.ReviewFreezeRequestReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/freeze-requests/{requestId}/reject": {
+            "patch": {
+                "tags": [
+                    "Freeze"
+                ],
+                "summary": "Отклонить запрос на заморозку",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Request ID",
+                        "name": "requestId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Review data",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.ReviewFreezeRequestReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/groups/{groupId}": {
+            "patch": {
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Изменить группу (moderator/admin)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Group ID",
+                        "name": "groupId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Group data",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.UpdateGroupRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/groups/{groupId}/students": {
+            "post": {
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Добавить ученика в группу (moderator/admin)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Group ID",
+                        "name": "groupId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Student data",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.AddStudentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/groups/{groupId}/students/{studentId}": {
+            "delete": {
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Удалить ученика из группы (moderator/admin)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Group ID",
+                        "name": "groupId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Student ID",
+                        "name": "studentId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/notifications": {
+            "get": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Получить уведомления пользователя",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/domain.Notification"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Создать уведомление",
+                "parameters": [
+                    {
+                        "description": "Notification data",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.CreateNotificationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/notifications/{notificationId}/read": {
+            "patch": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Отметить уведомление как прочитанное",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Notification ID",
+                        "name": "notificationId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/reports/lessons.xlsx": {
+            "get": {
+                "produces": [
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                ],
+                "tags": [
+                    "Reports"
+                ],
+                "summary": "Скачать Excel-отчёт по занятиям (только moderator/admin)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Start date (YYYY-MM-DD)",
+                        "name": "start_date",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "End date (YYYY-MM-DD)",
+                        "name": "end_date",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "file"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/statistics/students/{studentId}": {
+            "get": {
+                "tags": [
+                    "Statistics"
+                ],
+                "summary": "Получить статистику ученика",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Student ID",
+                        "name": "studentId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/domain.StudentStatistics"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/statistics/students/{studentId}/refresh": {
+            "post": {
+                "tags": [
+                    "Statistics"
+                ],
+                "summary": "Пересчитать статистику ученика",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Student ID",
+                        "name": "studentId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/domain.StudentStatistics"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/students/{studentId}/freeze-status": {
+            "get": {
+                "tags": [
+                    "Freeze"
+                ],
+                "summary": "Получить статус заморозки ученика",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Student ID",
+                        "name": "studentId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/domain.FreezePeriod"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/students/{studentId}/group": {
+            "patch": {
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Изменить группу ученика (moderator/admin)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Student ID",
+                        "name": "studentId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "New group data",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.ChangeGroupRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/teachers/{teacherId}/group": {
+            "patch": {
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Изменить группу учителя (moderator/admin)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Teacher ID",
+                        "name": "teacherId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "New group data",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.ChangeGroupRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/auth/login": {
             "post": {
                 "description": "Ввод email и пароля, возвращает HTTP-Only Cookie.",
@@ -1502,16 +2537,19 @@
                 }
             }
         },
-        "/lessons/{id}/complete": {
+        "/lessons/{id}/attendance": {
             "post": {
-                "description": "Отметить урок как пройденный (для уроков без обязательного ДЗ).",
+                "description": "Отметить урок с указанием статуса посещения, ссылки на запись и комментария.",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Student-Learning"
                 ],
-                "summary": "УЧЕНИК: Завершить урок (без ДЗ)",
+                "summary": "УЧЕНИК: Отметить посещение урока",
                 "parameters": [
                     {
                         "type": "string",
@@ -1519,6 +2557,15 @@
                         "name": "id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "description": "Данные посещения",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.SetAttendanceRequest"
+                        }
                     }
                 ],
                 "responses": {
@@ -1849,6 +2896,36 @@
                 }
             }
         },
+        "/teacher/monthly-report": {
+            "get": {
+                "tags": [
+                    "Teacher"
+                ],
+                "summary": "TEACHER: Месячный отчёт",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Year (default: current)",
+                        "name": "year",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Month 1-12 (default: current)",
+                        "name": "month",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/domain.TeacherMonthlyReport"
+                        }
+                    }
+                }
+            }
+        },
         "/teacher/profile": {
             "get": {
                 "produces": [
@@ -1988,6 +3065,57 @@
         }
     },
     "definitions": {
+        "domain.AccessRequest": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "resource_id": {
+                    "type": "string"
+                },
+                "resource_type": {
+                    "type": "string"
+                },
+                "review_comment": {
+                    "type": "string"
+                },
+                "reviewed_at": {
+                    "type": "string"
+                },
+                "reviewed_by": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/domain.AccessRequestStatus"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.AccessRequestStatus": {
+            "type": "string",
+            "enum": [
+                "PENDING",
+                "APPROVED",
+                "REJECTED"
+            ],
+            "x-enum-varnames": [
+                "AccessRequestStatusPending",
+                "AccessRequestStatusApproved",
+                "AccessRequestStatusRejected"
+            ]
+        },
         "domain.AdminCourseStats": {
             "type": "object",
             "properties": {
@@ -2025,6 +3153,12 @@
             "properties": {
                 "active_courses": {
                     "type": "integer"
+                },
+                "attendance_performance_zones": {
+                    "$ref": "#/definitions/domain.PerformanceZones"
+                },
+                "hw_performance_zones": {
+                    "$ref": "#/definitions/domain.PerformanceZones"
                 },
                 "lesson_activity": {
                     "type": "array",
@@ -2104,6 +3238,118 @@
                 }
             }
         },
+        "domain.AttendanceRecord": {
+            "type": "object",
+            "properties": {
+                "comment": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "lesson_id": {
+                    "type": "string"
+                },
+                "marked_at": {
+                    "type": "string"
+                },
+                "marked_by": {
+                    "type": "string"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/domain.AttendanceStatus"
+                },
+                "student_id": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "updated_by": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.AttendanceStatus": {
+            "type": "string",
+            "enum": [
+                "ATTENDED",
+                "ABSENT_EXCUSED",
+                "ABSENT_UNEXCUSED",
+                "FREEZE"
+            ],
+            "x-enum-varnames": [
+                "AttendanceStatusAttended",
+                "AttendanceStatusAbsentExcused",
+                "AttendanceStatusAbsentUnexcused",
+                "AttendanceStatusFreeze"
+            ]
+        },
+        "domain.Banner": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "created_by": {
+                    "type": "string"
+                },
+                "end_date": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "priority": {
+                    "type": "integer"
+                },
+                "start_date": {
+                    "type": "string"
+                },
+                "target_roles": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "title": {
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/domain.BannerType"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.BannerType": {
+            "type": "string",
+            "enum": [
+                "INFO",
+                "WARNING",
+                "ANNOUNCEMENT",
+                "PROMOTION"
+            ],
+            "x-enum-varnames": [
+                "BannerTypeInfo",
+                "BannerTypeWarning",
+                "BannerTypeAnnouncement",
+                "BannerTypePromotion"
+            ]
+        },
         "domain.ChatMessage": {
             "type": "object",
             "properties": {
@@ -2135,6 +3381,44 @@
                     "$ref": "#/definitions/domain.Role"
                 },
                 "student_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.Comment": {
+            "type": "object",
+            "properties": {
+                "author_id": {
+                    "type": "string"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_read": {
+                    "type": "boolean"
+                },
+                "lesson_id": {
+                    "type": "string"
+                },
+                "parent_comment_id": {
+                    "type": "string"
+                },
+                "read_at": {
+                    "type": "string"
+                },
+                "recipient_id": {
+                    "type": "string"
+                },
+                "student_id": {
+                    "type": "string"
+                },
+                "updated_at": {
                     "type": "string"
                 }
             }
@@ -2243,6 +3527,69 @@
                 }
             }
         },
+        "domain.CuratorDashboardData": {
+            "type": "object",
+            "properties": {
+                "attendance_by_group": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.CuratorGroupAttendance"
+                    }
+                },
+                "groups": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.Group"
+                    }
+                },
+                "homework_by_group": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.CuratorHomeworkStats"
+                    }
+                },
+                "performance_zones": {
+                    "$ref": "#/definitions/domain.PerformanceZones"
+                }
+            }
+        },
+        "domain.CuratorGroupAttendance": {
+            "type": "object",
+            "properties": {
+                "avg_attendance_percent": {
+                    "type": "number"
+                },
+                "group_id": {
+                    "type": "string"
+                },
+                "group_title": {
+                    "type": "string"
+                },
+                "student_count": {
+                    "type": "integer"
+                }
+            }
+        },
+        "domain.CuratorHomeworkStats": {
+            "type": "object",
+            "properties": {
+                "avg_completion_percent": {
+                    "type": "number"
+                },
+                "group_id": {
+                    "type": "string"
+                },
+                "group_title": {
+                    "type": "string"
+                },
+                "total_accepted": {
+                    "type": "integer"
+                },
+                "total_submitted": {
+                    "type": "integer"
+                }
+            }
+        },
         "domain.CuratorTableItem": {
             "type": "object",
             "properties": {
@@ -2282,6 +3629,92 @@
                     "type": "integer"
                 }
             }
+        },
+        "domain.FreezePeriod": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "created_by": {
+                    "type": "string"
+                },
+                "end_date": {
+                    "type": "string"
+                },
+                "freeze_request_id": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "start_date": {
+                    "type": "string"
+                },
+                "student_id": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.FreezeRequest": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "end_date": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "requested_by": {
+                    "type": "string"
+                },
+                "review_comment": {
+                    "type": "string"
+                },
+                "reviewed_at": {
+                    "type": "string"
+                },
+                "reviewed_by": {
+                    "type": "string"
+                },
+                "start_date": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/domain.FreezeStatus"
+                },
+                "student_id": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.FreezeStatus": {
+            "type": "string",
+            "enum": [
+                "PENDING",
+                "APPROVED",
+                "REJECTED"
+            ],
+            "x-enum-varnames": [
+                "FreezeStatusPending",
+                "FreezeStatusApproved",
+                "FreezeStatusRejected"
+            ]
         },
         "domain.Group": {
             "type": "object",
@@ -2361,6 +3794,12 @@
         "domain.Lesson": {
             "type": "object",
             "properties": {
+                "cancellation_reason": {
+                    "type": "string"
+                },
+                "cancelled_at": {
+                    "type": "string"
+                },
                 "content": {
                     "type": "array",
                     "items": {
@@ -2381,6 +3820,9 @@
                 },
                 "id": {
                     "type": "string"
+                },
+                "is_cancelled": {
+                    "type": "boolean"
                 },
                 "is_interactive": {
                     "type": "boolean"
@@ -2405,6 +3847,9 @@
                     "items": {
                         "$ref": "#/definitions/domain.Project"
                     }
+                },
+                "substituted_teacher_id": {
+                    "type": "string"
                 },
                 "teacher_id": {
                     "type": "string"
@@ -2516,6 +3961,62 @@
                     "type": "integer"
                 }
             }
+        },
+        "domain.Notification": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_read": {
+                    "type": "boolean"
+                },
+                "link_url": {
+                    "type": "string"
+                },
+                "metadata": {
+                    "type": "string"
+                },
+                "read_at": {
+                    "type": "string"
+                },
+                "recipient_id": {
+                    "type": "string"
+                },
+                "sender_id": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/domain.NotificationType"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.NotificationType": {
+            "type": "string",
+            "enum": [
+                "INFO",
+                "WARNING",
+                "ERROR",
+                "SUCCESS"
+            ],
+            "x-enum-varnames": [
+                "NotificationTypeInfo",
+                "NotificationTypeWarning",
+                "NotificationTypeError",
+                "NotificationTypeSuccess"
+            ]
         },
         "domain.PerformanceZones": {
             "type": "object",
@@ -2724,6 +4225,9 @@
                 "assignment_status": {
                     "type": "string"
                 },
+                "attendance_status": {
+                    "type": "string"
+                },
                 "grade": {
                     "type": "integer"
                 },
@@ -2743,6 +4247,9 @@
                     "type": "string"
                 },
                 "previous_lesson_id": {
+                    "type": "string"
+                },
+                "recording_url": {
                     "type": "string"
                 },
                 "teacher_comment": {
@@ -2808,11 +4315,58 @@
                 }
             }
         },
+        "domain.StudentStatistics": {
+            "type": "object",
+            "properties": {
+                "absent_excused": {
+                    "type": "integer"
+                },
+                "absent_unexcused": {
+                    "type": "integer"
+                },
+                "attended_lessons": {
+                    "type": "integer"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "current_freeze_end_date": {
+                    "type": "string"
+                },
+                "freeze_days": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "last_attendance_date": {
+                    "type": "string"
+                },
+                "remaining_excused": {
+                    "type": "integer"
+                },
+                "remaining_lessons": {
+                    "type": "integer"
+                },
+                "student_id": {
+                    "type": "string"
+                },
+                "total_lessons": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
         "domain.StudentTableItem": {
             "type": "object",
             "properties": {
                 "age": {
                     "type": "integer"
+                },
+                "balance": {
+                    "type": "number"
                 },
                 "city": {
                     "type": "string"
@@ -2835,10 +4389,16 @@
                 "gender": {
                     "type": "string"
                 },
+                "graduation_broadcast_url": {
+                    "type": "string"
+                },
                 "group": {
                     "type": "string"
                 },
                 "id": {
+                    "type": "string"
+                },
+                "intro_broadcast_url": {
                     "type": "string"
                 },
                 "language": {
@@ -2926,6 +4486,12 @@
                         "$ref": "#/definitions/domain.StudentCoursePreview"
                     }
                 },
+                "cancelled_lessons": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.Lesson"
+                    }
+                },
                 "my_reviews": {
                     "type": "array",
                     "items": {
@@ -2934,6 +4500,50 @@
                 },
                 "profile": {
                     "$ref": "#/definitions/domain.TeacherPublicInfo"
+                },
+                "substitutions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.Lesson"
+                    }
+                },
+                "upcoming_lessons": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.Lesson"
+                    }
+                }
+            }
+        },
+        "domain.TeacherMonthlyReport": {
+            "type": "object",
+            "properties": {
+                "attendance_avg_percent": {
+                    "type": "number"
+                },
+                "avg_rating": {
+                    "type": "number"
+                },
+                "month": {
+                    "type": "integer"
+                },
+                "replaced_count": {
+                    "type": "integer"
+                },
+                "substitutions_count": {
+                    "type": "integer"
+                },
+                "teacher_id": {
+                    "type": "string"
+                },
+                "total_lessons": {
+                    "type": "integer"
+                },
+                "total_students": {
+                    "type": "integer"
+                },
+                "year": {
+                    "type": "integer"
                 }
             }
         },
@@ -3095,6 +4705,9 @@
                 "avatar_url": {
                     "type": "string"
                 },
+                "balance": {
+                    "type": "number"
+                },
                 "birth_date": {
                     "type": "string"
                 },
@@ -3119,13 +4732,22 @@
                 "gender": {
                     "type": "string"
                 },
+                "graduation_broadcast_url": {
+                    "type": "string"
+                },
                 "id": {
+                    "type": "string"
+                },
+                "intro_broadcast_url": {
                     "type": "string"
                 },
                 "language": {
                     "type": "string"
                 },
                 "last_name": {
+                    "type": "string"
+                },
+                "loss_reason": {
                     "type": "string"
                 },
                 "phone": {
@@ -3138,6 +4760,9 @@
                     "$ref": "#/definitions/domain.Role"
                 },
                 "school_name": {
+                    "type": "string"
+                },
+                "subscription_end_date": {
                     "type": "string"
                 },
                 "telegram": {
@@ -3168,9 +4793,119 @@
                 }
             }
         },
+        "http.AddStudentRequest": {
+            "type": "object",
+            "properties": {
+                "student_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "http.CancelLessonRequest": {
+            "type": "object",
+            "properties": {
+                "reason": {
+                    "type": "string"
+                }
+            }
+        },
+        "http.ChangeGroupRequest": {
+            "type": "object",
+            "properties": {
+                "group_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "http.CreateAccessRequestReq": {
+            "type": "object",
+            "properties": {
+                "reason": {
+                    "type": "string"
+                },
+                "resource_id": {
+                    "type": "string"
+                },
+                "resource_type": {
+                    "type": "string"
+                }
+            }
+        },
+        "http.CreateBannerRequest": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "end_date": {
+                    "type": "string"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "priority": {
+                    "type": "integer"
+                },
+                "start_date": {
+                    "type": "string"
+                },
+                "target_roles": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "title": {
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/domain.BannerType"
+                }
+            }
+        },
+        "http.CreateCommentRequest": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "lesson_id": {
+                    "type": "string"
+                },
+                "parent_comment_id": {
+                    "type": "string"
+                },
+                "recipient_id": {
+                    "type": "string"
+                },
+                "student_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "http.CreateFreezeRequestReq": {
+            "type": "object",
+            "properties": {
+                "end_date": {
+                    "type": "string"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "start_date": {
+                    "type": "string"
+                },
+                "student_id": {
+                    "type": "string"
+                }
+            }
+        },
         "http.CreateFullUserRequest": {
             "type": "object",
             "properties": {
+                "balance": {
+                    "type": "number"
+                },
                 "birth_date": {
                     "type": "string",
                     "example": "20.01.2000"
@@ -3198,7 +4933,13 @@
                     "type": "string",
                     "example": "male"
                 },
+                "graduation_broadcast_url": {
+                    "type": "string"
+                },
                 "group_id": {
+                    "type": "string"
+                },
+                "intro_broadcast_url": {
                     "type": "string"
                 },
                 "language": {
@@ -3315,6 +5056,26 @@
                 }
             }
         },
+        "http.CreateNotificationRequest": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "link_url": {
+                    "type": "string"
+                },
+                "recipient_id": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/domain.NotificationType"
+                }
+            }
+        },
         "http.CreateProjectRequest": {
             "type": "object",
             "properties": {
@@ -3424,6 +5185,39 @@
                 }
             }
         },
+        "http.MarkAttendanceRequest": {
+            "type": "object",
+            "properties": {
+                "comment": {
+                    "type": "string"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/domain.AttendanceStatus"
+                },
+                "student_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "http.ReviewAccessRequestReq": {
+            "type": "object",
+            "properties": {
+                "review_comment": {
+                    "type": "string"
+                }
+            }
+        },
+        "http.ReviewFreezeRequestReq": {
+            "type": "object",
+            "properties": {
+                "review_comment": {
+                    "type": "string"
+                }
+            }
+        },
         "http.ReviewRequest": {
             "type": "object",
             "properties": {
@@ -3432,6 +5226,71 @@
                 },
                 "rating": {
                     "type": "integer"
+                }
+            }
+        },
+        "http.SetAttendanceRequest": {
+            "type": "object",
+            "properties": {
+                "recording_url": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "teacher_comment": {
+                    "type": "string"
+                }
+            }
+        },
+        "http.SubstituteTeacherRequest": {
+            "type": "object",
+            "properties": {
+                "teacher_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "http.UpdateBannerRequest": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "end_date": {
+                    "type": "string"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "priority": {
+                    "type": "integer"
+                },
+                "start_date": {
+                    "type": "string"
+                },
+                "target_roles": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "title": {
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/domain.BannerType"
+                }
+            }
+        },
+        "http.UpdateGroupRequest": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "teacher_id": {
+                    "type": "string"
                 }
             }
         },

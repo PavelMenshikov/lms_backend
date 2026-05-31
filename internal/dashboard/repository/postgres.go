@@ -155,6 +155,44 @@ func (r *DashboardRepositoryImpl) GetPerformanceStats(ctx context.Context) (doma
 	return zones, err
 }
 
+func (r *DashboardRepositoryImpl) GetHwPerformanceStats(ctx context.Context) (domain.PerformanceZones, error) {
+	var zones domain.PerformanceZones
+	query := `
+		WITH student_hw_scores AS (
+			SELECT uas.user_id,
+				COUNT(CASE WHEN uas.status = 'accepted' THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0) as score
+			FROM user_assignments_submission uas
+			GROUP BY uas.user_id
+		)
+		SELECT
+			COUNT(CASE WHEN score >= 80 THEN 1 END) as green,
+			COUNT(CASE WHEN score >= 50 AND score < 80 THEN 1 END) as yellow,
+			COUNT(CASE WHEN score < 50 THEN 1 END) as red
+		FROM student_hw_scores
+	`
+	err := r.db.QueryRowContext(ctx, query).Scan(&zones.Green, &zones.Yellow, &zones.Red)
+	return zones, err
+}
+
+func (r *DashboardRepositoryImpl) GetAttendancePerformanceStats(ctx context.Context) (domain.PerformanceZones, error) {
+	var zones domain.PerformanceZones
+	query := `
+		WITH student_att_scores AS (
+			SELECT ula.user_id,
+				COUNT(CASE WHEN ula.status IN ('visited', 'trial') THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0) as score
+			FROM user_lesson_attendance ula
+			GROUP BY ula.user_id
+		)
+		SELECT
+			COUNT(CASE WHEN score >= 80 THEN 1 END) as green,
+			COUNT(CASE WHEN score >= 50 AND score < 80 THEN 1 END) as yellow,
+			COUNT(CASE WHEN score < 50 THEN 1 END) as red
+		FROM student_att_scores
+	`
+	err := r.db.QueryRowContext(ctx, query).Scan(&zones.Green, &zones.Yellow, &zones.Red)
+	return zones, err
+}
+
 func (r *DashboardRepositoryImpl) GetCuratorGroups(ctx context.Context, curatorID string) ([]domain.Group, error) {
 	query := `
 		SELECT id, stream_id, COALESCE(curator_id, ''), COALESCE(teacher_id, ''), title, created_at

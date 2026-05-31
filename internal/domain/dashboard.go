@@ -53,15 +53,17 @@ type DailyLessonActivity struct {
 }
 
 type AdminHomeDashboard struct {
-	TotalStudents     int                   `json:"total_students"`
-	StudentsDelta     float64               `json:"students_delta_percent"`
-	NewStudentsMonth  int                   `json:"new_students_month"`
-	NewStudentsDelta  float64               `json:"new_students_delta_percent"`
-	TotalTeachers     int                   `json:"total_teachers"`
-	ActiveCourses     int                   `json:"active_courses"`
-	Performance       PerformanceZones      `json:"performance_zones"`
-	LessonActivity    []DailyLessonActivity `json:"lesson_activity"`
-	UpdatePeriodMonth string                `json:"update_period_month"`
+	TotalStudents         int                   `json:"total_students"`
+	StudentsDelta         float64               `json:"students_delta_percent"`
+	NewStudentsMonth      int                   `json:"new_students_month"`
+	NewStudentsDelta      float64               `json:"new_students_delta_percent"`
+	TotalTeachers         int                   `json:"total_teachers"`
+	ActiveCourses         int                   `json:"active_courses"`
+	Performance           PerformanceZones      `json:"performance_zones"`
+	HwPerformance         PerformanceZones      `json:"hw_performance_zones"`
+	AttendancePerformance PerformanceZones      `json:"attendance_performance_zones"`
+	LessonActivity        []DailyLessonActivity `json:"lesson_activity"`
+	UpdatePeriodMonth     string                `json:"update_period_month"`
 }
 
 type AdminCourseStats struct {
