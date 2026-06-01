@@ -6,7 +6,25 @@ on:
       - master
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: stable
+
+      - name: Run tests
+        run: go test -count=1 -timeout 120s ./internal/...
+
+      - name: Build check
+        run: go build ./cmd/...
+
   deploy:
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code

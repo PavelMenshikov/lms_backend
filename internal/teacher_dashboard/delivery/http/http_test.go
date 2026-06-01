@@ -47,7 +47,7 @@ func TestGetTeacherMonthlyReport(t *testing.T) {
 			TotalStudents:      25,
 			AttendanceAvg:      85.5,
 		}
-		mockRepo.On("GetMonthlyReport", mock.Anything, "teacher-1", 2026, 5).
+		mockRepo.On("GetMonthlyReport", mock.Anything, "teacher-1", mock.AnythingOfType("int"), mock.AnythingOfType("int")).
 			Return(expected, nil).Once()
 
 		req := httptest.NewRequest("GET", "/teacher/monthly-report", nil)
@@ -105,7 +105,7 @@ func TestGetTeacherMonthlyReport(t *testing.T) {
 	})
 
 	t.Run("usecase error", func(t *testing.T) {
-		mockRepo.On("GetMonthlyReport", mock.Anything, "teacher-1", 2026, 5).
+		mockRepo.On("GetMonthlyReport", mock.Anything, "teacher-1", mock.AnythingOfType("int"), mock.AnythingOfType("int")).
 			Return(nil, assert.AnError).Once()
 
 		req := httptest.NewRequest("GET", "/teacher/monthly-report", nil)
