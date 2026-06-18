@@ -44,7 +44,7 @@ func (r *DashboardRepositoryImpl) GetLastLessonData(ctx context.Context, userID 
 
 func (r *DashboardRepositoryImpl) GetActiveCoursesCount(ctx context.Context, userID string) (int, error) {
 	var count int
-	query := `SELECT COUNT(*) FROM user_courses WHERE user_id = $1 AND is_active = true`
+	query := `SELECT COUNT(*) FROM user_courses WHERE user_id = $1 AND status = 'active'`
 	err := r.db.QueryRowContext(ctx, query, userID).Scan(&count)
 	return count, err
 }
