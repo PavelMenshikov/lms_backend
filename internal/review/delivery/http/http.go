@@ -2,6 +2,7 @@ package http
 
 import (
 	"encoding/json"
+	"lms_backend/internal/httperror"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -36,7 +37,7 @@ func (h *ReviewHandler) GetPendingSubmissions(w http.ResponseWriter, r *http.Req
 
 	list, err := h.uc.GetPendingList(r.Context(), userCtx.UserID, string(userCtx.Role))
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -81,7 +82,7 @@ func (h *ReviewHandler) EvaluateSubmission(w http.ResponseWriter, r *http.Reques
 	}
 
 	if err := h.uc.Evaluate(r.Context(), input); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 

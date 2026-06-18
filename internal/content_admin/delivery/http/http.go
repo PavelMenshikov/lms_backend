@@ -3,7 +3,7 @@ package http
 import (
 	"context"
 	"encoding/json"
-	"log"
+	"log/slog"
 	"mime/multipart"
 	"net/http"
 	"strconv"
@@ -14,6 +14,8 @@ import (
 
 	"lms_backend/internal/content_admin/usecase"
 	"lms_backend/internal/domain"
+	"lms_backend/internal/httperror"
+	"lms_backend/pkg/logger"
 )
 
 type ContentAdminService interface {
@@ -193,8 +195,8 @@ func (h *ContentAdminHandler) CreateCourse(w http.ResponseWriter, r *http.Reques
 
 	courseID, err := h.uc.CreateCourse(r.Context(), input)
 	if err != nil {
-		log.Printf("ERROR creating course: %v", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		slog.Error("creating course", logger.Err(err))
+		httperror.BadRequest(w, err)
 		return
 	}
 
@@ -228,8 +230,8 @@ func (h *ContentAdminHandler) UploadMedia(w http.ResponseWriter, r *http.Request
 
 	url, err := h.uc.UploadMedia(r.Context(), header)
 	if err != nil {
-		log.Printf("Error uploading media: %v", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		slog.Error("uploading media", logger.Err(err))
+		httperror.Internal(w, err)
 		return
 	}
 
@@ -296,7 +298,7 @@ func (h *ContentAdminHandler) UpdateCourseSettings(w http.ResponseWriter, r *htt
 	}
 
 	if err := h.uc.UpdateCourseSettings(r.Context(), input); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
@@ -312,7 +314,7 @@ func (h *ContentAdminHandler) UpdateCourseSettings(w http.ResponseWriter, r *htt
 func (h *ContentAdminHandler) GetAllCourses(w http.ResponseWriter, r *http.Request) {
 	courses, err := h.uc.GetAllCourses(r.Context())
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -329,7 +331,7 @@ func (h *ContentAdminHandler) GetAllCourses(w http.ResponseWriter, r *http.Reque
 func (h *ContentAdminHandler) GetCourseStructure(w http.ResponseWriter, r *http.Request) {
 	structure, err := h.uc.GetCourseStructure(r.Context(), chi.URLParam(r, "id"))
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -353,7 +355,7 @@ func (h *ContentAdminHandler) CreateModule(w http.ResponseWriter, r *http.Reques
 		LessonIDs   []string `json:"lesson_ids"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		httperror.BadRequest(w, err)
 		return
 	}
 
@@ -367,7 +369,7 @@ func (h *ContentAdminHandler) CreateModule(w http.ResponseWriter, r *http.Reques
 
 	id, err := h.uc.CreateModule(r.Context(), input)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -383,7 +385,7 @@ func (h *ContentAdminHandler) CreateModule(w http.ResponseWriter, r *http.Reques
 func (h *ContentAdminHandler) DeleteModule(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	if err := h.uc.DeleteModule(r.Context(), id); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
@@ -429,7 +431,7 @@ func (h *ContentAdminHandler) CreateLesson(w http.ResponseWriter, r *http.Reques
 
 		id, err := h.uc.CreateLesson(r.Context(), input)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			httperror.Internal(w, err)
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
@@ -468,7 +470,7 @@ func (h *ContentAdminHandler) CreateLesson(w http.ResponseWriter, r *http.Reques
 
 	id, err := h.uc.CreateLesson(r.Context(), input)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -484,7 +486,7 @@ func (h *ContentAdminHandler) CreateLesson(w http.ResponseWriter, r *http.Reques
 func (h *ContentAdminHandler) DeleteLesson(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	if err := h.uc.DeleteLesson(r.Context(), id); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
@@ -501,7 +503,7 @@ func (h *ContentAdminHandler) DeleteLesson(w http.ResponseWriter, r *http.Reques
 func (h *ContentAdminHandler) CreateTest(w http.ResponseWriter, r *http.Request) {
 	var req CreateTestRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		httperror.BadRequest(w, err)
 		return
 	}
 	input := usecase.CreateTestInput{
@@ -514,7 +516,7 @@ func (h *ContentAdminHandler) CreateTest(w http.ResponseWriter, r *http.Request)
 	}
 	id, err := h.uc.CreateTest(r.Context(), input)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -530,7 +532,7 @@ func (h *ContentAdminHandler) CreateTest(w http.ResponseWriter, r *http.Request)
 func (h *ContentAdminHandler) DeleteTest(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	if err := h.uc.DeleteTest(r.Context(), id); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
@@ -547,7 +549,7 @@ func (h *ContentAdminHandler) DeleteTest(w http.ResponseWriter, r *http.Request)
 func (h *ContentAdminHandler) CreateProject(w http.ResponseWriter, r *http.Request) {
 	var req CreateProjectRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		httperror.BadRequest(w, err)
 		return
 	}
 	input := usecase.CreateProjectInput{
@@ -560,7 +562,7 @@ func (h *ContentAdminHandler) CreateProject(w http.ResponseWriter, r *http.Reque
 	}
 	id, err := h.uc.CreateProject(r.Context(), input)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -577,7 +579,7 @@ func (h *ContentAdminHandler) CreateProject(w http.ResponseWriter, r *http.Reque
 func (h *ContentAdminHandler) CreateModulesBulk(w http.ResponseWriter, r *http.Request) {
 	var req []usecase.CreateModuleInput
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		log.Printf("[HTTP_BULK_MODULE_ERROR] decode fail: %v", err)
+		slog.Error("decode fail", logger.Err(err))
 		http.Error(w, "Invalid array structure", http.StatusBadRequest)
 		return
 	}
@@ -613,7 +615,7 @@ func (h *ContentAdminHandler) CreateLessonsBulk(w http.ResponseWriter, r *http.R
 func (h *ContentAdminHandler) DeleteProject(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	if err := h.uc.DeleteProject(r.Context(), id); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
@@ -636,7 +638,7 @@ func (h *ContentAdminHandler) CreateFullCourse(w http.ResponseWriter, r *http.Re
 
 	id, err := h.uc.CreateFullCourse(r.Context(), req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 
@@ -656,7 +658,7 @@ func (h *ContentAdminHandler) CreateFullCourse(w http.ResponseWriter, r *http.Re
 func (h *ContentAdminHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	var req CreateFullUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		httperror.BadRequest(w, err)
 		return
 	}
 
@@ -687,8 +689,8 @@ func (h *ContentAdminHandler) CreateUser(w http.ResponseWriter, r *http.Request)
 
 	result, err := h.uc.CreateFullUser(r.Context(), input)
 	if err != nil {
-		log.Printf("ERROR creating user: %v", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		slog.Error("creating user", logger.Err(err))
+		httperror.Internal(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -706,7 +708,7 @@ func (h *ContentAdminHandler) GetUserInfo(w http.ResponseWriter, r *http.Request
 	userID := chi.URLParam(r, "id")
 	res, err := h.uc.GetUserInfo(r.Context(), userID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		httperror.NotFound(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -724,11 +726,11 @@ func (h *ContentAdminHandler) UpdateUser(w http.ResponseWriter, r *http.Request)
 	userID := chi.URLParam(r, "id")
 	var req CreateFullUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		httperror.BadRequest(w, err)
 		return
 	}
 
-	log.Printf("[DEBUG] UpdateUser for %s. Raw date: '%s'", userID, req.BirthDateStr)
+	slog.Debug("UpdateUser", slog.String("user_id", userID), slog.String("raw_date", req.BirthDateStr))
 
 	var birthDate time.Time
 	if req.BirthDateStr != "" {
@@ -763,8 +765,8 @@ func (h *ContentAdminHandler) UpdateUser(w http.ResponseWriter, r *http.Request)
 	}
 
 	if err := h.uc.UpdateUser(r.Context(), userID, input); err != nil {
-		log.Printf("ERROR updating user: %v", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		slog.Error("updating user", logger.Err(err))
+		httperror.Internal(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -780,7 +782,7 @@ func (h *ContentAdminHandler) UpdateUser(w http.ResponseWriter, r *http.Request)
 func (h *ContentAdminHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	userID := chi.URLParam(r, "id")
 	if err := h.uc.DeleteUser(r.Context(), userID); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -805,7 +807,7 @@ func (h *ContentAdminHandler) GetUsersList(w http.ResponseWriter, r *http.Reques
 	}
 	users, err := h.uc.GetUsersList(r.Context(), filter)
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		httperror.Internal(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -823,7 +825,7 @@ func (h *ContentAdminHandler) GetDetailedStudents(w http.ResponseWriter, r *http
 	courseID := r.URL.Query().Get("course_id")
 	list, err := h.uc.GetDetailedStudents(r.Context(), courseID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -839,7 +841,7 @@ func (h *ContentAdminHandler) GetDetailedStudents(w http.ResponseWriter, r *http
 func (h *ContentAdminHandler) GetDetailedTeachers(w http.ResponseWriter, r *http.Request) {
 	list, err := h.uc.GetDetailedTeachers(r.Context())
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -855,7 +857,7 @@ func (h *ContentAdminHandler) GetDetailedTeachers(w http.ResponseWriter, r *http
 func (h *ContentAdminHandler) GetDetailedCurators(w http.ResponseWriter, r *http.Request) {
 	list, err := h.uc.GetDetailedCurators(r.Context())
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -871,7 +873,7 @@ func (h *ContentAdminHandler) GetDetailedCurators(w http.ResponseWriter, r *http
 func (h *ContentAdminHandler) GetDetailedModerators(w http.ResponseWriter, r *http.Request) {
 	list, err := h.uc.GetDetailedModerators(r.Context())
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -887,7 +889,7 @@ func (h *ContentAdminHandler) GetDetailedModerators(w http.ResponseWriter, r *ht
 func (h *ContentAdminHandler) GetAllUsersTable(w http.ResponseWriter, r *http.Request) {
 	list, err := h.uc.GetAllUsersTable(r.Context())
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -905,13 +907,13 @@ func (h *ContentAdminHandler) GetAllUsersTable(w http.ResponseWriter, r *http.Re
 func (h *ContentAdminHandler) EnrollUser(w http.ResponseWriter, r *http.Request) {
 	var req EnrollRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		httperror.BadRequest(w, err)
 		return
 	}
 	err := h.uc.EnrollStudent(r.Context(), req.UserID, req.CourseID)
 	if err != nil {
-		log.Printf("ERROR enrolling user: %v", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		slog.Error("enrolling user", logger.Err(err))
+		httperror.Internal(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -928,7 +930,7 @@ func (h *ContentAdminHandler) EnrollUser(w http.ResponseWriter, r *http.Request)
 func (h *ContentAdminHandler) GetCourseStudents(w http.ResponseWriter, r *http.Request) {
 	students, err := h.uc.GetCourseStudents(r.Context(), chi.URLParam(r, "id"))
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -945,7 +947,7 @@ func (h *ContentAdminHandler) GetCourseStudents(w http.ResponseWriter, r *http.R
 func (h *ContentAdminHandler) GetCourseStats(w http.ResponseWriter, r *http.Request) {
 	stats, err := h.uc.GetCourseStats(r.Context(), chi.URLParam(r, "id"))
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -963,7 +965,7 @@ func (h *ContentAdminHandler) GetCourseStats(w http.ResponseWriter, r *http.Requ
 func (h *ContentAdminHandler) CreateStream(w http.ResponseWriter, r *http.Request) {
 	var req CreateStreamRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		httperror.BadRequest(w, err)
 		return
 	}
 	startDate, _ := time.Parse("2006-01-02", req.StartDateStr)
@@ -973,7 +975,7 @@ func (h *ContentAdminHandler) CreateStream(w http.ResponseWriter, r *http.Reques
 		StartDate: startDate,
 	})
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -1037,7 +1039,7 @@ func parseFlexibleDate(dateStr string) time.Time {
 			return t
 		}
 	}
-	log.Printf("[DEBUG_DATE_FAIL] Input: '%s'", dateStr)
+	slog.Debug("date parse failed", slog.String("input", dateStr))
 	return time.Time{}
 }
 
@@ -1049,7 +1051,7 @@ func (h *ContentAdminHandler) UnenrollStudent(w http.ResponseWriter, r *http.Req
 	courseID := chi.URLParam(r, "id")
 	userID := chi.URLParam(r, "user_id")
 	if err := h.uc.UnenrollStudent(r.Context(), userID, courseID); err != nil {
-		http.Error(w, err.Error(), 500)
+		httperror.Internal(w, err)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
@@ -1067,7 +1069,7 @@ func (h *ContentAdminHandler) UpdateLesson(w http.ResponseWriter, r *http.Reques
 	lessonID := chi.URLParam(r, "id")
 	var req CreateLessonRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		httperror.BadRequest(w, err)
 		return
 	}
 
@@ -1090,7 +1092,7 @@ func (h *ContentAdminHandler) UpdateLesson(w http.ResponseWriter, r *http.Reques
 	}
 
 	if err := h.uc.UpdateLesson(r.Context(), lessonID, input); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 	json.NewEncoder(w).Encode(map[string]string{"status": "updated"})
@@ -1107,7 +1109,7 @@ func (h *ContentAdminHandler) GetLesson(w http.ResponseWriter, r *http.Request) 
 	lessonID := chi.URLParam(r, "id")
 	lesson, err := h.uc.GetLesson(r.Context(), lessonID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		httperror.NotFound(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -1126,11 +1128,11 @@ func (h *ContentAdminHandler) CancelLesson(w http.ResponseWriter, r *http.Reques
 	lessonID := chi.URLParam(r, "id")
 	var req CancelLessonRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		httperror.BadRequest(w, err)
 		return
 	}
 	if err := h.uc.CancelLesson(r.Context(), lessonID, req.Reason); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 	json.NewEncoder(w).Encode(map[string]string{"status": "cancelled"})
@@ -1148,11 +1150,11 @@ func (h *ContentAdminHandler) SubstituteTeacher(w http.ResponseWriter, r *http.R
 	lessonID := chi.URLParam(r, "id")
 	var req SubstituteTeacherRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		httperror.BadRequest(w, err)
 		return
 	}
 	if err := h.uc.SubstituteTeacher(r.Context(), lessonID, req.TeacherID); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 	json.NewEncoder(w).Encode(map[string]string{"status": "substituted"})

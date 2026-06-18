@@ -3,4 +3,6 @@ postgres_data/
 *.exe
 *.test
 tmp/
+dev/
 
+app-linux

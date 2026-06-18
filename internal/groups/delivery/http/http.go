@@ -3,6 +3,7 @@ package http
 import (
 	"encoding/json"
 	"lms_backend/internal/groups/usecase"
+	"lms_backend/internal/httperror"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -41,13 +42,13 @@ func (h *GroupHandler) UpdateGroup(w http.ResponseWriter, r *http.Request) {
 
 	var req UpdateGroupRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		httperror.BadRequest(w, err)
 		return
 	}
 
 	err := h.uc.UpdateGroup(r.Context(), groupID, req.Name, req.TeacherID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 
@@ -67,13 +68,13 @@ func (h *GroupHandler) AddStudentToGroup(w http.ResponseWriter, r *http.Request)
 
 	var req AddStudentRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		httperror.BadRequest(w, err)
 		return
 	}
 
 	err := h.uc.AddStudentToGroup(r.Context(), groupID, req.StudentID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 
@@ -94,7 +95,7 @@ func (h *GroupHandler) RemoveStudentFromGroup(w http.ResponseWriter, r *http.Req
 
 	err := h.uc.RemoveStudentFromGroup(r.Context(), groupID, studentID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 
@@ -114,13 +115,13 @@ func (h *GroupHandler) ChangeStudentGroup(w http.ResponseWriter, r *http.Request
 
 	var req ChangeGroupRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		httperror.BadRequest(w, err)
 		return
 	}
 
 	err := h.uc.ChangeStudentGroup(r.Context(), studentID, req.GroupID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 
@@ -140,13 +141,13 @@ func (h *GroupHandler) ChangeTeacherGroup(w http.ResponseWriter, r *http.Request
 
 	var req ChangeGroupRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		httperror.BadRequest(w, err)
 		return
 	}
 
 	err := h.uc.ChangeTeacherGroup(r.Context(), teacherID, req.GroupID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 

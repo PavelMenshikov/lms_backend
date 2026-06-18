@@ -2,6 +2,7 @@ package http
 
 import (
 	"encoding/json"
+	"lms_backend/internal/httperror"
 	"mime/multipart"
 	"net/http"
 
@@ -31,7 +32,7 @@ func (h *LearningHandler) GetMyCourses(w http.ResponseWriter, r *http.Request) {
 	userCtxData := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
 	courses, err := h.uc.GetMyCourses(r.Context(), userCtxData.UserID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -51,7 +52,7 @@ func (h *LearningHandler) GetCourseContent(w http.ResponseWriter, r *http.Reques
 	courseID := chi.URLParam(r, "id")
 	view, err := h.uc.GetCourseContent(r.Context(), courseID, userCtxData.UserID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -71,7 +72,7 @@ func (h *LearningHandler) GetLessonDetail(w http.ResponseWriter, r *http.Request
 	lessonID := chi.URLParam(r, "id")
 	lesson, err := h.uc.GetLessonDetail(r.Context(), lessonID, userCtxData.UserID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -92,7 +93,7 @@ func (h *LearningHandler) GetLessonDetail(w http.ResponseWriter, r *http.Request
 func (h *LearningHandler) SubmitAssignment(w http.ResponseWriter, r *http.Request) {
 	const MAX_SIZE = 10 << 20
 	if err := r.ParseMultipartForm(MAX_SIZE); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		httperror.BadRequest(w, err)
 		return
 	}
 	userCtxData := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
@@ -109,7 +110,7 @@ func (h *LearningHandler) SubmitAssignment(w http.ResponseWriter, r *http.Reques
 		FileHeader: fileHeader,
 	}
 	if err := h.uc.SubmitAssignment(r.Context(), input); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		httperror.BadRequest(w, err)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
@@ -138,7 +139,7 @@ func (h *LearningHandler) SetLessonAttendance(w http.ResponseWriter, r *http.Req
 
 	var req SetAttendanceRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		httperror.BadRequest(w, err)
 		return
 	}
 
@@ -150,7 +151,7 @@ func (h *LearningHandler) SetLessonAttendance(w http.ResponseWriter, r *http.Req
 		TeacherComment: req.TeacherComment,
 	}
 	if err := h.uc.SetLessonAttendance(r.Context(), input); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 
@@ -168,7 +169,7 @@ func (h *LearningHandler) SetLessonAttendance(w http.ResponseWriter, r *http.Req
 func (h *LearningHandler) GetTeachers(w http.ResponseWriter, r *http.Request) {
 	teachers, err := h.uc.GetTeachers(r.Context())
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -187,7 +188,7 @@ func (h *LearningHandler) GetTeacherDetails(w http.ResponseWriter, r *http.Reque
 	id := chi.URLParam(r, "id")
 	teacher, err := h.uc.GetTeacherDetails(r.Context(), id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -214,7 +215,7 @@ func (h *LearningHandler) AddReview(w http.ResponseWriter, r *http.Request) {
 	userCtxData := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
 	var req ReviewRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		httperror.BadRequest(w, err)
 		return
 	}
 	input := usecase.AddReviewInput{
@@ -224,7 +225,7 @@ func (h *LearningHandler) AddReview(w http.ResponseWriter, r *http.Request) {
 		Comment:   req.Comment,
 	}
 	if err := h.uc.AddReview(r.Context(), input); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 	w.WriteHeader(http.StatusCreated)
@@ -281,7 +282,7 @@ func (h *LearningHandler) GetTeacherDashboard(w http.ResponseWriter, r *http.Req
 
 	dashboard, err := h.uc.GetTeacherDashboard(r.Context(), userData.UserID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")

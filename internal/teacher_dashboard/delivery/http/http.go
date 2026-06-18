@@ -2,6 +2,7 @@ package http
 
 import (
 	"encoding/json"
+	"lms_backend/internal/httperror"
 	"net/http"
 	"strconv"
 	"time"
@@ -52,7 +53,7 @@ func (h *TeacherDashboardHandler) GetTeacherMonthlyReport(w http.ResponseWriter,
 
 	report, err := h.uc.GetMonthlyReport(r.Context(), userData.UserID, year, month)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")

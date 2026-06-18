@@ -2,7 +2,7 @@ package http
 
 import (
 	"encoding/json"
-	"log"
+	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -11,13 +11,23 @@ import (
 	authMiddleware "lms_backend/internal/auth/delivery/middleware"
 	"lms_backend/internal/chat/usecase"
 	"lms_backend/internal/domain"
+	"lms_backend/internal/httperror"
 )
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 	CheckOrigin: func(r *http.Request) bool {
-		return true
+		origin := r.Header.Get("Origin")
+		allowed := map[string]bool{
+			"http://localhost:3000":            true,
+			"https://localhost:3000":           true,
+			"https://cap-education.vercel.app": true,
+			"https://platform.capedu.kz":       true,
+			"http://platform.capedu.kz":        true,
+			"https://cap.grtsq.ru":             true,
+		}
+		return allowed[origin]
 	},
 }
 
@@ -93,7 +103,7 @@ func (h *ChatHandler) ConnectToChat(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if err := h.uc.SendMessage(r.Context(), msg); err != nil {
-			log.Printf("Failed to send message: %v", err)
+			slog.Error("Failed to send message", slog.String("error", err.Error()))
 		}
 	}
 }
@@ -129,7 +139,7 @@ func (h *ChatHandler) GetChatHistory(w http.ResponseWriter, r *http.Request) {
 
 	history, err := h.uc.GetHistory(r.Context(), moduleID, studentID, limit, offset)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 

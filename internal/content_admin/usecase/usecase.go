@@ -6,7 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"mime/multipart"
 	"strings"
 	"time"
@@ -451,7 +451,7 @@ func (uc *ContentAdminUseCase) CreateModulesBulk(ctx context.Context, input []Cr
 	for _, mInput := range input {
 		id, err := uc.CreateModule(ctx, mInput)
 		if err != nil {
-			log.Printf("[BULK_MODULE_ERROR] title: %s, err: %v", mInput.Title, err)
+			slog.Error("bulk module error", slog.String("title", mInput.Title), slog.String("error", err.Error()))
 			continue
 		}
 		ids = append(ids, id)

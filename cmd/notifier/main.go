@@ -2,13 +2,14 @@ package main
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"lms_backend/internal/notifier/worker"
 	"lms_backend/pkg/broker"
+	"lms_backend/pkg/logger"
 
 	"github.com/joho/godotenv"
 )
@@ -34,11 +35,11 @@ func main() {
 
 	go func() {
 		if err := notificationWorker.Run(ctx); err != nil {
-			log.Fatalf("Worker failed: %v", err)
+			slog.Error("Worker failed", logger.Err(err))
 		}
 	}()
 
-	log.Println("Notifier Service running...")
+	slog.Info("Notifier Service running")
 	<-sigChan
-	log.Println("Shutting down...")
+	slog.Info("Shutting down")
 }

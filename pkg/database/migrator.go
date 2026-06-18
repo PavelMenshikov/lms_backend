@@ -3,13 +3,13 @@ package database
 import (
 	"database/sql"
 	"fmt"
-	"log"
+	"log/slog"
 
 	"github.com/pressly/goose/v3"
 )
 
 func RunMigrations(db *sql.DB) error {
-	log.Println("--- GOOSE: STARTING MIGRATIONS ---")
+	slog.Info("goose: starting migrations")
 
 	if err := goose.SetDialect("postgres"); err != nil {
 		return fmt.Errorf("failed to set goose dialect: %w", err)
@@ -19,6 +19,6 @@ func RunMigrations(db *sql.DB) error {
 		return fmt.Errorf("goose up failed: %w", err)
 	}
 
-	log.Println("--- GOOSE: MIGRATIONS FINISHED ---")
+	slog.Info("goose: migrations finished")
 	return nil
 }

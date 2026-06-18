@@ -3,6 +3,7 @@ package http
 import (
 	"encoding/json"
 	"lms_backend/internal/freeze/usecase"
+	"lms_backend/internal/httperror"
 	"net/http"
 	"time"
 
@@ -38,7 +39,7 @@ type ReviewFreezeRequestReq struct {
 func (h *FreezeHandler) CreateFreezeRequest(w http.ResponseWriter, r *http.Request) {
 	var req CreateFreezeRequestReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		httperror.BadRequest(w, err)
 		return
 	}
 
@@ -59,7 +60,7 @@ func (h *FreezeHandler) CreateFreezeRequest(w http.ResponseWriter, r *http.Reque
 
 	err = h.uc.CreateRequest(r.Context(), req.StudentID, userID, startDate, endDate, req.Reason)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 
@@ -75,7 +76,7 @@ func (h *FreezeHandler) CreateFreezeRequest(w http.ResponseWriter, r *http.Reque
 func (h *FreezeHandler) GetPendingRequests(w http.ResponseWriter, r *http.Request) {
 	requests, err := h.uc.GetPendingRequests(r.Context())
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 
@@ -95,7 +96,7 @@ func (h *FreezeHandler) ApproveRequest(w http.ResponseWriter, r *http.Request) {
 
 	var req ReviewFreezeRequestReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		httperror.BadRequest(w, err)
 		return
 	}
 
@@ -104,7 +105,7 @@ func (h *FreezeHandler) ApproveRequest(w http.ResponseWriter, r *http.Request) {
 
 	err := h.uc.ApproveRequest(r.Context(), requestID, userID, req.ReviewComment)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 
@@ -124,7 +125,7 @@ func (h *FreezeHandler) RejectRequest(w http.ResponseWriter, r *http.Request) {
 
 	var req ReviewFreezeRequestReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		httperror.BadRequest(w, err)
 		return
 	}
 
@@ -133,7 +134,7 @@ func (h *FreezeHandler) RejectRequest(w http.ResponseWriter, r *http.Request) {
 
 	err := h.uc.RejectRequest(r.Context(), requestID, userID, req.ReviewComment)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 
@@ -152,7 +153,7 @@ func (h *FreezeHandler) GetStudentFreezeStatus(w http.ResponseWriter, r *http.Re
 
 	status, err := h.uc.GetStudentFreezeStatus(r.Context(), studentID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 

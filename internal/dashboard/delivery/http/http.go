@@ -2,6 +2,7 @@ package http
 
 import (
 	"encoding/json"
+	"lms_backend/internal/httperror"
 	"net/http"
 
 	authMiddleware "lms_backend/internal/auth/delivery/middleware"
@@ -34,7 +35,7 @@ func (h *DashboardHandler) GetUserHome(w http.ResponseWriter, r *http.Request) {
 
 	data, err := h.uc.GetUserHomeData(r.Context(), user)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 
@@ -54,7 +55,7 @@ func (h *DashboardHandler) GetCuratorDashboard(w http.ResponseWriter, r *http.Re
 
 	data, err := h.uc.GetCuratorDashboard(r.Context(), userCtxData.UserID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 
@@ -72,7 +73,7 @@ func (h *DashboardHandler) GetCuratorDashboard(w http.ResponseWriter, r *http.Re
 func (h *DashboardHandler) GetAdminDashboard(w http.ResponseWriter, r *http.Request) {
 	data, err := h.uc.GetAdminDashboard(r.Context())
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 

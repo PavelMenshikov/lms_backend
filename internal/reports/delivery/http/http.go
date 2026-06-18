@@ -1,6 +1,7 @@
 package http
 
 import (
+	"lms_backend/internal/httperror"
 	"lms_backend/internal/reports"
 	"net/http"
 	"time"
@@ -51,7 +52,7 @@ func (h *ReportsHandler) DownloadLessonsReport(w http.ResponseWriter, r *http.Re
 
 	file, err := h.service.GenerateLessonsReport(r.Context(), startDate, endDate)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 
@@ -60,7 +61,7 @@ func (h *ReportsHandler) DownloadLessonsReport(w http.ResponseWriter, r *http.Re
 	w.Header().Set("Content-Disposition", "attachment; filename="+filename)
 
 	if err := file.Write(w); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 }

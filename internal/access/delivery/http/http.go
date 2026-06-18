@@ -3,6 +3,7 @@ package http
 import (
 	"encoding/json"
 	"lms_backend/internal/access/usecase"
+	"lms_backend/internal/httperror"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -36,7 +37,7 @@ type ReviewAccessRequestReq struct {
 func (h *AccessHandler) CreateAccessRequest(w http.ResponseWriter, r *http.Request) {
 	var req CreateAccessRequestReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		httperror.BadRequest(w, err)
 		return
 	}
 
@@ -45,7 +46,7 @@ func (h *AccessHandler) CreateAccessRequest(w http.ResponseWriter, r *http.Reque
 
 	err := h.uc.CreateRequest(r.Context(), userID, req.ResourceType, req.ResourceID, req.Reason)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 
@@ -61,7 +62,7 @@ func (h *AccessHandler) CreateAccessRequest(w http.ResponseWriter, r *http.Reque
 func (h *AccessHandler) GetPendingRequests(w http.ResponseWriter, r *http.Request) {
 	requests, err := h.uc.GetPendingRequests(r.Context())
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 
@@ -81,7 +82,7 @@ func (h *AccessHandler) ApproveRequest(w http.ResponseWriter, r *http.Request) {
 
 	var req ReviewAccessRequestReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		httperror.BadRequest(w, err)
 		return
 	}
 
@@ -90,7 +91,7 @@ func (h *AccessHandler) ApproveRequest(w http.ResponseWriter, r *http.Request) {
 
 	err := h.uc.ApproveRequest(r.Context(), requestID, userID, req.ReviewComment)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 
@@ -110,7 +111,7 @@ func (h *AccessHandler) RejectRequest(w http.ResponseWriter, r *http.Request) {
 
 	var req ReviewAccessRequestReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		httperror.BadRequest(w, err)
 		return
 	}
 
@@ -119,7 +120,7 @@ func (h *AccessHandler) RejectRequest(w http.ResponseWriter, r *http.Request) {
 
 	err := h.uc.RejectRequest(r.Context(), requestID, userID, req.ReviewComment)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 

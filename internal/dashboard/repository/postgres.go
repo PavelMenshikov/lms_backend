@@ -21,7 +21,7 @@ func (r *DashboardRepositoryImpl) GetLastLessonData(ctx context.Context, userID 
 	query := `
 		SELECT 
 			c.title, m.title, l.title, l.id,
-			COALESCE(uas.status, 'not_started') as assignment_status
+			COALESCE(uas.status::text, 'not_started') as assignment_status
 		FROM user_courses uc
 		JOIN courses c ON uc.course_id = c.id
 		JOIN modules m ON m.course_id = c.id

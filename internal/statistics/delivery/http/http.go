@@ -2,6 +2,7 @@ package http
 
 import (
 	"encoding/json"
+	"lms_backend/internal/httperror"
 	"lms_backend/internal/statistics/usecase"
 	"net/http"
 
@@ -27,7 +28,7 @@ func (h *StatisticsHandler) GetStudentStatistics(w http.ResponseWriter, r *http.
 
 	stats, err := h.uc.GetStudentStatistics(r.Context(), studentID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 
@@ -46,7 +47,7 @@ func (h *StatisticsHandler) RefreshStudentStatistics(w http.ResponseWriter, r *h
 
 	stats, err := h.uc.RefreshStudentStatistics(r.Context(), studentID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 

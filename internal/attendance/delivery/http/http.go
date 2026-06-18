@@ -5,6 +5,7 @@ import (
 	"lms_backend/internal/attendance/usecase"
 	authMiddleware "lms_backend/internal/auth/delivery/middleware"
 	"lms_backend/internal/domain"
+	"lms_backend/internal/httperror"
 	"net/http"
 	"time"
 
@@ -71,7 +72,7 @@ func (h *AttendanceHandler) GetStudentCalendar(w http.ResponseWriter, r *http.Re
 
 	records, err := h.uc.GetStudentCalendar(r.Context(), studentID, startDate, endDate)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 
@@ -91,7 +92,7 @@ func (h *AttendanceHandler) MarkLessonAttendance(w http.ResponseWriter, r *http.
 
 	var req MarkAttendanceRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		httperror.BadRequest(w, err)
 		return
 	}
 
@@ -100,7 +101,7 @@ func (h *AttendanceHandler) MarkLessonAttendance(w http.ResponseWriter, r *http.
 
 	err := h.uc.MarkAttendance(r.Context(), lessonID, req.StudentID, req.Status, req.Reason, req.Comment, userID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 
@@ -119,7 +120,7 @@ func (h *AttendanceHandler) GetStudentStats(w http.ResponseWriter, r *http.Reque
 
 	stats, err := h.uc.GetStudentStats(r.Context(), studentID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 
@@ -138,7 +139,7 @@ func (h *AttendanceHandler) GetLessonAttendance(w http.ResponseWriter, r *http.R
 
 	records, err := h.uc.GetLessonAttendance(r.Context(), lessonID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 

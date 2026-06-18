@@ -3,7 +3,7 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"time"
@@ -93,7 +93,9 @@ import (
 	reportsHttp "lms_backend/internal/reports/delivery/http"
 
 	"lms_backend/internal/domain"
+	"lms_backend/internal/httperror"
 	dbPkg "lms_backend/pkg/database"
+	"lms_backend/pkg/logger"
 	storageService "lms_backend/pkg/storage"
 )
 
@@ -104,8 +106,10 @@ import (
 // @BasePath /
 func main() {
 	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found (using system envs)")
+		slog.Warn("no .env file, using system envs")
 	}
+
+	logger.Init(os.Getenv("APP_ENV"))
 
 	apiPort := os.Getenv("API_PORT")
 	if apiPort == "" {
@@ -123,7 +127,8 @@ func main() {
 
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
-		log.Fatal(err)
+		slog.Error("failed to open db", logger.Err(err))
+		os.Exit(1)
 	}
 	defer db.Close()
 
@@ -132,10 +137,11 @@ func main() {
 	db.SetConnMaxLifetime(5 * time.Minute)
 	db.SetConnMaxIdleTime(1 * time.Minute)
 
-	log.Println("Успешное подключение к PostgreSQL")
+	slog.Info("connected to postgresql")
 
 	if err := dbPkg.RunMigrations(db); err != nil {
-		log.Fatalf("Critical Error running migrations: %v", err)
+		slog.Error("Critical Error running migrations", logger.Err(err))
+		os.Exit(1)
 	}
 
 	s3Client, err := storageService.NewS3Client(
@@ -146,7 +152,8 @@ func main() {
 		os.Getenv("S3_SECRET_ACCESS_KEY"),
 	)
 	if err != nil {
-		log.Fatalf("Failed to initialize S3 Storage: %v", err)
+		slog.Error("Failed to initialize S3 Storage", logger.Err(err))
+		os.Exit(1)
 	}
 
 	authRepoImpl := repository.NewAuthRepository(db)
@@ -253,11 +260,22 @@ func main() {
 			"https://platform.capedu.kz",
 		},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "Cookie", "X-System-Secret"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "Cookie"},
 		ExposedHeaders:   []string{"Link"},
 		AllowCredentials: true,
 		MaxAge:           300,
 	}))
+
+	r.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("X-Content-Type-Options", "nosniff")
+			w.Header().Set("X-Frame-Options", "DENY")
+			w.Header().Set("X-XSS-Protection", "1; mode=block")
+			w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
+			w.Header().Set("Permissions-Policy", "geolocation=(), microphone=(), camera=()")
+			next.ServeHTTP(w, r)
+		})
+	})
 
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
@@ -294,7 +312,7 @@ func main() {
 
 		res, err := db.Exec("UPDATE users SET password_hash=$1 WHERE email=$2", string(hash), body.Email)
 		if err != nil {
-			http.Error(w, "DB Error: "+err.Error(), http.StatusInternalServerError)
+			httperror.Internal(w, err)
 			return
 		}
 
@@ -303,7 +321,7 @@ func main() {
 			_, err = db.Exec(`INSERT INTO users (id, first_name, last_name, email, password_hash, role)
 				VALUES (gen_random_uuid(), 'Root', 'Admin', $1, $2, 'admin')`, body.Email, string(hash))
 			if err != nil {
-				http.Error(w, "Create Error: "+err.Error(), http.StatusInternalServerError)
+				httperror.Internal(w, err)
 				return
 			}
 			w.WriteHeader(http.StatusCreated)
@@ -506,9 +524,9 @@ func main() {
 	})
 
 	listenAddr := ":" + apiPort
-	log.Printf("Server started on port: %s", apiPort)
+	slog.Info("server started", slog.String("port", apiPort))
 
 	if err := http.ListenAndServe(listenAddr, r); err != nil {
-		log.Fatalf("Server failed to start: %v", err)
+		slog.Error("server failed", logger.Err(err))
 	}
 }

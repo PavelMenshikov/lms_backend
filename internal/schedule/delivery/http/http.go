@@ -2,6 +2,7 @@ package http
 
 import (
 	"encoding/json"
+	"lms_backend/internal/httperror"
 	"net/http"
 	"strconv"
 	"time"
@@ -40,7 +41,7 @@ func (h *ScheduleHandler) GetWeeklySchedule(w http.ResponseWriter, r *http.Reque
 
 	schedule, err := h.uc.GetWeeklySchedule(r.Context(), userData.UserID, targetDate)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 
@@ -73,7 +74,7 @@ func (h *ScheduleHandler) GetMonthlySchedule(w http.ResponseWriter, r *http.Requ
 
 	schedule, err := h.uc.GetMonthlySchedule(r.Context(), userData.UserID, year, month)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 

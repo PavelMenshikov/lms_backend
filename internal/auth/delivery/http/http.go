@@ -2,11 +2,12 @@ package http
 
 import (
 	"encoding/json"
-	"log"
+	"log/slog"
 	"net/http"
 	"time"
 
 	"lms_backend/internal/auth/usecase"
+	"lms_backend/internal/httperror"
 )
 
 type AuthHandler struct {
@@ -25,7 +26,7 @@ func NewAuthHandler(uc *usecase.AuthUsecase) *AuthHandler {
 // @Failure 403 {object} map[string]string "error: Public registration is disabled."
 // @Router /auth/register [post]
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
-	log.Println("ATTEMPT TO USE DEPRECATED /auth/register ROUTE. ACCESS DENIED.")
+	slog.Info("ATTEMPT TO USE DEPRECATED /auth/register ROUTE. ACCESS DENIED.")
 	http.Error(w, "Public registration is disabled. Users must be created by Admin.", http.StatusForbidden)
 }
 
@@ -48,13 +49,13 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req LoginRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		httperror.BadRequest(w, err)
 		return
 	}
 
 	user, err := h.uc.Login(r.Context(), req.Email, req.Password)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
+		httperror.Unauthorized(w, err)
 		return
 	}
 
@@ -74,7 +75,6 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	response := map[string]interface{}{
 		"message": "Login successful",
-		"token":   token,
 		"user":    user,
 	}
 

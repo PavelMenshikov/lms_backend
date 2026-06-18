@@ -3,6 +3,7 @@ package http
 import (
 	"encoding/json"
 	"lms_backend/internal/domain"
+	"lms_backend/internal/httperror"
 	"lms_backend/internal/notification/usecase"
 	"net/http"
 
@@ -35,7 +36,7 @@ type CreateNotificationRequest struct {
 func (h *NotificationHandler) CreateNotification(w http.ResponseWriter, r *http.Request) {
 	var req CreateNotificationRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		httperror.BadRequest(w, err)
 		return
 	}
 
@@ -44,7 +45,7 @@ func (h *NotificationHandler) CreateNotification(w http.ResponseWriter, r *http.
 
 	err := h.uc.CreateNotification(r.Context(), req.RecipientID, &userID, req.Title, req.Content, req.Type, req.LinkURL)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 
@@ -63,7 +64,7 @@ func (h *NotificationHandler) GetNotifications(w http.ResponseWriter, r *http.Re
 
 	notifications, err := h.uc.GetUserNotifications(r.Context(), userID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 
@@ -82,7 +83,7 @@ func (h *NotificationHandler) MarkNotificationAsRead(w http.ResponseWriter, r *h
 
 	err := h.uc.MarkAsRead(r.Context(), notificationID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 

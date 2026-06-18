@@ -21,6 +21,5 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Printf("Password: %s\n", password)
 	fmt.Printf("Hash: %s\n", string(hash))
 }

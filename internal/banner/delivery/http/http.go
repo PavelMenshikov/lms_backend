@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"lms_backend/internal/banner/usecase"
 	"lms_backend/internal/domain"
+	"lms_backend/internal/httperror"
 	"net/http"
 	"time"
 
@@ -55,7 +56,7 @@ func (h *BannerHandler) GetActiveBanners(w http.ResponseWriter, r *http.Request)
 
 	banners, err := h.uc.GetActiveBanners(r.Context(), role)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 
@@ -72,7 +73,7 @@ func (h *BannerHandler) GetActiveBanners(w http.ResponseWriter, r *http.Request)
 func (h *BannerHandler) CreateBanner(w http.ResponseWriter, r *http.Request) {
 	var req CreateBannerRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		httperror.BadRequest(w, err)
 		return
 	}
 
@@ -81,7 +82,7 @@ func (h *BannerHandler) CreateBanner(w http.ResponseWriter, r *http.Request) {
 
 	err := h.uc.CreateBanner(r.Context(), req.Title, req.Content, req.Type, req.IsActive, req.Priority, req.StartDate, req.EndDate, req.TargetRoles, userID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 
@@ -101,13 +102,13 @@ func (h *BannerHandler) UpdateBanner(w http.ResponseWriter, r *http.Request) {
 
 	var req UpdateBannerRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		httperror.BadRequest(w, err)
 		return
 	}
 
 	err := h.uc.UpdateBanner(r.Context(), bannerID, req.Title, req.Content, req.Type, req.IsActive, req.Priority, req.StartDate, req.EndDate, req.TargetRoles)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 
@@ -126,7 +127,7 @@ func (h *BannerHandler) DeleteBanner(w http.ResponseWriter, r *http.Request) {
 
 	err := h.uc.DeleteBanner(r.Context(), bannerID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 

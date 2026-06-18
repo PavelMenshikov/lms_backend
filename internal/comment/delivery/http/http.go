@@ -3,6 +3,7 @@ package http
 import (
 	"encoding/json"
 	"lms_backend/internal/comment/usecase"
+	"lms_backend/internal/httperror"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -34,7 +35,7 @@ type CreateCommentRequest struct {
 func (h *CommentHandler) CreateComment(w http.ResponseWriter, r *http.Request) {
 	var req CreateCommentRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		httperror.BadRequest(w, err)
 		return
 	}
 
@@ -43,7 +44,7 @@ func (h *CommentHandler) CreateComment(w http.ResponseWriter, r *http.Request) {
 
 	err := h.uc.CreateComment(r.Context(), req.StudentID, req.LessonID, userID, req.RecipientID, req.Content, req.ParentCommentID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 
@@ -66,7 +67,7 @@ func (h *CommentHandler) GetComments(w http.ResponseWriter, r *http.Request) {
 
 	comments, err := h.uc.GetStudentComments(r.Context(), studentID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 
@@ -85,7 +86,7 @@ func (h *CommentHandler) MarkCommentAsRead(w http.ResponseWriter, r *http.Reques
 
 	err := h.uc.MarkAsRead(r.Context(), commentID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 

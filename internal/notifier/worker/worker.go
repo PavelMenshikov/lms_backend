@@ -3,11 +3,12 @@ package worker
 import (
 	"context"
 	"encoding/json"
-	"log"
+	"log/slog"
 	"sync"
 	"time"
 
 	"lms_backend/pkg/broker"
+	"lms_backend/pkg/logger"
 )
 
 type NotificationWorker struct {
@@ -47,7 +48,7 @@ func (w *NotificationWorker) Run(ctx context.Context) error {
 					case <-ctx.Done():
 						return
 					default:
-						log.Printf("Redis error: %v", err)
+						slog.Error("Redis error", logger.Err(err))
 						time.Sleep(time.Second)
 						continue
 					}
@@ -55,7 +56,7 @@ func (w *NotificationWorker) Run(ctx context.Context) error {
 
 				var task broker.Task
 				if err := json.Unmarshal([]byte(res[1]), &task); err != nil {
-					log.Printf("Unmarshal error: %v", err)
+					slog.Error("Unmarshal error", logger.Err(err))
 					continue
 				}
 
@@ -70,7 +71,7 @@ func (w *NotificationWorker) Run(ctx context.Context) error {
 
 func (w *NotificationWorker) startWorker(id int, tasks <-chan broker.Task) {
 	for t := range tasks {
-		log.Printf("Worker [%d] processing task: %s", id, t.Type)
+		slog.Info("Worker processing task", slog.Int("worker_id", id), slog.String("task_type", t.Type))
 
 		switch t.Type {
 		case "EMAIL_CONFIRMATION":
@@ -82,10 +83,10 @@ func (w *NotificationWorker) startWorker(id int, tasks <-chan broker.Task) {
 }
 
 func (w *NotificationWorker) handleEmail(payload map[string]string) {
-	log.Printf("Sending email to %s...", payload["email"])
+	slog.Info("Sending email", slog.String("email", payload["email"]))
 	time.Sleep(time.Second * 1)
 }
 
 func (w *NotificationWorker) handleNewSubmission(payload map[string]string) {
-	log.Printf("Notifying staff about new submission from student %s", payload["student_id"])
+	slog.Info("Notifying staff about new submission", slog.String("student_id", payload["student_id"]))
 }

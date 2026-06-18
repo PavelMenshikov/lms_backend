@@ -2,6 +2,7 @@ package http
 
 import (
 	"encoding/json"
+	"lms_backend/internal/httperror"
 	"mime/multipart"
 	"net/http"
 
@@ -40,7 +41,7 @@ func (h *ProfileHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 	userData := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
 	profile, err := h.uc.GetMyProfile(r.Context(), userData.UserID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -93,7 +94,7 @@ func (h *ProfileHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.uc.UpdateProfile(r.Context(), input); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 
@@ -113,13 +114,13 @@ func (h *ProfileHandler) UpdateTeacherSchedule(w http.ResponseWriter, r *http.Re
 	userData := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
 	var rawData map[string]interface{}
 	if err := json.NewDecoder(r.Body).Decode(&rawData); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		httperror.BadRequest(w, err)
 		return
 	}
 	scheduleBytes, _ := json.Marshal(rawData)
 
 	if err := h.uc.UpdateTeacherSchedule(r.Context(), userData.UserID, scheduleBytes); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperror.Internal(w, err)
 		return
 	}
 
