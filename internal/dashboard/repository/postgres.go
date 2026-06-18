@@ -77,7 +77,7 @@ func (r *DashboardRepositoryImpl) GetUpcomingLessons(ctx context.Context, userID
 	query := `
 		SELECT 
 			l.lesson_time, 
-			u.first_name || ' ' || u.last_name as teacher_name,
+			COALESCE(u.first_name || ' ' || u.last_name, '') as teacher_name,
 			c.title as course_title
 		FROM user_courses uc
 		JOIN courses c ON uc.course_id = c.id
@@ -304,7 +304,7 @@ func (r *DashboardRepositoryImpl) GetCuratorHomeworkStats(ctx context.Context, c
 			gh.group_title,
 			COUNT(*) as total_submitted,
 			COUNT(CASE WHEN gh.status = 'accepted' THEN 1 END) as total_accepted,
-			ROUND(COUNT(CASE WHEN gh.status = 'accepted' THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0), 2) as avg_completion
+			COALESCE(ROUND(COUNT(CASE WHEN gh.status = 'accepted' THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0), 2), 0) as avg_completion
 		FROM group_homework gh
 		GROUP BY gh.group_id, gh.group_title
 		ORDER BY gh.group_title ASC

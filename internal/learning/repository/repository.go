@@ -207,7 +207,7 @@ func (r *LearningRepoImpl) GetLessonDetail(ctx context.Context, lessonID, userID
 	lesson := &domain.Lesson{}
 	var contentRaw []byte
 
-	query := `SELECT id, title, video_url, presentation_url, content_text, content, duration_min 
+	query := `SELECT id, title, COALESCE(video_url, ''), COALESCE(presentation_url, ''), COALESCE(content_text, ''), content, duration_min 
               FROM lessons WHERE id = $1 AND is_published = true`
 
 	err := r.db.QueryRowContext(ctx, query, lessonID).Scan(
@@ -240,7 +240,7 @@ func (r *LearningRepoImpl) GetLessonDetail(ctx context.Context, lessonID, userID
 	}
 
 	homeworkQuery := `
-		SELECT uas.status, COALESCE(uas.grade, 0), COALESCE(uas.teacher_comment, '')
+		SELECT COALESCE(uas.status, ''), COALESCE(uas.grade, 0), COALESCE(uas.teacher_comment, '')
 		FROM assignments a
 		JOIN user_assignments_submission uas ON a.id = uas.assignment_id
 		WHERE a.lesson_id = $1 AND uas.user_id = $2
@@ -391,7 +391,7 @@ func (r *LearningRepoImpl) AddTeacherReview(ctx context.Context, rev *domain.Tea
 
 func (r *LearningRepoImpl) GetTeacherReviews(ctx context.Context, teacherID string) ([]*domain.TeacherReview, error) {
 	query := `
-		SELECT tr.id, tr.teacher_id, tr.student_id, u.first_name || ' ' || u.last_name, tr.rating, tr.comment, tr.created_at
+		SELECT tr.id, tr.teacher_id, tr.student_id, COALESCE(u.first_name || ' ' || u.last_name, ''), tr.rating, COALESCE(tr.comment, ''), tr.created_at
 		FROM teacher_reviews tr
 		JOIN users u ON tr.student_id = u.id
 		WHERE tr.teacher_id = $1

@@ -436,9 +436,9 @@ func (r *ContentAdminRepoImpl) GetDetailedStudentList(ctx context.Context, filte
 		SELECT 
 			u.id, 
 			COALESCE(u.avatar_url, '') as photo, 
-			u.first_name || ' ' || u.last_name as full_name, 
+			COALESCE(u.first_name || ' ' || u.last_name, '') as full_name, 
 			u.created_at, 
-			u.gender,
+			COALESCE(u.gender, ''),
 			COALESCE(EXTRACT(YEAR FROM AGE(u.birth_date)), 0) as age,
 			COALESCE(STRING_AGG(DISTINCT uc.status, ', '), 'inactive') as status, 
 			COALESCE(STRING_AGG(DISTINCT c.title, ', '), '') as course, 
@@ -501,8 +501,8 @@ func (r *ContentAdminRepoImpl) GetDetailedStudentList(ctx context.Context, filte
 
 func (r *ContentAdminRepoImpl) GetDetailedTeacherList(ctx context.Context) ([]*domain.TeacherTableItem, error) {
 	query := `
-		SELECT u.id, COALESCE(u.avatar_url, ''), u.first_name || ' ' || u.last_name,
-			u.created_at, u.gender, u.phone,
+		SELECT u.id, COALESCE(u.avatar_url, ''), COALESCE(u.first_name || ' ' || u.last_name, ''),
+			u.created_at, COALESCE(u.gender, ''), COALESCE(u.phone, ''),
 			COALESCE(STRING_AGG(g.title, ', '), '') as groups,
 			COALESCE(u.city, ''), u.email, COALESCE(u.experience_years, 0),
 			COALESCE(u.language, '')
@@ -521,7 +521,9 @@ func (r *ContentAdminRepoImpl) GetDetailedTeacherList(ctx context.Context) ([]*d
 	var list []*domain.TeacherTableItem
 	for rows.Next() {
 		item := &domain.TeacherTableItem{}
-		rows.Scan(&item.ID, &item.Photo, &item.FullName, &item.CreatedAt, &item.Gender, &item.Phone, &item.Groups, &item.City, &item.Email, &item.ExperienceYears, &item.Language)
+		if err := rows.Scan(&item.ID, &item.Photo, &item.FullName, &item.CreatedAt, &item.Gender, &item.Phone, &item.Groups, &item.City, &item.Email, &item.ExperienceYears, &item.Language); err != nil {
+			return nil, err
+		}
 		list = append(list, item)
 	}
 	return list, nil
@@ -529,8 +531,8 @@ func (r *ContentAdminRepoImpl) GetDetailedTeacherList(ctx context.Context) ([]*d
 
 func (r *ContentAdminRepoImpl) GetDetailedCuratorList(ctx context.Context) ([]*domain.CuratorTableItem, error) {
 	query := `
-		SELECT u.id, u.first_name || ' ' || u.last_name, u.created_at,
-			COALESCE(STRING_AGG(g.title, ', '), '') as groups, u.phone, u.email
+		SELECT u.id, COALESCE(u.first_name || ' ' || u.last_name, ''), u.created_at,
+			COALESCE(STRING_AGG(g.title, ', '), '') as groups, COALESCE(u.phone, ''), u.email
 		FROM users u
 		LEFT JOIN groups g ON g.curator_id = u.id
 		WHERE u.role = 'curator'
@@ -546,14 +548,16 @@ func (r *ContentAdminRepoImpl) GetDetailedCuratorList(ctx context.Context) ([]*d
 	var list []*domain.CuratorTableItem
 	for rows.Next() {
 		item := &domain.CuratorTableItem{}
-		rows.Scan(&item.ID, &item.FullName, &item.CreatedAt, &item.Groups, &item.Phone, &item.Email)
+		if err := rows.Scan(&item.ID, &item.FullName, &item.CreatedAt, &item.Groups, &item.Phone, &item.Email); err != nil {
+			return nil, err
+		}
 		list = append(list, item)
 	}
 	return list, nil
 }
 
 func (r *ContentAdminRepoImpl) GetDetailedModeratorList(ctx context.Context) ([]*domain.ModeratorTableItem, error) {
-	query := `SELECT id, first_name || ' ' || last_name, created_at, phone, email FROM users WHERE role = 'moderator' ORDER BY created_at DESC`
+	query := `SELECT id, COALESCE(first_name || ' ' || last_name, ''), created_at, COALESCE(phone, ''), email FROM users WHERE role = 'moderator' ORDER BY created_at DESC`
 	rows, err := r.db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
@@ -562,7 +566,9 @@ func (r *ContentAdminRepoImpl) GetDetailedModeratorList(ctx context.Context) ([]
 	var list []*domain.ModeratorTableItem
 	for rows.Next() {
 		item := &domain.ModeratorTableItem{}
-		rows.Scan(&item.ID, &item.FullName, &item.CreatedAt, &item.Phone, &item.Email)
+		if err := rows.Scan(&item.ID, &item.FullName, &item.CreatedAt, &item.Phone, &item.Email); err != nil {
+			return nil, err
+		}
 		list = append(list, item)
 	}
 	return list, nil
@@ -626,6 +632,7 @@ func (r *ContentAdminRepoImpl) GetGroupsByStream(ctx context.Context, streamID s
 		args = append(args, streamID)
 	}
 	query += " ORDER BY created_at DESC LIMIT 200"
+	query = `SELECT id, stream_id, COALESCE(curator_id, ''), COALESCE(teacher_id, ''), title, created_at FROM groups` + strings.TrimPrefix(query, "SELECT id, stream_id, curator_id, teacher_id, title, created_at FROM groups")
 	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
@@ -634,7 +641,9 @@ func (r *ContentAdminRepoImpl) GetGroupsByStream(ctx context.Context, streamID s
 	var groups []*domain.Group
 	for rows.Next() {
 		g := &domain.Group{}
-		rows.Scan(&g.ID, &g.StreamID, &g.CuratorID, &g.TeacherID, &g.Title, &g.CreatedAt)
+		if err := rows.Scan(&g.ID, &g.StreamID, &g.CuratorID, &g.TeacherID, &g.Title, &g.CreatedAt); err != nil {
+			return nil, err
+		}
 		groups = append(groups, g)
 	}
 	return groups, nil
@@ -667,14 +676,14 @@ func (r *ContentAdminRepoImpl) GetStudentEnrollment(ctx context.Context, userID 
 
 func (r *ContentAdminRepoImpl) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
 	u := &domain.User{}
-	query := `SELECT id, first_name, last_name, email, role, phone FROM users WHERE email = $1`
+	query := `SELECT id, first_name, last_name, email, role, COALESCE(phone, '') FROM users WHERE email = $1`
 	err := r.db.QueryRowContext(ctx, query, email).Scan(&u.ID, &u.FirstName, &u.LastName, &u.Email, &u.Role, &u.Phone)
 	return u, err
 }
 
 func (r *ContentAdminRepoImpl) GetByPhone(ctx context.Context, phone string) (*domain.User, error) {
 	u := &domain.User{}
-	query := `SELECT id, first_name, last_name, email, phone FROM users WHERE phone = $1`
+	query := `SELECT id, first_name, last_name, email, COALESCE(phone, '') FROM users WHERE phone = $1`
 	err := r.db.QueryRowContext(ctx, query, phone).Scan(&u.ID, &u.FirstName, &u.LastName, &u.Email, &u.Phone)
 	return u, err
 }
@@ -851,7 +860,7 @@ func (r *ContentAdminRepoImpl) SubstituteTeacher(ctx context.Context, lessonID, 
 		return err
 	}
 
-	var originalTeacherID string
+	var originalTeacherID sql.NullString
 	err = tx.QueryRowContext(ctx,
 		`SELECT teacher_id FROM lessons WHERE id = $1 FOR UPDATE`, lessonID,
 	).Scan(&originalTeacherID)

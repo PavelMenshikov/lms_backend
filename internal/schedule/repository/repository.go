@@ -27,7 +27,7 @@ func (r *ScheduleRepoImpl) GetStudentLessonsInRange(ctx context.Context, userID 
 		SELECT 
 			l.id, l.title, c.title as course_name, l.lesson_time, l.duration_min,
 			u.first_name || ' ' || u.last_name as teacher_name, u.email as teacher_email,
-			l.online_url as discord_url, COALESCE(ula.comment_teacher, '') as teacher_comment,
+			COALESCE(l.online_url, '') as discord_url, COALESCE(ula.comment_teacher, '') as teacher_comment,
 			COALESCE(uas.status, 'not_submitted') as homework_status
 		FROM lessons l
 		JOIN modules m ON l.module_id = m.id
