@@ -76,6 +76,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	response := map[string]interface{}{
 		"message": "Login successful",
 		"user":    user,
+		"token":   token,
 	}
 
 	w.Header().Set("Content-Type", "application/json")

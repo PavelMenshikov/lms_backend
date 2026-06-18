@@ -22,6 +22,10 @@ var upgrader = websocket.Upgrader{
 		allowed := map[string]bool{
 			"http://localhost:3000":            true,
 			"https://localhost:3000":           true,
+			"http://test.xcx.cx":               true,
+			"https://test.xcx.cx":              true,
+			"http://capapi.grtsq.ru":           true,
+			"https://capapi.grtsq.ru":          true,
 			"https://cap-education.vercel.app": true,
 			"https://platform.capedu.kz":       true,
 			"http://platform.capedu.kz":        true,
