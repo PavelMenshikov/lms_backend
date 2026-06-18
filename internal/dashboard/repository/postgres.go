@@ -53,14 +53,11 @@ func (r *DashboardRepositoryImpl) GetAttendancePercentage(ctx context.Context, u
 	stats := &domain.StatisticSummary{}
 	query := `
 		SELECT 
-			ROUND(COUNT(CASE WHEN status IN ('visited', 'trial') THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0), 2) as percentage
+			COALESCE(ROUND(COUNT(CASE WHEN status IN ('visited', 'trial') THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0), 2), 0) as percentage
 		FROM user_lesson_attendance 
 		WHERE user_id = $1
 	`
 	err := r.db.QueryRowContext(ctx, query, userID).Scan(&stats.Percentage)
-	if err == sql.ErrNoRows {
-		return &domain.StatisticSummary{Percentage: 0}, nil
-	}
 	return stats, err
 }
 
@@ -68,14 +65,11 @@ func (r *DashboardRepositoryImpl) GetAssignmentsCompletionPercentage(ctx context
 	stats := &domain.StatisticSummary{Breakdown: make(map[string]int)}
 	query := `
 		SELECT 
-			ROUND(COUNT(CASE WHEN status = 'accepted' THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0), 2) as percentage
+			COALESCE(ROUND(COUNT(CASE WHEN status = 'accepted' THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0), 2), 0) as percentage
 		FROM user_assignments_submission
 		WHERE user_id = $1
 	`
 	err := r.db.QueryRowContext(ctx, query, userID).Scan(&stats.Percentage)
-	if err == sql.ErrNoRows {
-		return &domain.StatisticSummary{Percentage: 0}, nil
-	}
 	return stats, err
 }
 
