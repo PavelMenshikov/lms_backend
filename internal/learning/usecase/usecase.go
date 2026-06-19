@@ -36,10 +36,10 @@ func (uc *LearningUseCase) GetLessonDetail(ctx context.Context, lessonID, userID
 }
 
 type SubmitAssignmentInput struct {
-	LessonID   string
-	UserID     string
-	TextAnswer string
-	FileHeader *multipart.FileHeader
+	LessonID    string
+	UserID      string
+	TextAnswer  string
+	FileHeaders []*multipart.FileHeader
 }
 
 func (uc *LearningUseCase) SubmitAssignment(ctx context.Context, input SubmitAssignmentInput) error {
@@ -47,21 +47,22 @@ func (uc *LearningUseCase) SubmitAssignment(ctx context.Context, input SubmitAss
 	if err != nil {
 		return fmt.Errorf("assignment not found: %w", err)
 	}
-	var fileURL string
-	if input.FileHeader != nil {
-		file, err := input.FileHeader.Open()
+	var fileURLs []string
+	for _, fh := range input.FileHeaders {
+		file, err := fh.Open()
 		if err != nil {
 			return err
 		}
 		defer file.Close()
-		s3Key := fmt.Sprintf("submissions/%s_%s_%s", input.UserID, assignmentID, input.FileHeader.Filename)
-		key, err := uc.s3Storage.UploadFile(ctx, file, s3Key, input.FileHeader.Size, input.FileHeader.Header.Get("Content-Type"))
+		s3Key := fmt.Sprintf("submissions/%s_%s_%s", input.UserID, assignmentID, fh.Filename)
+		key, err := uc.s3Storage.UploadFile(ctx, file, s3Key, fh.Size, fh.Header.Get("Content-Type"))
 		if err != nil {
 			return err
 		}
-		fileURL, _ = uc.s3Storage.GetPublicURL(ctx, key)
+		url, _ := uc.s3Storage.GetPublicURL(ctx, key)
+		fileURLs = append(fileURLs, url)
 	}
-	return uc.repo.SaveSubmission(ctx, input.UserID, assignmentID, input.TextAnswer, []string{fileURL})
+	return uc.repo.SaveSubmission(ctx, input.UserID, assignmentID, input.TextAnswer, fileURLs)
 }
 
 type SetAttendanceInput struct {
@@ -116,6 +117,14 @@ func (uc *LearningUseCase) GetTest(ctx context.Context, testID string) (*domain.
 func (uc *LearningUseCase) GetProject(ctx context.Context, projectID string) (*domain.Project, error) {
 	return uc.repo.GetProjectByID(ctx, projectID)
 }
+
+func (uc *LearningUseCase) GetAllCourses(ctx context.Context) ([]*domain.Course, error) {
+	return uc.repo.GetAllCourses(ctx)
+}
+func (uc *LearningUseCase) GetTeacherCertificates(ctx context.Context, teacherID string) ([]*domain.TeacherCertificate, error) {
+	return uc.repo.GetTeacherCertificates(ctx, teacherID)
+}
+
 func (uc *LearningUseCase) GetTeacherDashboard(ctx context.Context, teacherID string) (*domain.TeacherDashboardData, error) {
 	profile, err := uc.repo.GetTeacherByID(ctx, teacherID)
 	if err != nil {

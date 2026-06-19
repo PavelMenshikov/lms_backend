@@ -107,3 +107,72 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"message": "Logged out successfully"})
 }
+
+type ForgotPasswordRequest struct {
+	Email string `json:"email" example:"user@capedu.kz"`
+}
+
+// ForgotPassword godoc
+// @Summary Запрос сброса пароля
+// @Description Отправляет email для сброса пароля (заглушка).
+// @Tags Аутентификация
+// @Accept json
+// @Produce json
+// @Param request body ForgotPasswordRequest true "Email"
+// @Success 200 {object} map[string]string
+// @Router /auth/forgot-password [post]
+func (h *AuthHandler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
+	var req ForgotPasswordRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		httperror.BadRequest(w, err)
+		return
+	}
+
+	if req.Email == "" {
+		http.Error(w, "Email is required", http.StatusBadRequest)
+		return
+	}
+
+	// Заглушка: в реальном проекте здесь отправка email
+	slog.Info("password reset requested", slog.String("email", req.Email))
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"message": "If the email exists, a password reset link has been sent.",
+	})
+}
+
+type ResetPasswordRequest struct {
+	Token    string `json:"token" example:"reset-token"`
+	Password string `json:"password" example:"newpassword123"`
+}
+
+// ResetPassword godoc
+// @Summary Сброс пароля
+// @Description Сбрасывает пароль по токену (заглушка).
+// @Tags Аутентификация
+// @Accept json
+// @Produce json
+// @Param request body ResetPasswordRequest true "Токен и новый пароль"
+// @Success 200 {object} map[string]string
+// @Router /auth/reset-password [post]
+func (h *AuthHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
+	var req ResetPasswordRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		httperror.BadRequest(w, err)
+		return
+	}
+
+	if req.Token == "" || req.Password == "" {
+		http.Error(w, "Token and password are required", http.StatusBadRequest)
+		return
+	}
+
+	// Заглушка: в реальном проекте здесь проверка токена и смена пароля
+	slog.Info("password reset with token", slog.String("token", req.Token))
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"message": "Password has been reset successfully.",
+	})
+}

@@ -36,15 +36,30 @@ type TeacherPublicInfo struct {
 	Reviews         []*TeacherReview `json:"reviews"`
 }
 type TeacherMonthlyReport struct {
-	TeacherID          string  `json:"teacher_id"`
-	Year               int     `json:"year"`
-	Month              int     `json:"month"`
-	TotalLessons       int     `json:"total_lessons"`
-	SubstitutionsCount int     `json:"substitutions_count"`
-	ReplacedCount      int     `json:"replaced_count"`
-	AvgRating          float64 `json:"avg_rating"`
-	TotalStudents      int     `json:"total_students"`
-	AttendanceAvg      float64 `json:"attendance_avg_percent"`
+	TeacherID              string  `json:"teacher_id"`
+	Year                   int     `json:"year"`
+	Month                  int     `json:"month"`
+	TotalLessons           int     `json:"total_lessons"`
+	LessonsPerWeek         float64 `json:"lessons_per_week"`
+	SubstitutionsCount     int     `json:"substitutions_count"`
+	ReplacedCount          int     `json:"replaced_count"`
+	SubstitutionsDelta     int     `json:"substitutions_delta"`
+	ReplacedDelta          int     `json:"replaced_delta"`
+	AvgRating              float64 `json:"avg_rating"`
+	TotalStudents          int     `json:"total_students"`
+	AttendanceAvg          float64 `json:"attendance_avg_percent"`
+	AverageHomeworkScore   float64 `json:"average_homework_score"`
+	TotalCancelled         int     `json:"total_cancelled"`
+	CancelledDelta         int     `json:"cancelled_delta"`
+}
+
+type TeacherCertificate struct {
+	ID          string    `json:"id"`
+	Title       string    `json:"title"`
+	StudentName string    `json:"student_name"`
+	IssuedAt    time.Time `json:"issued_at"`
+	CourseName  string    `json:"course_name"`
+	CertificateURL string `json:"certificate_url"`
 }
 
 type TeacherDashboardData struct {

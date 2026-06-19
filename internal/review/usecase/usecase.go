@@ -14,8 +14,8 @@ func NewReviewUseCase(repo repository.ReviewRepository) *ReviewUseCase {
 	return &ReviewUseCase{repo: repo}
 }
 
-func (uc *ReviewUseCase) GetPendingList(ctx context.Context, staffID string, role string) ([]*domain.SubmissionRecord, error) {
-	return uc.repo.GetPendingSubmissions(ctx, staffID, role)
+func (uc *ReviewUseCase) GetPendingList(ctx context.Context, staffID string, role string, studentID string) ([]*domain.SubmissionRecord, error) {
+	return uc.repo.GetPendingSubmissions(ctx, staffID, role, studentID)
 }
 
 type EvaluateInput struct {

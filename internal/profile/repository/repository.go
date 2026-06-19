@@ -34,7 +34,8 @@ func (r *ProfileRepoImpl) GetProfile(ctx context.Context, userID string) (*domai
 			COALESCE(u.birth_date, '0001-01-01 00:00:00Z'), COALESCE(u.school_name, ''),
 			COALESCE(u.experience_years, 0), COALESCE(u.whatsapp_link, ''), COALESCE(u.telegram_link, ''), 
 			COALESCE(u.avatar_url, ''),
-			COALESCE(ROUND(tr.avg_rating, 1), 0.0) as rating
+			COALESCE(ROUND(tr.avg_rating, 1), 0.0) as rating,
+			COALESCE(u.discord_username, '')
 		FROM users u
 		LEFT JOIN (SELECT teacher_id, AVG(rating) as avg_rating FROM teacher_reviews GROUP BY teacher_id) tr ON tr.teacher_id = u.id
 		WHERE u.id = $1
@@ -45,7 +46,7 @@ func (r *ProfileRepoImpl) GetProfile(ctx context.Context, userID string) (*domai
 		&u.Phone, &u.City, &u.Language, &u.Gender,
 		&u.BirthDate, &u.SchoolName,
 		&u.ExperienceYears, &u.Whatsapp, &u.Telegram, &u.AvatarURL,
-		&u.Rating,
+		&u.Rating, &u.DiscordUsername,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -53,6 +54,41 @@ func (r *ProfileRepoImpl) GetProfile(ctx context.Context, userID string) (*domai
 		}
 		return nil, err
 	}
+
+	if u.Role == domain.RoleStudent {
+		// Fetch parents
+		parentRows, err := r.db.QueryContext(ctx, `
+			SELECT u.first_name || ' ' || u.last_name, COALESCE(u.phone, ''), u.email
+			FROM child_parent_links cpl
+			JOIN users u ON cpl.parent_id = u.id
+			WHERE cpl.child_id = $1
+		`, userID)
+		if err == nil {
+			defer parentRows.Close()
+			for parentRows.Next() {
+				var p domain.ParentInfo
+				if parentRows.Scan(&p.FullName, &p.Phone, &p.Email) == nil {
+					u.Parents = append(u.Parents, p)
+				}
+			}
+		}
+		if u.Parents == nil {
+			u.Parents = []domain.ParentInfo{}
+		}
+
+		// Fetch courses completed count
+		r.db.QueryRowContext(ctx, `
+			SELECT COUNT(*) FROM user_courses WHERE user_id = $1 AND progress_percent >= 100
+		`, userID).Scan(&u.CoursesCompleted)
+
+		// Fetch groups count
+		r.db.QueryRowContext(ctx, `
+			SELECT COUNT(*) FROM user_courses uc
+			JOIN groups g ON uc.group_id = g.id
+			WHERE uc.user_id = $1
+		`, userID).Scan(&u.GroupsCount)
+	}
+
 	return u, nil
 }
 

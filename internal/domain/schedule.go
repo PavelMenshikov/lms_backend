@@ -6,6 +6,7 @@ type ScheduleLesson struct {
 	ID             string    `json:"id"`
 	Title          string    `json:"title"`
 	CourseName     string    `json:"course_name"`
+	CourseTitle    string    `json:"course_title"`
 	StartTime      time.Time `json:"start_time"`
 	EndTime        time.Time `json:"end_time"`
 	DurationMin    int       `json:"duration_min"`

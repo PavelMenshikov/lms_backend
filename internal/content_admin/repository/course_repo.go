@@ -77,7 +77,8 @@ func (r *ContentAdminRepoImpl) GetModulesByCourseID(ctx context.Context, courseI
 func (r *ContentAdminRepoImpl) GetCourseStudents(ctx context.Context, courseID string) ([]*domain.AdminStudentProgress, error) {
 	query := `
 		SELECT u.id, u.first_name || ' ' || u.last_name, uc.progress_percent,
-			COALESCE(ula.attended, 0), COALESCE(uas.accepted, 0)
+			COALESCE(ula.attended, 0), COALESCE(lesson_cnt.total, 0),
+			COALESCE(uas.accepted, 0), COALESCE(assign_cnt.total, 0)
 		FROM users u
 		JOIN user_courses uc ON u.id = uc.user_id AND uc.course_id = $1
 		LEFT JOIN (
@@ -92,6 +93,14 @@ func (r *ContentAdminRepoImpl) GetCourseStudents(ctx context.Context, courseID s
 			WHERE status = 'accepted'
 			GROUP BY user_id
 		) uas ON u.id = uas.user_id
+		LEFT JOIN (
+			SELECT COUNT(*) as total FROM lessons WHERE course_id = $1 AND is_published = true
+		) lesson_cnt ON 1=1
+		LEFT JOIN (
+			SELECT COUNT(*) as total FROM assignments a
+			JOIN lessons l ON a.lesson_id = l.id
+			WHERE l.course_id = $1
+		) assign_cnt ON 1=1
 		WHERE u.role = 'student'
 	`
 	rows, err := r.db.QueryContext(ctx, query, courseID)
@@ -102,7 +111,7 @@ func (r *ContentAdminRepoImpl) GetCourseStudents(ctx context.Context, courseID s
 	var list []*domain.AdminStudentProgress
 	for rows.Next() {
 		s := &domain.AdminStudentProgress{}
-		if err := rows.Scan(&s.UserID, &s.FullName, &s.ProgressPercent, &s.LessonsAttended, &s.HomeworksDone); err != nil {
+		if err := rows.Scan(&s.UserID, &s.FullName, &s.ProgressPercent, &s.LessonsAttended, &s.LessonsTotal, &s.HomeworksDone, &s.AssignmentsTotal); err != nil {
 			return nil, err
 		}
 		list = append(list, s)

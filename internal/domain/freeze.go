@@ -35,4 +35,6 @@ type FreezePeriod struct {
 	CreatedBy       string    `json:"created_by" db:"created_by"`
 	CreatedAt       time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt       time.Time `json:"updated_at" db:"updated_at"`
+	UsedDays        int       `json:"used_days"`
+	RemainingDays   int       `json:"remaining_days"`
 }

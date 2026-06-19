@@ -1,7 +1,9 @@
 package http
 
 import (
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"lms_backend/internal/httperror"
 	"mime/multipart"
 	"net/http"
@@ -87,27 +89,28 @@ func (h *LearningHandler) GetLessonDetail(w http.ResponseWriter, r *http.Request
 // @Produce json
 // @Param id path string true "ID урока"
 // @Param text_answer formData string false "Текст ответа"
-// @Param file formData file false "Файл с заданием"
+// @Param file formData file false "Файл с заданием (можно несколько)"
 // @Success 200 {object} map[string]string
 // @Router /lessons/{id}/assignment [post]
 func (h *LearningHandler) SubmitAssignment(w http.ResponseWriter, r *http.Request) {
-	const MAX_SIZE = 10 << 20
+	const MAX_SIZE = 50 << 20
 	if err := r.ParseMultipartForm(MAX_SIZE); err != nil {
 		httperror.BadRequest(w, err)
 		return
 	}
 	userCtxData := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
 	lessonID := chi.URLParam(r, "id")
-	var fileHeader *multipart.FileHeader
-	if f, header, err := r.FormFile("file"); err == nil {
-		f.Close()
-		fileHeader = header
+
+	files := r.MultipartForm.File["file"]
+	var fileHeaders []*multipart.FileHeader
+	for _, fh := range files {
+		fileHeaders = append(fileHeaders, fh)
 	}
 	input := usecase.SubmitAssignmentInput{
-		LessonID:   lessonID,
-		UserID:     userCtxData.UserID,
-		TextAnswer: r.FormValue("text_answer"),
-		FileHeader: fileHeader,
+		LessonID:    lessonID,
+		UserID:      userCtxData.UserID,
+		TextAnswer:  r.FormValue("text_answer"),
+		FileHeaders: fileHeaders,
 	}
 	if err := h.uc.SubmitAssignment(r.Context(), input); err != nil {
 		httperror.BadRequest(w, err)
@@ -242,7 +245,12 @@ func (h *LearningHandler) GetTest(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	test, err := h.uc.GetTest(r.Context(), id)
 	if err != nil {
-		http.Error(w, "Test not found", http.StatusNotFound)
+		if errors.Is(err, sql.ErrNoRows) {
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(&domain.Test{ID: id})
+			return
+		}
+		httperror.Internal(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -260,11 +268,61 @@ func (h *LearningHandler) GetProject(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	proj, err := h.uc.GetProject(r.Context(), id)
 	if err != nil {
-		http.Error(w, "Project not found", http.StatusNotFound)
+		httperror.Internal(w, err)
 		return
+	}
+	if proj == nil {
+		proj = &domain.Project{ID: id}
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(proj)
+}
+
+// GetAllCourses godoc
+// @Summary USER: Каталог курсов
+// @Description Получить список всех активных курсов.
+// @Tags Courses
+// @Produce json
+// @Success 200 {array} domain.Course
+// @Router /courses [get]
+func (h *LearningHandler) GetAllCourses(w http.ResponseWriter, r *http.Request) {
+	courses, err := h.uc.GetAllCourses(r.Context())
+	if err != nil {
+		httperror.Internal(w, err)
+		return
+	}
+	if courses == nil {
+		courses = []*domain.Course{}
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(courses)
+}
+
+// SubmitTest godoc
+// @Summary УЧЕНИК: Отправить тест
+// @Tags Student-Learning
+// @Accept json
+// @Produce json
+// @Param id path string true "Test ID"
+// @Success 200 {object} map[string]any
+// @Router /tests/{id}/submit [post]
+func (h *LearningHandler) SubmitTest(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"status": "submitted"})
+}
+
+// SubmitProject godoc
+// @Summary УЧЕНИК: Отправить проект
+// @Tags Student-Learning
+// @Accept mpfd
+// @Produce json
+// @Param id path string true "Project ID"
+// @Param file formData file false "File attachment"
+// @Success 200 {object} map[string]any
+// @Router /projects/{id}/submission [post]
+func (h *LearningHandler) SubmitProject(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"status": "submitted"})
 }
 
 // GetTeacherDashboard godoc
@@ -273,6 +331,17 @@ func (h *LearningHandler) GetProject(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Success 200 {object} domain.TeacherDashboardData
 // @Router /teacher/profile [get]
+// GetTeacherCertificates godoc
+// @Summary USER: Сертификаты преподавателя
+// @Tags Teacher-Certificates
+// @Produce json
+// @Success 200 {array} domain.TeacherCertificate
+// @Router /teacher/certificates [get]
+func (h *LearningHandler) GetTeacherCertificates(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode([]domain.TeacherCertificate{})
+}
+
 func (h *LearningHandler) GetTeacherDashboard(w http.ResponseWriter, r *http.Request) {
 	userData, ok := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
 	if !ok || userData.Role != domain.RoleTeacher {

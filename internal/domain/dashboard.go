@@ -84,14 +84,16 @@ type AdminCourseStats struct {
 }
 
 type AdminStudentProgress struct {
-	UserID          string    `json:"user_id"`
-	FullName        string    `json:"full_name"`
-	PhotoURL        string    `json:"photo_url"`
-	Status          string    `json:"status"`
-	StartDate       time.Time `json:"start_date"`
-	ProgressPercent int       `json:"progress_percent"`
-	LessonsAttended int       `json:"lessons_attended"`
-	HomeworksDone   int       `json:"homeworks_done"`
+	UserID           string    `json:"user_id"`
+	FullName         string    `json:"full_name"`
+	PhotoURL         string    `json:"photo_url"`
+	Status           string    `json:"status"`
+	StartDate        time.Time `json:"start_date"`
+	ProgressPercent  int       `json:"progress_percent"`
+	LessonsAttended  int       `json:"lessons_attended"`
+	LessonsTotal     int       `json:"lessons_total"`
+	HomeworksDone    int       `json:"homeworks_done"`
+	AssignmentsTotal int       `json:"assignments_total"`
 }
 
 type CuratorGroupAttendance struct {

@@ -81,22 +81,34 @@ type Group struct {
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
 }
 
+type TestQuestion struct {
+	ID            string   `json:"id"`
+	Question      string   `json:"question"`
+	Options       []string `json:"options"`
+	CorrectAnswer string   `json:"correct_answer,omitempty"`
+	Points        int      `json:"points"`
+}
+
 type Test struct {
-	ID           string    `json:"id" db:"id"`
-	LessonID     *string   `json:"lesson_id" db:"lesson_id"`
-	Title        string    `json:"title" db:"title"`
-	Description  string    `json:"description" db:"description"`
-	PassingScore int       `json:"passing_score" db:"passing_score"`
-	CreatedAt    time.Time `json:"created_at" db:"created_at"`
+	ID           string         `json:"id" db:"id"`
+	LessonID     *string        `json:"lesson_id" db:"lesson_id"`
+	Title        string         `json:"title" db:"title"`
+	Description  string         `json:"description" db:"description"`
+	PassingScore int            `json:"passing_score" db:"passing_score"`
+	Questions    []TestQuestion `json:"questions,omitempty"`
+	CreatedAt    time.Time      `json:"created_at" db:"created_at"`
 }
 
 type Project struct {
-	ID          string    `json:"id" db:"id"`
-	LessonID    *string   `json:"lesson_id" db:"lesson_id"`
-	Title       string    `json:"title" db:"title"`
-	Description string    `json:"description" db:"description"`
-	MaxScore    int       `json:"max_score" db:"max_score"`
-	CreatedAt   time.Time `json:"created_at" db:"created_at"`
+	ID               string    `json:"id" db:"id"`
+	LessonID         *string   `json:"lesson_id" db:"lesson_id"`
+	Title            string    `json:"title" db:"title"`
+	Description      string    `json:"description" db:"description"`
+	MaxScore         int       `json:"max_score" db:"max_score"`
+	SubmissionStatus string    `json:"submission_status,omitempty"`
+	Grade            int       `json:"grade,omitempty"`
+	TeacherComment   string    `json:"teacher_comment,omitempty"`
+	CreatedAt        time.Time `json:"created_at" db:"created_at"`
 }
 
 type CourseStructure struct {

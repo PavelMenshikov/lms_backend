@@ -22,9 +22,12 @@ type LearningRepoMock struct {
 	GetTeacherCoursesFunc       func(ctx context.Context, teacherID string) ([]*domain.StudentCoursePreview, error)
 	GetTestByIDFunc             func(ctx context.Context, testID string) (*domain.Test, error)
 	GetProjectByIDFunc          func(ctx context.Context, projectID string) (*domain.Project, error)
-	GetTeacherSubstitutionsFunc    func(ctx context.Context, teacherID string) ([]*domain.Lesson, error)
-	GetTeacherUpcomingLessonsFunc  func(ctx context.Context, teacherID string) ([]*domain.Lesson, error)
-	GetTeacherCancelledLessonsFunc func(ctx context.Context, teacherID string) ([]*domain.Lesson, error)
+	GetTeacherSubstitutionsFunc       func(ctx context.Context, teacherID string) ([]*domain.Lesson, error)
+	GetTeacherUpcomingLessonsFunc     func(ctx context.Context, teacherID string) ([]*domain.Lesson, error)
+	GetTeacherCancelledLessonsFunc    func(ctx context.Context, teacherID string) ([]*domain.Lesson, error)
+	GetAllCoursesFunc                 func(ctx context.Context) ([]*domain.Course, error)
+	GetLessonOrderNumFunc             func(ctx context.Context, lessonID string) (int, error)
+	GetTeacherCertificatesFunc        func(ctx context.Context, teacherID string) ([]*domain.TeacherCertificate, error)
 }
 
 func NewLearningRepoMock() *LearningRepoMock {
@@ -93,4 +96,16 @@ func (m *LearningRepoMock) GetTeacherUpcomingLessons(ctx context.Context, teache
 
 func (m *LearningRepoMock) GetTeacherCancelledLessons(ctx context.Context, teacherID string) ([]*domain.Lesson, error) {
 	return m.GetTeacherCancelledLessonsFunc(ctx, teacherID)
+}
+
+func (m *LearningRepoMock) GetAllCourses(ctx context.Context) ([]*domain.Course, error) {
+	return m.GetAllCoursesFunc(ctx)
+}
+
+func (m *LearningRepoMock) GetTeacherCertificates(ctx context.Context, teacherID string) ([]*domain.TeacherCertificate, error) {
+	return m.GetTeacherCertificatesFunc(ctx, teacherID)
+}
+
+func (m *LearningRepoMock) GetLessonOrderNum(ctx context.Context, lessonID string) (int, error) {
+	return m.GetLessonOrderNumFunc(ctx, lessonID)
 }

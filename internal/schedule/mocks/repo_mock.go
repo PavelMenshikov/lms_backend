@@ -10,7 +10,8 @@ import (
 var _ repository.ScheduleRepository = (*ScheduleRepoMock)(nil)
 
 type ScheduleRepoMock struct {
-	GetStudentLessonsInRangeFunc func(ctx context.Context, userID string, start, end time.Time) ([]domain.ScheduleLesson, error)
+	GetStudentLessonsInRangeFunc  func(ctx context.Context, userID string, start, end time.Time) ([]domain.ScheduleLesson, error)
+	GetTeacherLessonsInRangeFunc  func(ctx context.Context, userID string, start, end time.Time) ([]domain.ScheduleLesson, error)
 }
 
 func NewScheduleRepoMock() *ScheduleRepoMock {
@@ -19,4 +20,8 @@ func NewScheduleRepoMock() *ScheduleRepoMock {
 
 func (m *ScheduleRepoMock) GetStudentLessonsInRange(ctx context.Context, userID string, start, end time.Time) ([]domain.ScheduleLesson, error) {
 	return m.GetStudentLessonsInRangeFunc(ctx, userID, start, end)
+}
+
+func (m *ScheduleRepoMock) GetTeacherLessonsInRange(ctx context.Context, userID string, start, end time.Time) ([]domain.ScheduleLesson, error) {
+	return m.GetTeacherLessonsInRangeFunc(ctx, userID, start, end)
 }

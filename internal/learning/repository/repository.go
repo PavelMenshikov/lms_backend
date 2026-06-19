@@ -29,6 +29,10 @@ type LearningRepository interface {
 	GetTeacherSubstitutions(ctx context.Context, teacherID string) ([]*domain.Lesson, error)
 	GetTeacherUpcomingLessons(ctx context.Context, teacherID string) ([]*domain.Lesson, error)
 	GetTeacherCancelledLessons(ctx context.Context, teacherID string) ([]*domain.Lesson, error)
+
+	GetAllCourses(ctx context.Context) ([]*domain.Course, error)
+	GetLessonOrderNum(ctx context.Context, lessonID string) (int, error)
+	GetTeacherCertificates(ctx context.Context, teacherID string) ([]*domain.TeacherCertificate, error)
 }
 
 type LearningRepoImpl struct {
@@ -207,12 +211,12 @@ func (r *LearningRepoImpl) GetLessonDetail(ctx context.Context, lessonID, userID
 	lesson := &domain.Lesson{}
 	var contentRaw []byte
 
-	query := `SELECT id, title, COALESCE(video_url, ''), COALESCE(presentation_url, ''), COALESCE(content_text, ''), content, duration_min 
+	query := `SELECT id, title, COALESCE(video_url, ''), COALESCE(presentation_url, ''), COALESCE(content_text, ''), content, duration_min, order_num 
               FROM lessons WHERE id = $1 AND is_published = true`
 
 	err := r.db.QueryRowContext(ctx, query, lessonID).Scan(
 		&lesson.ID, &lesson.Title, &lesson.VideoURL, &lesson.PresentationURL,
-		&lesson.ContentText, &contentRaw, &lesson.DurationMin,
+		&lesson.ContentText, &contentRaw, &lesson.DurationMin, &lesson.OrderNum,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("lesson not found: %w", err)
@@ -513,6 +517,40 @@ func (r *LearningRepoImpl) GetTeacherUpcomingLessons(ctx context.Context, teache
 	}
 	defer rows.Close()
 	return scanLessons(rows)
+}
+
+func (r *LearningRepoImpl) GetAllCourses(ctx context.Context) ([]*domain.Course, error) {
+	query := `
+		SELECT id, title, description, is_main, COALESCE(image_url, ''), status, created_at
+		FROM courses
+		WHERE status = 'active'
+		ORDER BY created_at DESC
+	`
+	rows, err := r.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var courses []*domain.Course
+	for rows.Next() {
+		c := &domain.Course{}
+		if err := rows.Scan(&c.ID, &c.Title, &c.Description, &c.IsMain, &c.ImageURL, &c.Status, &c.CreatedAt); err != nil {
+			return nil, err
+		}
+		courses = append(courses, c)
+	}
+	return courses, nil
+}
+
+func (r *LearningRepoImpl) GetLessonOrderNum(ctx context.Context, lessonID string) (int, error) {
+	var orderNum int
+	err := r.db.QueryRowContext(ctx, "SELECT order_num FROM lessons WHERE id = $1", lessonID).Scan(&orderNum)
+	return orderNum, err
+}
+
+func (r *LearningRepoImpl) GetTeacherCertificates(ctx context.Context, teacherID string) ([]*domain.TeacherCertificate, error) {
+	return []*domain.TeacherCertificate{}, nil
 }
 
 func (r *LearningRepoImpl) GetTeacherCancelledLessons(ctx context.Context, teacherID string) ([]*domain.Lesson, error) {

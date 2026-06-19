@@ -9,7 +9,7 @@ import (
 )
 
 type ReviewRepository interface {
-	GetPendingSubmissions(ctx context.Context, staffID string, role string) ([]*domain.SubmissionRecord, error)
+	GetPendingSubmissions(ctx context.Context, staffID string, role string, studentID string) ([]*domain.SubmissionRecord, error)
 	EvaluateSubmission(ctx context.Context, submissionID string, grade int, comment string, status string) error
 	UpdateUserCourseProgress(ctx context.Context, userID, courseID string) error
 }
@@ -24,7 +24,7 @@ func NewReviewRepository(db *sql.DB) *ReviewRepoImpl {
 	return &ReviewRepoImpl{db: db}
 }
 
-func (r *ReviewRepoImpl) GetPendingSubmissions(ctx context.Context, staffID string, role string) ([]*domain.SubmissionRecord, error) {
+func (r *ReviewRepoImpl) GetPendingSubmissions(ctx context.Context, staffID string, role string, studentID string) ([]*domain.SubmissionRecord, error) {
 	query := `
 		SELECT 
 			uas.assignment_id, uas.user_id, u.first_name || ' ' || u.last_name,
@@ -45,6 +45,12 @@ func (r *ReviewRepoImpl) GetPendingSubmissions(ctx context.Context, staffID stri
 	if role == "teacher" {
 		query += fmt.Sprintf(" AND ct.teacher_id = $%d", argIdx)
 		args = append(args, staffID)
+		argIdx++
+	}
+
+	if studentID != "" {
+		query += fmt.Sprintf(" AND uas.user_id = $%d", argIdx)
+		args = append(args, studentID)
 		argIdx++
 	}
 

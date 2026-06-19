@@ -179,6 +179,8 @@ func (r *ContentAdminRepoImpl) GetDetailedStudentList(ctx context.Context, filte
 			COALESCE(STRING_AGG(DISTINCT s.title, ', '), '') as stream,
 			COALESCE(AVG(uc.progress_percent)::INT, 0) as performance,
 			COALESCE(MIN(par.phone), '') as parent_phone,
+			COALESCE(MIN(par.first_name || ' ' || par.last_name), '') as parent_name,
+			COALESCE(MIN(par.email), '') as parent_email,
 			COALESCE(u.city, '') as city, 
 			COALESCE(u.school_name, '') as school, 
 			COALESCE(u.language, '') as language,
@@ -186,7 +188,9 @@ func (r *ContentAdminRepoImpl) GetDetailedStudentList(ctx context.Context, filte
 			u.email,
 			COALESCE(u.intro_broadcast_url, ''),
 			COALESCE(u.graduation_broadcast_url, ''),
-			COALESCE(u.balance, 0)
+			COALESCE(u.balance, 0),
+			COALESCE(u.loss_reason, ''),
+			u.subscription_end_date
 		FROM users u
 		LEFT JOIN user_courses uc ON u.id = uc.user_id
 		LEFT JOIN courses c ON uc.course_id = c.id
@@ -218,9 +222,11 @@ func (r *ContentAdminRepoImpl) GetDetailedStudentList(ctx context.Context, filte
 		err := rows.Scan(
 			&item.ID, &item.Photo, &item.FullName, &item.CreatedAt, &item.Gender, &item.Age,
 			&item.Status, &item.Course, &item.Group, &item.Curator, &item.Teacher, &item.Stream,
-			&item.Performance, &item.ParentPhone, &item.City, &item.School, &item.Language,
+			&item.Performance, &item.ParentPhone, &item.ParentName, &item.ParentEmail,
+			&item.City, &item.School, &item.Language,
 			&item.Phone, &item.Email,
 			&item.IntroBroadcastURL, &item.GraduationBroadcastURL, &item.Balance,
+			&item.Zone, &item.SubscriptionEndDate,
 		)
 		if err != nil {
 			return nil, err

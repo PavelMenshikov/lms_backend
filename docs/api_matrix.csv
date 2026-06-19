@@ -1,0 +1,66 @@
+Feature,Category,Admin,Teacher,Curator,Moderator,Student,Tested (usecase)
+Admin dashboard stats,Dashboard,✅,✅,✅,✅,❌,✅
+Curator dashboard,Dashboard,✅,❌,✅,✅,❌,✅
+Teacher dashboard,Dashboard,❌,✅,❌,❌,❌,✅
+Home dashboard (user),Dashboard,✅,✅,✅,✅,✅,✅
+Monthly report (teacher),Dashboard,❌,✅,❌,❌,❌,✅
+Course CRUD,Courses,✅,❌,❌,❌,❌,✅
+Course settings update,Courses,✅,❌,❌,❌,❌,❌
+Course structure view,Courses,✅,✅,✅,✅,❌,✅
+Course students list,Courses,✅,✅,✅,✅,❌,❌
+Course stats,Courses,✅,❌,❌,❌,❌,❌
+Bulk create course,Courses,✅,❌,❌,❌,❌,❌
+Enroll/Unenroll student,Courses,✅,❌,❌,❌,❌,❌
+My courses (student),Courses,❌,❌,❌,❌,✅,✅
+Course content (student),Courses,❌,❌,❌,❌,✅,✅
+Module CRUD,Modules,✅,❌,❌,❌,❌,❌
+Bulk create modules,Modules,✅,❌,❌,❌,❌,❌
+Lesson CRUD,Lessons,✅,❌,❌,❌,❌,✅
+Lesson detail view,Lessons,✅,✅,✅,✅,✅,✅
+Cancel/Substitute teacher,Lessons,✅,❌,❌,❌,❌,❌
+Test CRUD,Tests/Projects,✅,❌,❌,❌,❌,❌
+Project CRUD,Tests/Projects,✅,❌,❌,❌,❌,❌
+View test,Tests/Projects,✅,✅,✅,✅,✅,❌
+View project,Tests/Projects,✅,✅,✅,✅,✅,❌
+Submit assignment,Homework,❌,❌,❌,❌,✅,✅
+View pending submissions,Homework,✅,✅,✅,✅,❌,✅
+Evaluate homework (grade),Homework,✅,✅,❌ (403),✅,❌,✅
+Mark attendance (staff),Attendance,✅,✅,✅,✅,❌,✅
+Self-mark attendance (student),Attendance,❌,❌,❌,❌,✅,✅
+Attendance calendar view,Attendance,✅,✅,✅,✅,❌,✅
+Attendance stats view,Attendance,✅,✅,✅,✅,❌,✅
+Lesson attendance records,Attendance,✅,✅,✅,✅,❌,✅
+Create freeze request,Freeze,✅,✅,✅,✅,❌,✅
+View pending freeze requests,Freeze,✅,✅,✅,✅,❌,✅
+Approve/Reject freeze,Freeze,✅,❌,✅,✅,❌,✅
+Student freeze status,Freeze,✅,✅,✅,✅,❌,✅
+Create access request,Access,✅,✅,✅,✅,❌,✅
+View pending access requests,Access,✅,✅,✅,✅,❌,✅
+Approve/Reject access,Access,✅,❌,✅,✅,❌,✅
+Create comment,Comments,✅,✅,✅,✅,❌,✅
+View comments,Comments,✅,✅,✅,✅,❌,✅
+Mark comment read,Comments,✅,✅,✅,✅,❌,✅
+Create notification,Notifications,✅,✅,✅,✅,❌,✅
+View own notifications,Notifications,✅,✅,✅,✅,✅,✅
+Mark notification read,Notifications,✅,✅,✅,✅,✅,✅
+User CRUD (any role),Users,✅,❌,❌,❌,❌,✅
+Detailed user lists,Users,✅,❌,❌,❌,❌,❌
+User info card,Users,✅,❌,❌,❌,❌,❌
+Stream CRUD,Streams/Groups,✅,❌,❌,❌,❌,❌
+Group CRUD,Streams/Groups,✅,❌,❌,❌,❌,✅
+Group student management,Streams/Groups,✅,❌,❌,✅,❌,✅
+Change student/teacher group,Streams/Groups,✅,❌,❌,✅,❌,✅
+Banner CRUD,Banners,✅,❌,❌,❌,❌,✅
+View active banners,Banners,✅,✅,✅,✅,✅,✅
+View/update own profile,Profile,✅,✅,✅,✅,✅,✅
+Save teacher schedule,Profile,❌,✅,❌,❌,❌,❌
+Weekly/Monthly schedule,Schedule,✅,✅,✅,✅,✅,✅
+WebSocket chat,Chat,✅,✅,✅,✅,✅,✅
+Chat history,Chat,✅,✅,✅,✅,✅,✅
+View student stats,Statistics,✅,✅,✅,✅,❌,✅
+Refresh student stats,Statistics,✅,✅,✅,✅,❌,✅
+Excel lessons report,Reports,✅,✅,✅,✅,❌,❌
+Teacher list/details,Teachers,✅,✅,✅,✅,✅,✅
+Leave teacher review,Teachers,❌,❌,❌,❌,✅,✅
+Media upload,Media,✅,❌,❌,❌,❌,❌
+Auth (login/logout),Auth,✅,✅,✅,✅,✅,✅

@@ -3,6 +3,8 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"time"
+
 	"lms_backend/internal/domain"
 )
 
@@ -184,5 +186,18 @@ func (r *freezeRepository) GetStudentFreezeStatus(ctx context.Context, studentID
 	if err != nil {
 		return nil, err
 	}
+
+	now := time.Now()
+	totalDays := int(period.EndDate.Sub(period.StartDate).Hours() / 24)
+	elapsedDays := int(now.Sub(period.StartDate).Hours() / 24)
+	if elapsedDays < 0 {
+		elapsedDays = 0
+	}
+	if elapsedDays > totalDays {
+		elapsedDays = totalDays
+	}
+	period.UsedDays = elapsedDays
+	period.RemainingDays = totalDays - elapsedDays
+
 	return &period, nil
 }

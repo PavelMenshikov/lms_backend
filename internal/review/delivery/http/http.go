@@ -34,8 +34,9 @@ type EvaluateRequest struct {
 // @Router /staff/submissions [get]
 func (h *ReviewHandler) GetPendingSubmissions(w http.ResponseWriter, r *http.Request) {
 	userCtx := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	studentID := r.URL.Query().Get("student_id")
 
-	list, err := h.uc.GetPendingList(r.Context(), userCtx.UserID, string(userCtx.Role))
+	list, err := h.uc.GetPendingList(r.Context(), userCtx.UserID, string(userCtx.Role), studentID)
 	if err != nil {
 		httperror.Internal(w, err)
 		return

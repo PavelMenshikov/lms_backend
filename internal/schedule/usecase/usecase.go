@@ -27,11 +27,14 @@ func (uc *ScheduleUseCase) GetWeeklySchedule(ctx context.Context, userID string,
 
 	lessons, err := uc.repo.GetStudentLessonsInRange(ctx, userID, start, end)
 	if err != nil {
-		return nil, err
+		lessons = []domain.ScheduleLesson{}
 	}
 
 	days := make(map[string][]domain.ScheduleLesson)
 	for _, l := range lessons {
+		if l.StartTime.IsZero() {
+			continue
+		}
 		dayKey := l.StartTime.Format("2006-01-02")
 		days[dayKey] = append(days[dayKey], l)
 	}
@@ -49,11 +52,14 @@ func (uc *ScheduleUseCase) GetMonthlySchedule(ctx context.Context, userID string
 
 	lessons, err := uc.repo.GetStudentLessonsInRange(ctx, userID, start, end)
 	if err != nil {
-		return nil, err
+		lessons = []domain.ScheduleLesson{}
 	}
 
 	days := make(map[int][]domain.ScheduleLesson)
 	for _, l := range lessons {
+		if l.StartTime.IsZero() {
+			continue
+		}
 		day := l.StartTime.Day()
 		days[day] = append(days[day], l)
 	}

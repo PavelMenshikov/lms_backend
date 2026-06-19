@@ -283,10 +283,14 @@ func main() {
 	r.Post("/auth/register", authHandler.Register)
 	r.Post("/auth/login", authHandler.Login)
 	r.Post("/auth/logout", authHandler.Logout)
+	r.Post("/auth/forgot-password", authHandler.ForgotPassword)
+	r.Post("/auth/reset-password", authHandler.ResetPassword)
 
 	r.Post("/api/auth/register", authHandler.Register)
 	r.Post("/api/auth/login", authHandler.Login)
 	r.Post("/api/auth/logout", authHandler.Logout)
+	r.Post("/api/auth/forgot-password", authHandler.ForgotPassword)
+	r.Post("/api/auth/reset-password", authHandler.ResetPassword)
 
 	r.Post("/system/reset-password", func(w http.ResponseWriter, r *http.Request) {
 		secret := os.Getenv("SYSTEM_SECRET")
@@ -371,6 +375,7 @@ func main() {
 		r.Get("/admin/users/all", adminHandler.GetAllUsersTable)
 		r.Get("/admin/students/detailed", adminHandler.GetDetailedStudents)
 		r.Get("/admin/teachers/detailed", adminHandler.GetDetailedTeachers)
+		r.Get("/admin/teachers/{id}", adminHandler.GetUserInfo)
 		r.Get("/admin/curators/detailed", adminHandler.GetDetailedCurators)
 		r.Get("/admin/moderators/detailed", adminHandler.GetDetailedModerators)
 		r.Post("/admin/streams", adminHandler.CreateStream)
@@ -414,6 +419,7 @@ func main() {
 		r.Get("/api/admin/users/all", adminHandler.GetAllUsersTable)
 		r.Get("/api/admin/students/detailed", adminHandler.GetDetailedStudents)
 		r.Get("/api/admin/teachers/detailed", adminHandler.GetDetailedTeachers)
+		r.Get("/api/admin/teachers/{id}", adminHandler.GetUserInfo)
 		r.Get("/api/admin/curators/detailed", adminHandler.GetDetailedCurators)
 		r.Get("/api/admin/moderators/detailed", adminHandler.GetDetailedModerators)
 		r.Post("/api/admin/streams", adminHandler.CreateStream)
@@ -478,7 +484,9 @@ func main() {
 		r.Post("/lessons/{id}/attendance", learningHandler.SetLessonAttendance)
 		r.Post("/admin/courses/bulk", adminHandler.CreateFullCourse)
 		r.Get("/tests/{id}", learningHandler.GetTest)
+		r.Post("/tests/{id}/submit", learningHandler.SubmitTest)
 		r.Get("/projects/{id}", learningHandler.GetProject)
+		r.Post("/projects/{id}/submission", learningHandler.SubmitProject)
 		r.Get("/profile", profileHandler.GetProfile)
 		r.Put("/profile", profileHandler.UpdateProfile)
 		r.Put("/profile/teacher/schedule", profileHandler.UpdateTeacherSchedule)
@@ -487,10 +495,13 @@ func main() {
 		r.Get("/chat/ws", chatHandler.ConnectToChat)
 		r.Get("/chat/history", chatHandler.GetChatHistory)
 
+		r.Get("/teacher/certificates", learningHandler.GetTeacherCertificates)
+
 		r.Get("/api/teachers", learningHandler.GetTeachers)
 		r.Get("/api/teachers/{id}", learningHandler.GetTeacherDetails)
 		r.Post("/api/teachers/{id}/reviews", learningHandler.AddReview)
 		r.Get("/api/teacher/profile", learningHandler.GetTeacherDashboard)
+		r.Get("/api/teacher/certificates", learningHandler.GetTeacherCertificates)
 		r.Get("/api/teacher/monthly-report", teacherDashboardHandler.GetTeacherMonthlyReport)
 		r.Get("/api/dashboard/home", dashboardHandler.GetUserHome)
 		r.Get("/api/my-courses", learningHandler.GetMyCourses)
@@ -499,7 +510,9 @@ func main() {
 		r.Post("/api/lessons/{id}/assignment", learningHandler.SubmitAssignment)
 		r.Post("/api/lessons/{id}/attendance", learningHandler.SetLessonAttendance)
 		r.Get("/api/tests/{id}", learningHandler.GetTest)
+		r.Post("/api/tests/{id}/submit", learningHandler.SubmitTest)
 		r.Get("/api/projects/{id}", learningHandler.GetProject)
+		r.Post("/api/projects/{id}/submission", learningHandler.SubmitProject)
 		r.Get("/api/profile", profileHandler.GetProfile)
 		r.Put("/api/profile", profileHandler.UpdateProfile)
 		r.Put("/api/profile/teacher/schedule", profileHandler.UpdateTeacherSchedule)
@@ -514,6 +527,14 @@ func main() {
 		r.Post("/api/access-requests", accessHandler.CreateAccessRequest)
 
 		r.Get("/api/banner/active", bannerHandler.GetActiveBanners)
+
+		r.Get("/api/students/{studentId}/freeze-status", freezeHandler.GetStudentFreezeStatus)
+		r.Get("/api/statistics/students/{studentId}", statisticsHandler.GetStudentStatistics)
+		r.Get("/api/courses", learningHandler.GetAllCourses)
+
+		r.Get("/students/{studentId}/freeze-status", freezeHandler.GetStudentFreezeStatus)
+		r.Get("/statistics/students/{studentId}", statisticsHandler.GetStudentStatistics)
+		r.Get("/courses", learningHandler.GetAllCourses)
 	})
 
 	r.Get("/swagger/*", httpSwagger.Handler(
