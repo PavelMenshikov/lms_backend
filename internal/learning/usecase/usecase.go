@@ -110,12 +110,20 @@ func (uc *LearningUseCase) AddReview(ctx context.Context, input AddReviewInput) 
 	}
 	return uc.repo.AddTeacherReview(ctx, review)
 }
-func (uc *LearningUseCase) GetTest(ctx context.Context, testID string) (*domain.Test, error) {
-	return uc.repo.GetTestByID(ctx, testID)
+func (uc *LearningUseCase) GetProject(ctx context.Context, projectID string) (*domain.Project, error) {
+	p, err := uc.repo.GetProjectByID(ctx, projectID)
+	if err != nil {
+		return nil, nil
+	}
+	return p, nil
 }
 
-func (uc *LearningUseCase) GetProject(ctx context.Context, projectID string) (*domain.Project, error) {
-	return uc.repo.GetProjectByID(ctx, projectID)
+func (uc *LearningUseCase) GetTest(ctx context.Context, testID string) (*domain.Test, error) {
+	t, err := uc.repo.GetTestByID(ctx, testID)
+	if err != nil {
+		return nil, nil
+	}
+	return t, nil
 }
 
 func (uc *LearningUseCase) GetAllCourses(ctx context.Context) ([]*domain.Course, error) {

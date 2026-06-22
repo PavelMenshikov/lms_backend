@@ -30,7 +30,13 @@ func (r *TeacherDashboardRepoImpl) GetMonthlyReport(ctx context.Context, teacher
 	}
 
 	monthStart := fmt.Sprintf("%d-%02d-01", year, month)
-	monthEnd := fmt.Sprintf("%d-%02d-01", year, month+1)
+	nextMonth := month + 1
+	nextYear := year
+	if nextMonth > 12 {
+		nextMonth = 1
+		nextYear++
+	}
+	monthEnd := fmt.Sprintf("%d-%02d-01", nextYear, nextMonth)
 
 	prevMonth := month - 1
 	prevYear := year
@@ -39,7 +45,13 @@ func (r *TeacherDashboardRepoImpl) GetMonthlyReport(ctx context.Context, teacher
 		prevYear--
 	}
 	prevStart := fmt.Sprintf("%d-%02d-01", prevYear, prevMonth)
-	prevEnd := fmt.Sprintf("%d-%02d-01", prevYear, prevMonth+1)
+	prevEndMonth := prevMonth + 1
+	prevEndYear := prevYear
+	if prevEndMonth > 12 {
+		prevEndMonth = 1
+		prevEndYear++
+	}
+	prevEnd := fmt.Sprintf("%d-%02d-01", prevEndYear, prevEndMonth)
 
 	query := `
 	WITH date_range AS (

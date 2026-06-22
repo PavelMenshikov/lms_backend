@@ -100,7 +100,10 @@ func (uc *DashboardUseCase) GetCuratorDashboard(ctx context.Context, curatorID s
 	})
 	eg.Go(func() (err error) {
 		d.zones, err = uc.repo.GetCuratorPerformanceZones(egCtx, curatorID)
-		return err
+		if err != nil {
+			d.zones = domain.PerformanceZones{}
+		}
+		return nil
 	})
 
 	if err := eg.Wait(); err != nil {

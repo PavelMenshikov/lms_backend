@@ -51,7 +51,11 @@ func (h *DashboardHandler) GetUserHome(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} domain.CuratorDashboardData
 // @Router /admin/curator/dashboard [get]
 func (h *DashboardHandler) GetCuratorDashboard(w http.ResponseWriter, r *http.Request) {
-	userCtxData := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	userCtxData, ok := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 
 	data, err := h.uc.GetCuratorDashboard(r.Context(), userCtxData.UserID)
 	if err != nil {

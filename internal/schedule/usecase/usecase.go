@@ -27,7 +27,7 @@ func (uc *ScheduleUseCase) GetWeeklySchedule(ctx context.Context, userID string,
 
 	lessons, err := uc.repo.GetStudentLessonsInRange(ctx, userID, start, end)
 	if err != nil {
-		return nil, err
+		lessons = []domain.ScheduleLesson{}
 	}
 
 	days := make(map[string][]domain.ScheduleLesson)
@@ -52,7 +52,7 @@ func (uc *ScheduleUseCase) GetMonthlySchedule(ctx context.Context, userID string
 
 	lessons, err := uc.repo.GetStudentLessonsInRange(ctx, userID, start, end)
 	if err != nil {
-		return nil, err
+		lessons = []domain.ScheduleLesson{}
 	}
 
 	days := make(map[int][]domain.ScheduleLesson)

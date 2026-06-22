@@ -31,11 +31,10 @@ func (r *ProfileRepoImpl) GetProfile(ctx context.Context, userID string) (*domai
 			u.id, u.first_name, u.last_name, u.first_name || ' ' || u.last_name as full_name,
 			u.email, u.role, u.created_at,
 			COALESCE(u.phone, ''), COALESCE(u.city, ''), COALESCE(u.language, 'ru'), COALESCE(u.gender, ''), 
-			COALESCE(u.birth_date, '0001-01-01 00:00:00Z'), COALESCE(u.school_name, ''),
+			COALESCE(u.birth_date, '0001-01-01 00:00:00'::timestamp), COALESCE(u.school_name, ''),
 			COALESCE(u.experience_years, 0), COALESCE(u.whatsapp_link, ''), COALESCE(u.telegram_link, ''), 
 			COALESCE(u.avatar_url, ''),
-			COALESCE(ROUND(tr.avg_rating, 1), 0.0) as rating,
-			COALESCE(u.discord_username, '')
+			COALESCE(ROUND(tr.avg_rating, 1), 0.0) as rating
 		FROM users u
 		LEFT JOIN (SELECT teacher_id, AVG(rating) as avg_rating FROM teacher_reviews GROUP BY teacher_id) tr ON tr.teacher_id = u.id
 		WHERE u.id = $1
@@ -46,7 +45,7 @@ func (r *ProfileRepoImpl) GetProfile(ctx context.Context, userID string) (*domai
 		&u.Phone, &u.City, &u.Language, &u.Gender,
 		&u.BirthDate, &u.SchoolName,
 		&u.ExperienceYears, &u.Whatsapp, &u.Telegram, &u.AvatarURL,
-		&u.Rating, &u.DiscordUsername,
+		&u.Rating,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -59,7 +58,7 @@ func (r *ProfileRepoImpl) GetProfile(ctx context.Context, userID string) (*domai
 		// Fetch parents
 		parentRows, err := r.db.QueryContext(ctx, `
 			SELECT u.first_name || ' ' || u.last_name, COALESCE(u.phone, ''), u.email
-			FROM child_parent_links cpl
+			FROM child_parent_link cpl
 			JOIN users u ON cpl.parent_id = u.id
 			WHERE cpl.child_id = $1
 		`, userID)

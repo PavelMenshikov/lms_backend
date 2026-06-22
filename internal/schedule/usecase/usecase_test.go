@@ -40,13 +40,16 @@ func TestGetWeeklySchedule(t *testing.T) {
 		}
 	})
 
-	t.Run("repo error propagates", func(t *testing.T) {
+	t.Run("repo error returns empty schedule", func(t *testing.T) {
 		repo.GetStudentLessonsInRangeFunc = func(ctx context.Context, userID string, start, end time.Time) ([]domain.ScheduleLesson, error) {
 			return nil, errors.New("db error")
 		}
-		_, err := uc.GetWeeklySchedule(context.Background(), "user-1", monday)
-		if err == nil {
-			t.Error("expected error")
+		sched, err := uc.GetWeeklySchedule(context.Background(), "user-1", monday)
+		if err != nil {
+			t.Fatalf("expected graceful degradation, got error: %v", err)
+		}
+		if len(sched.Days) != 0 {
+			t.Error("expected empty days on error")
 		}
 	})
 
@@ -91,10 +94,13 @@ func TestGetMonthlySchedule(t *testing.T) {
 		}
 	})
 
-	t.Run("repo error", func(t *testing.T) {
-		_, err := uc.GetMonthlySchedule(context.Background(), "fail", 2026, 6)
-		if err == nil {
-			t.Error("expected error")
+	t.Run("repo error returns empty schedule", func(t *testing.T) {
+		sched, err := uc.GetMonthlySchedule(context.Background(), "fail", 2026, 6)
+		if err != nil {
+			t.Fatalf("expected graceful degradation, got error: %v", err)
+		}
+		if len(sched.Days) != 0 {
+			t.Error("expected empty days on error")
 		}
 	})
 

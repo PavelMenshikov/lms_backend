@@ -181,7 +181,11 @@ func (r *freezeRepository) GetStudentFreezeStatus(ctx context.Context, studentID
 		&period.EndDate, &period.IsActive, &period.CreatedBy, &period.CreatedAt, &period.UpdatedAt,
 	)
 	if err == sql.ErrNoRows {
-		return nil, nil
+		return &domain.FreezePeriod{
+			UsedDays:      0,
+			RemainingDays: 0,
+			IsActive:      false,
+		}, nil
 	}
 	if err != nil {
 		return nil, err
