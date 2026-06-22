@@ -143,6 +143,11 @@ func (h *ChatHandler) GetChatHistory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if studentID == "" {
+		http.Error(w, "student_id is required for staff", http.StatusBadRequest)
+		return
+	}
+
 	limit, _ := strconv.Atoi(limitStr)
 	offset, _ := strconv.Atoi(offsetStr)
 
