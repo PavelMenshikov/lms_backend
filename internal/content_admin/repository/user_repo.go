@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -182,6 +183,16 @@ func (r *ContentAdminRepoImpl) GetDetailedStudentList(ctx context.Context, filte
 		COALESCE(MIN(par.phone), '') as parent_phone,
 		COALESCE(MIN(par.first_name || ' ' || par.last_name), '') as parent_name,
 		COALESCE(MIN(par.email), '') as parent_email,
+		COALESCE(
+			JSONB_AGG(
+				DISTINCT jsonb_build_object(
+					'full_name', par.first_name || ' ' || par.last_name,
+					'phone', par.phone,
+					'email', par.email
+				)
+			) FILTER (WHERE par.id IS NOT NULL),
+			'[]'::jsonb
+		) as parents,
 		COALESCE(u.city, '') as city, 
 		COALESCE(u.school_name, '') as school, 
 		COALESCE(u.language, '') as language,
@@ -224,15 +235,18 @@ func (r *ContentAdminRepoImpl) GetDetailedStudentList(ctx context.Context, filte
 	var list []*domain.StudentTableItem
 	for rows.Next() {
 		item := &domain.StudentTableItem{}
+		var parentsBytes []byte
 		err := rows.Scan(
 			&item.ID, &item.Photo, &item.FullName, &item.CreatedAt, &item.Gender, &item.Age,
 			&item.Status, &item.Course, &item.Group, &item.Curator, &item.Teacher, &item.Stream,
 			&item.Performance, &item.ParentPhone, &item.ParentName, &item.ParentEmail,
+			&parentsBytes,
 			&item.City, &item.School, &item.Language,
 			&item.Phone, &item.Email,
 			&item.IntroBroadcastURL, &item.GraduationBroadcastURL, &item.Balance,
 			&item.Zone, &item.SubscriptionEndDate,
 		)
+		item.Parents = json.RawMessage(parentsBytes)
 		if item.SubscriptionEndDate != nil && item.SubscriptionEndDate.After(time.Now()) {
 			item.SubscriptionStatus = "active"
 		} else if item.SubscriptionEndDate != nil {
