@@ -26,7 +26,11 @@ func NewDashboardHandler(uc *usecase.DashboardUseCase) *DashboardHandler {
 // @Success 200 {object} domain.HomeDashboard
 // @Router /dashboard/home [get]
 func (h *DashboardHandler) GetUserHome(w http.ResponseWriter, r *http.Request) {
-	userCtxData := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	userCtxData, ok := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	if !ok || userCtxData == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 
 	user := &domain.User{
 		ID:   userCtxData.UserID,
@@ -52,8 +56,13 @@ func (h *DashboardHandler) GetUserHome(w http.ResponseWriter, r *http.Request) {
 // @Router /admin/curator/dashboard [get]
 func (h *DashboardHandler) GetCuratorDashboard(w http.ResponseWriter, r *http.Request) {
 	userCtxData, ok := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
-	if !ok {
+	if !ok || userCtxData == nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	if userCtxData.UserID == "" {
+		http.Error(w, "Forbidden: empty user id", http.StatusForbidden)
 		return
 	}
 
