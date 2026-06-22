@@ -5,6 +5,14 @@ on:
     branches:
       - master
 
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GO_VERSION: stable
+  DEPLOY_PATH: /root/projects/cap-ed-backend
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -15,10 +23,10 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: stable
+          go-version: ${{ env.GO_VERSION }}
 
       - name: Run tests
-        run: go test -count=1 -timeout 120s ./internal/...
+        run: go test -count=1 -timeout 120s -race ./internal/...
 
       - name: Build check
         run: go build ./cmd/...
@@ -26,17 +34,29 @@ jobs:
   deploy:
     needs: test
     runs-on: ubuntu-latest
+    if: success()
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       - name: Deploy to Server via SSH
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          timeout: 120s
+          command_timeout: 300s
+          retry: 2
           script: |
-            cd /root/projects/cap-ed-backend
-            git pull origin master
-            docker compose up -d --build
+            set -e
+            echo "=== Pulling latest code ==="
+            cd ${{ env.DEPLOY_PATH }}
+            git fetch origin master
+            git reset --hard origin/master
+
+            echo "=== Rebuilding containers ==="
+            docker compose up -d --build --remove-orphans
+
+            echo "=== Checking services ==="
+            docker compose ps --format "table {{.Name}}\t{{.Status}}\t{{.Ports}}"
+
+            echo "=== Deploy complete ==="
