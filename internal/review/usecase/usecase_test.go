@@ -15,7 +15,7 @@ func TestReviewUseCase_GetPendingList(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("EmptyList", func(t *testing.T) {
-		list, err := uc.GetPendingList(ctx, "teacher-1", "teacher")
+		list, err := uc.GetPendingList(ctx, "teacher-1", "teacher", "")
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -55,7 +55,7 @@ func TestReviewUseCase_Evaluate(t *testing.T) {
 			t.Fatalf("unexpected error: %v", err)
 		}
 
-		list, _ := uc.GetPendingList(ctx, "teacher-1", "teacher")
+		list, _ := uc.GetPendingList(ctx, "teacher-1", "teacher", "")
 		for _, s := range list {
 			if s.ID == "sub-2" && s.Grade != 100 {
 				t.Errorf("expected grade 100 for invalid grade, got %d", s.Grade)
