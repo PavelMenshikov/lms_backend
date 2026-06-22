@@ -41,10 +41,18 @@ func (h *AccessHandler) CreateAccessRequest(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	userCtxData := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
-	userID := userCtxData.UserID
+	if req.ResourceType == "" || req.ResourceID == "" {
+		http.Error(w, "resource_type and resource_id are required", http.StatusBadRequest)
+		return
+	}
 
-	err := h.uc.CreateRequest(r.Context(), userID, req.ResourceType, req.ResourceID, req.Reason)
+	userCtxData, ok := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	if !ok || userCtxData == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	err := h.uc.CreateRequest(r.Context(), userCtxData.UserID, req.ResourceType, req.ResourceID, req.Reason)
 	if err != nil {
 		httperror.Internal(w, err)
 		return
@@ -86,10 +94,13 @@ func (h *AccessHandler) ApproveRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userCtxData := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
-	userID := userCtxData.UserID
+	userCtxData, ok := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	if !ok || userCtxData == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 
-	err := h.uc.ApproveRequest(r.Context(), requestID, userID, req.ReviewComment)
+	err := h.uc.ApproveRequest(r.Context(), requestID, userCtxData.UserID, req.ReviewComment)
 	if err != nil {
 		httperror.Internal(w, err)
 		return
@@ -115,10 +126,13 @@ func (h *AccessHandler) RejectRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userCtxData := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
-	userID := userCtxData.UserID
+	userCtxData, ok := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	if !ok || userCtxData == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 
-	err := h.uc.RejectRequest(r.Context(), requestID, userID, req.ReviewComment)
+	err := h.uc.RejectRequest(r.Context(), requestID, userCtxData.UserID, req.ReviewComment)
 	if err != nil {
 		httperror.Internal(w, err)
 		return

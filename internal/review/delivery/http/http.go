@@ -33,9 +33,13 @@ type EvaluateRequest struct {
 // @Success 200 {array} domain.SubmissionRecord
 // @Router /staff/submissions [get]
 func (h *ReviewHandler) GetPendingSubmissions(w http.ResponseWriter, r *http.Request) {
-	userCtx := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
-	studentID := r.URL.Query().Get("student_id")
+	userCtx, ok := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	if !ok || userCtx == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 
+	studentID := r.URL.Query().Get("student_id")
 	list, err := h.uc.GetPendingList(r.Context(), userCtx.UserID, string(userCtx.Role), studentID)
 	if err != nil {
 		httperror.Internal(w, err)
@@ -55,7 +59,11 @@ func (h *ReviewHandler) GetPendingSubmissions(w http.ResponseWriter, r *http.Req
 // @Success 200 {object} map[string]string
 // @Router /staff/submissions/{id}/evaluate [post]
 func (h *ReviewHandler) EvaluateSubmission(w http.ResponseWriter, r *http.Request) {
-	userCtx := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	userCtx, ok := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	if !ok || userCtx == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 
 	if userCtx.Role == domain.RoleCurator {
 		http.Error(w, "Forbidden: Curators cannot evaluate homework", http.StatusForbidden)

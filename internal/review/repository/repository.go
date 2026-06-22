@@ -37,13 +37,12 @@ func (r *ReviewRepoImpl) GetPendingSubmissions(ctx context.Context, staffID stri
 		JOIN lessons l ON a.lesson_id = l.id
 		JOIN modules m ON l.module_id = m.id
 		JOIN courses c ON m.course_id = c.id
-		LEFT JOIN course_teachers ct ON c.id = ct.course_id
 		WHERE 1=1
 	`
 	var args []interface{}
 	argIdx := 1
 	if role == "teacher" {
-		query += fmt.Sprintf(" AND ct.teacher_id = $%d", argIdx)
+		query += fmt.Sprintf(" AND c.id IN (SELECT DISTINCT uc.course_id FROM groups g JOIN user_courses uc ON uc.group_id = g.id WHERE g.teacher_id = $%d)", argIdx)
 		args = append(args, staffID)
 		argIdx++
 	}
