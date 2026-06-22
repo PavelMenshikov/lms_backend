@@ -77,7 +77,11 @@ func (h *BannerHandler) CreateBanner(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userCtxData := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	userCtxData, ok := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	if !ok || userCtxData == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 	userID := userCtxData.UserID
 
 	err := h.uc.CreateBanner(r.Context(), req.Title, req.Content, req.Type, req.IsActive, req.Priority, req.StartDate, req.EndDate, req.TargetRoles, userID)

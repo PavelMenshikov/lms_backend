@@ -124,7 +124,11 @@ func (h *ChatHandler) ConnectToChat(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {array} domain.ChatMessage
 // @Router /chat/history [get]
 func (h *ChatHandler) GetChatHistory(w http.ResponseWriter, r *http.Request) {
-	userCtxData := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	userCtxData, ok := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	if !ok || userCtxData == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 	moduleID := r.URL.Query().Get("module_id")
 	studentID := r.URL.Query().Get("student_id")
 	limitStr := r.URL.Query().Get("limit")
@@ -132,6 +136,11 @@ func (h *ChatHandler) GetChatHistory(w http.ResponseWriter, r *http.Request) {
 
 	if userCtxData.Role == domain.RoleStudent {
 		studentID = userCtxData.UserID
+	}
+
+	if moduleID == "" {
+		http.Error(w, "module_id is required", http.StatusBadRequest)
+		return
 	}
 
 	limit, _ := strconv.Atoi(limitStr)

@@ -39,7 +39,11 @@ func (h *CommentHandler) CreateComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userCtxData := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	userCtxData, ok := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	if !ok || userCtxData == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 	userID := userCtxData.UserID
 
 	err := h.uc.CreateComment(r.Context(), req.StudentID, req.LessonID, userID, req.RecipientID, req.Content, req.ParentCommentID)

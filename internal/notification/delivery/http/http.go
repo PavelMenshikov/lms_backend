@@ -40,7 +40,11 @@ func (h *NotificationHandler) CreateNotification(w http.ResponseWriter, r *http.
 		return
 	}
 
-	userCtxData := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	userCtxData, ok := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	if !ok || userCtxData == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 	userID := userCtxData.UserID
 
 	err := h.uc.CreateNotification(r.Context(), req.RecipientID, &userID, req.Title, req.Content, req.Type, req.LinkURL)
@@ -59,7 +63,11 @@ func (h *NotificationHandler) CreateNotification(w http.ResponseWriter, r *http.
 // @Success 200 {array} domain.Notification
 // @Router /api/notifications [get]
 func (h *NotificationHandler) GetNotifications(w http.ResponseWriter, r *http.Request) {
-	userCtxData := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	userCtxData, ok := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	if !ok || userCtxData == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 	userID := userCtxData.UserID
 
 	notifications, err := h.uc.GetUserNotifications(r.Context(), userID)

@@ -38,7 +38,11 @@ type UpdateProfileRequest struct {
 // @Success 200 {object} domain.User
 // @Router /profile [get]
 func (h *ProfileHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
-	userData := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	userData, ok := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	if !ok || userData == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 	profile, err := h.uc.GetMyProfile(r.Context(), userData.UserID)
 	if err != nil {
 		httperror.Internal(w, err)
@@ -72,7 +76,11 @@ func (h *ProfileHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userData := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	userData, ok := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	if !ok || userData == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 
 	var fileHeader *multipart.FileHeader
 	if f, head, err := r.FormFile("avatar"); err == nil {
@@ -111,7 +119,11 @@ func (h *ProfileHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} map[string]string
 // @Router /profile/teacher/schedule [put]
 func (h *ProfileHandler) UpdateTeacherSchedule(w http.ResponseWriter, r *http.Request) {
-	userData := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	userData, ok := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	if !ok || userData == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 	var rawData map[string]interface{}
 	if err := json.NewDecoder(r.Body).Decode(&rawData); err != nil {
 		httperror.BadRequest(w, err)

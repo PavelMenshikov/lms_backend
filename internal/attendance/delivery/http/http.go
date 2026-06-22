@@ -96,7 +96,11 @@ func (h *AttendanceHandler) MarkLessonAttendance(w http.ResponseWriter, r *http.
 		return
 	}
 
-	userCtxData := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	userCtxData, ok := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	if !ok || userCtxData == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 	userID := userCtxData.UserID
 
 	err := h.uc.MarkAttendance(r.Context(), lessonID, req.StudentID, req.Status, req.Reason, req.Comment, userID)

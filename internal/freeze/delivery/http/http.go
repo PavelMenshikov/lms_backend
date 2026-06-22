@@ -55,7 +55,11 @@ func (h *FreezeHandler) CreateFreezeRequest(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	userCtxData := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	userCtxData, ok := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	if !ok || userCtxData == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 	userID := userCtxData.UserID
 
 	err = h.uc.CreateRequest(r.Context(), req.StudentID, userID, startDate, endDate, req.Reason)
@@ -100,7 +104,11 @@ func (h *FreezeHandler) ApproveRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userCtxData := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	userCtxData, ok := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	if !ok || userCtxData == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 	userID := userCtxData.UserID
 
 	err := h.uc.ApproveRequest(r.Context(), requestID, userID, req.ReviewComment)
@@ -129,7 +137,11 @@ func (h *FreezeHandler) RejectRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userCtxData := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	userCtxData, ok := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	if !ok || userCtxData == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 	userID := userCtxData.UserID
 
 	err := h.uc.RejectRequest(r.Context(), requestID, userID, req.ReviewComment)

@@ -31,7 +31,11 @@ func NewLearningHandler(uc *usecase.LearningUseCase) *LearningHandler {
 // @Success 200 {array} domain.StudentCoursePreview
 // @Router /my-courses [get]
 func (h *LearningHandler) GetMyCourses(w http.ResponseWriter, r *http.Request) {
-	userCtxData := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	userCtxData, ok := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	if !ok || userCtxData == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 	courses, err := h.uc.GetMyCourses(r.Context(), userCtxData.UserID)
 	if err != nil {
 		httperror.Internal(w, err)
@@ -50,7 +54,11 @@ func (h *LearningHandler) GetMyCourses(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} domain.StudentCourseView
 // @Router /courses/{id} [get]
 func (h *LearningHandler) GetCourseContent(w http.ResponseWriter, r *http.Request) {
-	userCtxData := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	userCtxData, ok := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	if !ok || userCtxData == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 	courseID := chi.URLParam(r, "id")
 	view, err := h.uc.GetCourseContent(r.Context(), courseID, userCtxData.UserID)
 	if err != nil {
@@ -70,7 +78,11 @@ func (h *LearningHandler) GetCourseContent(w http.ResponseWriter, r *http.Reques
 // @Success 200 {object} domain.StudentLessonDetail
 // @Router /lessons/{id} [get]
 func (h *LearningHandler) GetLessonDetail(w http.ResponseWriter, r *http.Request) {
-	userCtxData := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	userCtxData, ok := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	if !ok || userCtxData == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 	lessonID := chi.URLParam(r, "id")
 	lesson, err := h.uc.GetLessonDetail(r.Context(), lessonID, userCtxData.UserID)
 	if err != nil {
@@ -98,7 +110,11 @@ func (h *LearningHandler) SubmitAssignment(w http.ResponseWriter, r *http.Reques
 		httperror.BadRequest(w, err)
 		return
 	}
-	userCtxData := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	userCtxData, ok := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	if !ok || userCtxData == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 	lessonID := chi.URLParam(r, "id")
 
 	files := r.MultipartForm.File["file"]
@@ -137,7 +153,11 @@ type SetAttendanceRequest struct {
 // @Success 200 {object} map[string]string
 // @Router /lessons/{id}/attendance [post]
 func (h *LearningHandler) SetLessonAttendance(w http.ResponseWriter, r *http.Request) {
-	userCtxData := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	userCtxData, ok := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	if !ok || userCtxData == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 	lessonID := chi.URLParam(r, "id")
 
 	var req SetAttendanceRequest
@@ -215,7 +235,11 @@ type ReviewRequest struct {
 // @Router /teachers/{id}/reviews [post]
 func (h *LearningHandler) AddReview(w http.ResponseWriter, r *http.Request) {
 	teacherID := chi.URLParam(r, "id")
-	userCtxData := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	userCtxData, ok := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	if !ok || userCtxData == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 	var req ReviewRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		httperror.BadRequest(w, err)

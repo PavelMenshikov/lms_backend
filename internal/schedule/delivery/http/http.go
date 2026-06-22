@@ -29,7 +29,11 @@ func NewScheduleHandler(uc *usecase.ScheduleUseCase) *ScheduleHandler {
 // @Success 200 {object} domain.WeeklySchedule
 // @Router /schedule/weekly [get]
 func (h *ScheduleHandler) GetWeeklySchedule(w http.ResponseWriter, r *http.Request) {
-	userData := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	userData, ok := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	if !ok || userData == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 
 	dateStr := r.URL.Query().Get("date")
 	targetDate := time.Now()
@@ -59,7 +63,11 @@ func (h *ScheduleHandler) GetWeeklySchedule(w http.ResponseWriter, r *http.Reque
 // @Success 200 {object} domain.MonthlySchedule
 // @Router /schedule/monthly [get]
 func (h *ScheduleHandler) GetMonthlySchedule(w http.ResponseWriter, r *http.Request) {
-	userData := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	userData, ok := r.Context().Value(authMiddleware.ContextUserDataKey).(*authMiddleware.UserContextData)
+	if !ok || userData == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 
 	now := time.Now()
 	year, _ := strconv.Atoi(r.URL.Query().Get("year"))
