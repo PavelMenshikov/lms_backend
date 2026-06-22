@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"golang.org/x/sync/errgroup"
@@ -79,29 +80,38 @@ func (uc *DashboardUseCase) GetCuratorDashboard(ctx context.Context, curatorID s
 	var d curatorData
 	eg.Go(func() (err error) {
 		d.groups, err = uc.repo.GetCuratorGroups(egCtx, curatorID)
-		if err == nil && d.groups == nil {
+		if err != nil {
+			return fmt.Errorf("GetCuratorGroups: %w", err)
+		}
+		if d.groups == nil {
 			d.groups = []domain.Group{}
 		}
-		return err
+		return nil
 	})
 	eg.Go(func() (err error) {
 		d.attendance, err = uc.repo.GetCuratorAttendanceStats(egCtx, curatorID)
-		if err == nil && d.attendance == nil {
+		if err != nil {
+			return fmt.Errorf("GetCuratorAttendanceStats: %w", err)
+		}
+		if d.attendance == nil {
 			d.attendance = []domain.CuratorGroupAttendance{}
 		}
-		return err
+		return nil
 	})
 	eg.Go(func() (err error) {
 		d.homework, err = uc.repo.GetCuratorHomeworkStats(egCtx, curatorID)
-		if err == nil && d.homework == nil {
+		if err != nil {
+			return fmt.Errorf("GetCuratorHomeworkStats: %w", err)
+		}
+		if d.homework == nil {
 			d.homework = []domain.CuratorHomeworkStats{}
 		}
-		return err
+		return nil
 	})
 	eg.Go(func() (err error) {
 		d.zones, err = uc.repo.GetCuratorPerformanceZones(egCtx, curatorID)
 		if err != nil {
-			d.zones = domain.PerformanceZones{}
+			return fmt.Errorf("GetCuratorPerformanceZones: %w", err)
 		}
 		return nil
 	})
