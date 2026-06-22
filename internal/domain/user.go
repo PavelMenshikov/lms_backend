@@ -1,9 +1,6 @@
 package domain
 
-import (
-	"encoding/json"
-	"time"
-)
+import "time"
 
 type Role string
 
@@ -74,10 +71,10 @@ type StudentTableItem struct {
 	Teacher                string    `json:"teacher"`
 	Stream                 string    `json:"stream"`
 	Performance            int       `json:"performance"`
-	ParentPhone            string          `json:"parent_phone"`
-	ParentName             string          `json:"parent_name"`
-	ParentEmail            string          `json:"parent_email"`
-	Parents                json.RawMessage `json:"parents"`
+	ParentPhone            string                   `json:"parent_phone"`
+	ParentName             string                   `json:"parent_name"`
+	ParentEmail            string                   `json:"parent_email"`
+	Parents                []map[string]interface{} `json:"parents"`
 	City                   string    `json:"city"`
 	School                 string    `json:"school"`
 	Language               string    `json:"language"`

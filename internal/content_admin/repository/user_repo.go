@@ -235,18 +235,22 @@ func (r *ContentAdminRepoImpl) GetDetailedStudentList(ctx context.Context, filte
 	var list []*domain.StudentTableItem
 	for rows.Next() {
 		item := &domain.StudentTableItem{}
-		var parentsBytes []byte
+		var parentsJSON string
 		err := rows.Scan(
 			&item.ID, &item.Photo, &item.FullName, &item.CreatedAt, &item.Gender, &item.Age,
 			&item.Status, &item.Course, &item.Group, &item.Curator, &item.Teacher, &item.Stream,
 			&item.Performance, &item.ParentPhone, &item.ParentName, &item.ParentEmail,
-			&parentsBytes,
+			&parentsJSON,
 			&item.City, &item.School, &item.Language,
 			&item.Phone, &item.Email,
 			&item.IntroBroadcastURL, &item.GraduationBroadcastURL, &item.Balance,
 			&item.Zone, &item.SubscriptionEndDate,
 		)
-		item.Parents = json.RawMessage(parentsBytes)
+		if parentsJSON != "" {
+			json.Unmarshal([]byte(parentsJSON), &item.Parents)
+		} else {
+			item.Parents = []map[string]interface{}{}
+		}
 		if item.SubscriptionEndDate != nil && item.SubscriptionEndDate.After(time.Now()) {
 			item.SubscriptionStatus = "active"
 		} else if item.SubscriptionEndDate != nil {
