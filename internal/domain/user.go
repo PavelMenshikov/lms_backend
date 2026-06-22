@@ -84,6 +84,7 @@ type StudentTableItem struct {
 	Balance                float64   `json:"balance"`
 	Zone                   string    `json:"zone"`
 	SubscriptionEndDate    *time.Time `json:"subscription_end_date,omitempty"`
+	SubscriptionStatus     string    `json:"subscription_status"`
 }
 
 type TeacherTableItem struct {

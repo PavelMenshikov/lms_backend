@@ -113,8 +113,8 @@ func (r *TeacherDashboardRepoImpl) GetMonthlyReport(ctx context.Context, teacher
 	)
 	SELECT 
 		lc.total_lessons,
-		CASE WHEN EXTRACT(DAY FROM (date_trunc('month', start_date) + interval '1 month' - date_trunc('month', start_date))) > 0
-			 THEN ROUND(lc.total_lessons * 7.0 / EXTRACT(DAY FROM (date_trunc('month', start_date) + interval '1 month' - date_trunc('month', start_date))), 1)
+		CASE WHEN EXTRACT(DAY FROM (date_trunc('month', $2::date) + interval '1 month' - date_trunc('month', $2::date))) > 0
+			 THEN ROUND(lc.total_lessons * 7.0 / EXTRACT(DAY FROM (date_trunc('month', $2::date) + interval '1 month' - date_trunc('month', $2::date))), 1)
 			 ELSE 0 END,
 		sc.substitutions_count, sc.replaced_count,
 		sc.substitutions_count - COALESCE(psc.sub, 0),

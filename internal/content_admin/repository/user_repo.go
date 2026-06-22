@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"lms_backend/internal/domain"
 )
@@ -164,33 +165,37 @@ func (r *ContentAdminRepoImpl) UnlinkAllParents(ctx context.Context, studentID s
 
 func (r *ContentAdminRepoImpl) GetDetailedStudentList(ctx context.Context, filter domain.UserFilter) ([]*domain.StudentTableItem, error) {
 	query := `
-		SELECT 
-			u.id, 
-			COALESCE(u.avatar_url, '') as photo, 
-			COALESCE(u.first_name || ' ' || u.last_name, '') as full_name, 
-			u.created_at, 
-			COALESCE(u.gender, ''),
-			COALESCE(EXTRACT(YEAR FROM AGE(u.birth_date)), 0) as age,
-			COALESCE(STRING_AGG(DISTINCT uc.status, ', '), 'inactive') as status, 
-			COALESCE(STRING_AGG(DISTINCT c.title, ', '), '') as course, 
-			COALESCE(STRING_AGG(DISTINCT g.title, ', '), '') as "group", 
-			COALESCE(STRING_AGG(DISTINCT cur.first_name || ' ' || cur.last_name, ', '), '') as curator,
-			COALESCE(STRING_AGG(DISTINCT teach.first_name || ' ' || teach.last_name, ', '), '') as teacher,
-			COALESCE(STRING_AGG(DISTINCT s.title, ', '), '') as stream,
-			COALESCE(AVG(uc.progress_percent)::INT, 0) as performance,
-			COALESCE(MIN(par.phone), '') as parent_phone,
-			COALESCE(MIN(par.first_name || ' ' || par.last_name), '') as parent_name,
-			COALESCE(MIN(par.email), '') as parent_email,
-			COALESCE(u.city, '') as city, 
-			COALESCE(u.school_name, '') as school, 
-			COALESCE(u.language, '') as language,
-			COALESCE(u.phone, '') as phone, 
-			u.email,
-			COALESCE(u.intro_broadcast_url, ''),
-			COALESCE(u.graduation_broadcast_url, ''),
-			COALESCE(u.balance, 0),
-			COALESCE(u.loss_reason, ''),
-			u.subscription_end_date
+	SELECT 
+		u.id, 
+		COALESCE(u.avatar_url, '') as photo, 
+		COALESCE(u.first_name || ' ' || u.last_name, '') as full_name, 
+		u.created_at, 
+		COALESCE(u.gender, ''),
+		COALESCE(EXTRACT(YEAR FROM AGE(u.birth_date)), 0) as age,
+		COALESCE(STRING_AGG(DISTINCT uc.status, ', '), 'inactive') as status, 
+		COALESCE(STRING_AGG(DISTINCT c.title, ', '), '') as course, 
+		COALESCE(STRING_AGG(DISTINCT g.title, ', '), '') as "group", 
+		COALESCE(STRING_AGG(DISTINCT cur.first_name || ' ' || cur.last_name, ', '), '') as curator,
+		COALESCE(STRING_AGG(DISTINCT teach.first_name || ' ' || teach.last_name, ', '), '') as teacher,
+		COALESCE(STRING_AGG(DISTINCT s.title, ', '), '') as stream,
+		COALESCE(AVG(uc.progress_percent)::INT, 0) as performance,
+		COALESCE(MIN(par.phone), '') as parent_phone,
+		COALESCE(MIN(par.first_name || ' ' || par.last_name), '') as parent_name,
+		COALESCE(MIN(par.email), '') as parent_email,
+		COALESCE(u.city, '') as city, 
+		COALESCE(u.school_name, '') as school, 
+		COALESCE(u.language, '') as language,
+		COALESCE(u.phone, '') as phone, 
+		u.email,
+		COALESCE(u.intro_broadcast_url, ''),
+		COALESCE(u.graduation_broadcast_url, ''),
+		COALESCE(u.balance, 0),
+		CASE 
+			WHEN COALESCE(AVG(uc.progress_percent), 0) >= 80 THEN 'green'
+			WHEN COALESCE(AVG(uc.progress_percent), 0) >= 50 THEN 'yellow'
+			ELSE 'red'
+		END as zone,
+		u.subscription_end_date
 		FROM users u
 		LEFT JOIN user_courses uc ON u.id = uc.user_id
 		LEFT JOIN courses c ON uc.course_id = c.id
@@ -228,6 +233,13 @@ func (r *ContentAdminRepoImpl) GetDetailedStudentList(ctx context.Context, filte
 			&item.IntroBroadcastURL, &item.GraduationBroadcastURL, &item.Balance,
 			&item.Zone, &item.SubscriptionEndDate,
 		)
+		if item.SubscriptionEndDate != nil && item.SubscriptionEndDate.After(time.Now()) {
+			item.SubscriptionStatus = "active"
+		} else if item.SubscriptionEndDate != nil {
+			item.SubscriptionStatus = "expired"
+		} else {
+			item.SubscriptionStatus = "none"
+		}
 		if err != nil {
 			return nil, err
 		}

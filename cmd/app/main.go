@@ -466,6 +466,8 @@ func main() {
 
 		r.Get("/staff/submissions", reviewHandler.GetPendingSubmissions)
 		r.Post("/staff/submissions/{id}/evaluate", reviewHandler.EvaluateSubmission)
+		r.Get("/api/staff/submissions", reviewHandler.GetPendingSubmissions)
+		r.Post("/api/staff/submissions/{id}/evaluate", reviewHandler.EvaluateSubmission)
 	})
 
 	r.Group(func(r chi.Router) {
