@@ -228,7 +228,7 @@ func (r *DashboardRepositoryImpl) GetAttendancePerformanceStats(ctx context.Cont
 
 func (r *DashboardRepositoryImpl) GetCuratorGroups(ctx context.Context, curatorID string) ([]domain.Group, error) {
 	query := `
-		SELECT id, stream_id, COALESCE(curator_id, ''), COALESCE(teacher_id, ''), title, created_at
+		SELECT id::text, stream_id::text, COALESCE(curator_id::text, ''), COALESCE(teacher_id::text, ''), title, created_at
 		FROM groups
 		WHERE curator_id = $1
 		ORDER BY title ASC
