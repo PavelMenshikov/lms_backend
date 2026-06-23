@@ -78,6 +78,7 @@ type CreateLessonRequest struct {
 	OrderNum    int                   `json:"order_num"`
 	ContentText string                `json:"content_text"`
 	Content     []domain.ContentBlock `json:"content"`
+	HasHomework bool                  `json:"has_homework"`
 }
 
 type CancelLessonRequest struct {
@@ -427,6 +428,7 @@ func (h *ContentAdminHandler) CreateLesson(w http.ResponseWriter, r *http.Reques
 			OrderNum:    req.OrderNum,
 			ContentText: req.ContentText,
 			Content:     req.Content,
+			HasHomework: req.HasHomework,
 		}
 
 		id, err := h.uc.CreateLesson(r.Context(), input)
@@ -456,6 +458,8 @@ func (h *ContentAdminHandler) CreateLesson(w http.ResponseWriter, r *http.Reques
 		pH = head
 	}
 
+	parseBool := func(key string) bool { return r.FormValue(key) == "true" || r.FormValue(key) == "on" }
+
 	input := usecase.CreateLessonInput{
 		CourseID:         r.FormValue("course_id"),
 		ModuleID:         r.FormValue("module_id"),
@@ -466,6 +470,7 @@ func (h *ContentAdminHandler) CreateLesson(w http.ResponseWriter, r *http.Reques
 		VideoFile:        vH,
 		PresentationFile: pH,
 		Content:          []domain.ContentBlock{},
+		HasHomework:      parseBool("has_homework"),
 	}
 
 	id, err := h.uc.CreateLesson(r.Context(), input)
@@ -1089,6 +1094,7 @@ func (h *ContentAdminHandler) UpdateLesson(w http.ResponseWriter, r *http.Reques
 		OrderNum:    req.OrderNum,
 		ContentText: req.ContentText,
 		Content:     req.Content,
+		HasHomework: req.HasHomework,
 	}
 
 	if err := h.uc.UpdateLesson(r.Context(), lessonID, input); err != nil {

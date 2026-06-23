@@ -259,7 +259,7 @@ func main() {
 			"http://platform.capedu.kz",
 			"https://platform.capedu.kz",
 		},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "Cookie"},
 		ExposedHeaders:   []string{"Link"},
 		AllowCredentials: true,

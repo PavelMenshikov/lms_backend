@@ -20,8 +20,8 @@ func (r *ContentAdminRepoImpl) CreateLesson(ctx context.Context, lesson *domain.
 		contentJSON = []byte("[]")
 	}
 
-	query := `INSERT INTO lessons (course_id, module_id, teacher_id, title, lesson_time, order_num, video_url, presentation_url, content_text, content, is_published)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id`
+	query := `INSERT INTO lessons (course_id, module_id, teacher_id, title, lesson_time, order_num, video_url, presentation_url, content_text, content, is_published, has_homework)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id`
 
 	err = r.db.QueryRowContext(ctx, query,
 		lesson.CourseID,
@@ -35,6 +35,7 @@ func (r *ContentAdminRepoImpl) CreateLesson(ctx context.Context, lesson *domain.
 		lesson.ContentText,
 		contentJSON,
 		lesson.IsPublished,
+		lesson.HasHomework,
 	).Scan(&newID)
 
 	return newID, err
@@ -49,8 +50,9 @@ func (r *ContentAdminRepoImpl) UpdateLesson(ctx context.Context, lesson *domain.
 	query := `
 		UPDATE lessons 
 		SET title = $1, order_num = $2, video_url = $3, presentation_url = $4, 
-		    content_text = $5, content = $6, is_published = $7, module_id = $8, teacher_id = $9
-		WHERE id = $10`
+		    content_text = $5, content = $6, is_published = $7, module_id = $8, teacher_id = $9,
+		    has_homework = $10
+		WHERE id = $11`
 
 	var tid sql.NullString
 	if lesson.TeacherID != "" {
@@ -59,7 +61,8 @@ func (r *ContentAdminRepoImpl) UpdateLesson(ctx context.Context, lesson *domain.
 
 	_, err = r.db.ExecContext(ctx, query,
 		lesson.Title, lesson.OrderNum, lesson.VideoURL, lesson.PresentationURL,
-		lesson.ContentText, contentJSON, lesson.IsPublished, lesson.ModuleID, tid, lesson.ID,
+		lesson.ContentText, contentJSON, lesson.IsPublished, lesson.ModuleID, tid,
+		lesson.HasHomework, lesson.ID,
 	)
 	return err
 }
@@ -73,11 +76,11 @@ func (r *ContentAdminRepoImpl) GetLessonByID(ctx context.Context, id string) (*d
 	l := &domain.Lesson{}
 	var mid, tid sql.NullString
 	var contentRaw []byte
-	query := `SELECT id, course_id, module_id, teacher_id, title, lesson_time, duration_min, order_num, is_published, video_url, presentation_url, content_text, content 
+	query := `SELECT id, course_id, module_id, teacher_id, title, lesson_time, duration_min, order_num, is_published, video_url, presentation_url, content_text, content, has_homework 
               FROM lessons WHERE id = $1`
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
 		&l.ID, &l.CourseID, &mid, &tid, &l.Title, &l.LessonTime, &l.DurationMin, &l.OrderNum,
-		&l.IsPublished, &l.VideoURL, &l.PresentationURL, &l.ContentText, &contentRaw,
+		&l.IsPublished, &l.VideoURL, &l.PresentationURL, &l.ContentText, &contentRaw, &l.HasHomework,
 	)
 	if err != nil {
 		return nil, err
@@ -96,7 +99,7 @@ func (r *ContentAdminRepoImpl) GetLessonByID(ctx context.Context, id string) (*d
 }
 
 func (r *ContentAdminRepoImpl) GetLessonsByCourseID(ctx context.Context, courseID string) ([]*domain.Lesson, error) {
-	rows, err := r.db.QueryContext(ctx, "SELECT id, course_id, module_id, teacher_id, title, lesson_time, duration_min, order_num, is_published, video_url, presentation_url, content_text, content FROM lessons WHERE course_id = $1 ORDER BY order_num ASC", courseID)
+	rows, err := r.db.QueryContext(ctx, "SELECT id, course_id, module_id, teacher_id, title, lesson_time, duration_min, order_num, is_published, video_url, presentation_url, content_text, content, has_homework FROM lessons WHERE course_id = $1 ORDER BY order_num ASC", courseID)
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +110,7 @@ func (r *ContentAdminRepoImpl) GetLessonsByCourseID(ctx context.Context, courseI
 		var mid, tid sql.NullString
 		var contentRaw []byte
 
-		err := rows.Scan(&l.ID, &l.CourseID, &mid, &tid, &l.Title, &l.LessonTime, &l.DurationMin, &l.OrderNum, &l.IsPublished, &l.VideoURL, &l.PresentationURL, &l.ContentText, &contentRaw)
+		err := rows.Scan(&l.ID, &l.CourseID, &mid, &tid, &l.Title, &l.LessonTime, &l.DurationMin, &l.OrderNum, &l.IsPublished, &l.VideoURL, &l.PresentationURL, &l.ContentText, &contentRaw, &l.HasHomework)
 		if err != nil {
 			return nil, err
 		}
@@ -207,7 +210,35 @@ func (r *ContentAdminRepoImpl) GetTestByID(ctx context.Context, id string) (*dom
 	t := &domain.Test{}
 	err := r.db.QueryRowContext(ctx, "SELECT id, lesson_id, title, description, passing_score, created_at FROM tests WHERE id = $1", id).
 		Scan(&t.ID, &t.LessonID, &t.Title, &t.Description, &t.PassingScore, &t.CreatedAt)
-	return t, err
+	if err != nil {
+		return nil, err
+	}
+	t.Questions = r.getTestQuestions(ctx, id)
+	return t, nil
+}
+
+func (r *ContentAdminRepoImpl) getTestQuestions(ctx context.Context, testID string) []domain.TestQuestion {
+	rows, err := r.db.QueryContext(ctx, "SELECT id, question, options, correct_answer, points FROM test_questions WHERE test_id = $1 ORDER BY created_at ASC", testID)
+	if err != nil {
+		return []domain.TestQuestion{}
+	}
+	defer rows.Close()
+	var questions []domain.TestQuestion
+	for rows.Next() {
+		var q domain.TestQuestion
+		var optionsRaw []byte
+		if err := rows.Scan(&q.ID, &q.Question, &optionsRaw, &q.CorrectAnswer, &q.Points); err != nil {
+			continue
+		}
+		if len(optionsRaw) > 0 {
+			json.Unmarshal(optionsRaw, &q.Options)
+		}
+		if q.Options == nil {
+			q.Options = []string{}
+		}
+		questions = append(questions, q)
+	}
+	return questions
 }
 
 func (r *ContentAdminRepoImpl) GetTestsByCourseID(ctx context.Context, courseID string) ([]domain.Test, error) {

@@ -5,11 +5,18 @@ import (
 	"errors"
 	"fmt"
 	"mime/multipart"
+	"time"
 
 	"lms_backend/internal/domain"
 	"lms_backend/internal/learning/repository"
 	storageService "lms_backend/pkg/storage"
 )
+
+const s3UploadTimeout = 30 * time.Second
+
+func s3Context(ctx context.Context) (context.Context, context.CancelFunc) {
+	return context.WithTimeout(ctx, s3UploadTimeout)
+}
 
 type LearningUseCase struct {
 	repo      repository.LearningRepository
@@ -54,8 +61,10 @@ func (uc *LearningUseCase) SubmitAssignment(ctx context.Context, input SubmitAss
 			return err
 		}
 		defer file.Close()
+		s3Ctx, cancel := s3Context(ctx)
+		defer cancel()
 		s3Key := fmt.Sprintf("submissions/%s_%s_%s", input.UserID, assignmentID, fh.Filename)
-		key, err := uc.s3Storage.UploadFile(ctx, file, s3Key, fh.Size, fh.Header.Get("Content-Type"))
+		key, err := uc.s3Storage.UploadFile(s3Ctx, file, s3Key, fh.Size, fh.Header.Get("Content-Type"))
 		if err != nil {
 			return err
 		}

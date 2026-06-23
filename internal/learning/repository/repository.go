@@ -420,7 +420,35 @@ func (r *LearningRepoImpl) GetTestByID(ctx context.Context, testID string) (*dom
 	t := &domain.Test{}
 	err := r.db.QueryRowContext(ctx, "SELECT id, lesson_id, title, description, passing_score, created_at FROM tests WHERE id = $1", testID).
 		Scan(&t.ID, &t.LessonID, &t.Title, &t.Description, &t.PassingScore, &t.CreatedAt)
-	return t, err
+	if err != nil {
+		return nil, err
+	}
+	t.Questions = r.getTestQuestions(ctx, testID)
+	return t, nil
+}
+
+func (r *LearningRepoImpl) getTestQuestions(ctx context.Context, testID string) []domain.TestQuestion {
+	rows, err := r.db.QueryContext(ctx, "SELECT id, question, options, correct_answer, points FROM test_questions WHERE test_id = $1 ORDER BY created_at ASC", testID)
+	if err != nil {
+		return []domain.TestQuestion{}
+	}
+	defer rows.Close()
+	var questions []domain.TestQuestion
+	for rows.Next() {
+		var q domain.TestQuestion
+		var optionsRaw []byte
+		if err := rows.Scan(&q.ID, &q.Question, &optionsRaw, &q.CorrectAnswer, &q.Points); err != nil {
+			continue
+		}
+		if len(optionsRaw) > 0 {
+			json.Unmarshal(optionsRaw, &q.Options)
+		}
+		if q.Options == nil {
+			q.Options = []string{}
+		}
+		questions = append(questions, q)
+	}
+	return questions
 }
 
 func (r *LearningRepoImpl) GetProjectByID(ctx context.Context, projectID string) (*domain.Project, error) {

@@ -18,6 +18,13 @@ import (
 	storageService "lms_backend/pkg/storage"
 )
 
+// s3UploadTimeout is the maximum time allowed for a single S3 upload operation.
+const s3UploadTimeout = 30 * time.Second
+
+func s3Context(ctx context.Context) (context.Context, context.CancelFunc) {
+	return context.WithTimeout(ctx, s3UploadTimeout)
+}
+
 type ContentAdminUseCase struct {
 	repo      repository.ContentAdminRepository
 	s3Storage storageService.ObjectStorage
@@ -89,6 +96,7 @@ type CreateLessonInput struct {
 	PresentationFile *multipart.FileHeader
 	ContentText      string
 	Content          []domain.ContentBlock
+	HasHomework      bool
 }
 
 type ExtendedCreateUserInput struct {
@@ -190,7 +198,10 @@ func (uc *ContentAdminUseCase) UploadMedia(ctx context.Context, fileHeader *mult
 	s3Key := fmt.Sprintf("editor_content/%d_%s", time.Now().Unix(), fileHeader.Filename)
 	mimeType := fileHeader.Header.Get("Content-Type")
 
-	key, err := uc.s3Storage.UploadFile(ctx, file, s3Key, fileHeader.Size, mimeType)
+	s3Ctx, cancel := s3Context(ctx)
+	defer cancel()
+
+	key, err := uc.s3Storage.UploadFile(s3Ctx, file, s3Key, fileHeader.Size, mimeType)
 	if err != nil {
 		return "", fmt.Errorf("failed to upload to s3: %w", err)
 	}
@@ -214,7 +225,10 @@ func (uc *ContentAdminUseCase) CreateCourse(ctx context.Context, input CreateCou
 		s3Key := fmt.Sprintf("course_previews/%s", input.FileHeader.Filename)
 		mimeType := input.FileHeader.Header.Get("Content-Type")
 
-		s3KeyAfterUpload, err := uc.s3Storage.UploadFile(ctx, file, s3Key, input.FileHeader.Size, mimeType)
+		s3Ctx, cancel := s3Context(ctx)
+		defer cancel()
+
+		s3KeyAfterUpload, err := uc.s3Storage.UploadFile(s3Ctx, file, s3Key, input.FileHeader.Size, mimeType)
 		if err != nil {
 			return "", fmt.Errorf("failed to upload image to S3: %w", err)
 		}
@@ -254,8 +268,13 @@ func (uc *ContentAdminUseCase) UpdateCourseSettings(ctx context.Context, input U
 		s3Key := fmt.Sprintf("course_previews/%s_%s", input.CourseID, input.FileHeader.Filename)
 		mimeType := input.FileHeader.Header.Get("Content-Type")
 
-		key, err := uc.s3Storage.UploadFile(ctx, file, s3Key, input.FileHeader.Size, mimeType)
-		if err == nil {
+		s3Ctx, cancel := s3Context(ctx)
+		defer cancel()
+
+		key, err := uc.s3Storage.UploadFile(s3Ctx, file, s3Key, input.FileHeader.Size, mimeType)
+		if err != nil {
+			slog.Error("uploading cover_image to S3", slog.String("course_id", input.CourseID), slog.String("error", err.Error()))
+		} else {
 			imageURL, _ = uc.s3Storage.GetPublicURL(ctx, key)
 		}
 	}
@@ -413,7 +432,9 @@ func (uc *ContentAdminUseCase) CreateLesson(ctx context.Context, input CreateLes
 			return "", err
 		}
 		defer file.Close()
-		key, err := uc.s3Storage.UploadFile(ctx, file, "lessons/videos/"+input.VideoFile.Filename, input.VideoFile.Size, input.VideoFile.Header.Get("Content-Type"))
+		s3Ctx, cancel := s3Context(ctx)
+		defer cancel()
+		key, err := uc.s3Storage.UploadFile(s3Ctx, file, "lessons/videos/"+input.VideoFile.Filename, input.VideoFile.Size, input.VideoFile.Header.Get("Content-Type"))
 		if err != nil {
 			return "", err
 		}
@@ -436,6 +457,7 @@ func (uc *ContentAdminUseCase) CreateLesson(ctx context.Context, input CreateLes
 		PresentationURL: presentationURL,
 		ContentText:     input.ContentText,
 		Content:         input.Content,
+		HasHomework:     input.HasHomework,
 		IsPublished:     true,
 	}
 
@@ -825,6 +847,8 @@ func (uc *ContentAdminUseCase) UpdateLesson(ctx context.Context, lessonID string
 	if input.TeacherID != "" {
 		existing.TeacherID = input.TeacherID
 	}
+
+	existing.HasHomework = input.HasHomework
 
 	return uc.repo.UpdateLesson(ctx, existing)
 }
