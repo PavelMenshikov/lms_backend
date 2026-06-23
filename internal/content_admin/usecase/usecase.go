@@ -274,9 +274,9 @@ func (uc *ContentAdminUseCase) UpdateCourseSettings(ctx context.Context, input U
 		key, err := uc.s3Storage.UploadFile(s3Ctx, file, s3Key, input.FileHeader.Size, mimeType)
 		if err != nil {
 			slog.Error("uploading cover_image to S3", slog.String("course_id", input.CourseID), slog.String("error", err.Error()))
-		} else {
-			imageURL, _ = uc.s3Storage.GetPublicURL(ctx, key)
+			return fmt.Errorf("failed to upload cover image: %w", err)
 		}
+		imageURL, _ = uc.s3Storage.GetPublicURL(ctx, key)
 	}
 
 	course := &domain.Course{
@@ -461,7 +461,16 @@ func (uc *ContentAdminUseCase) CreateLesson(ctx context.Context, input CreateLes
 		IsPublished:     true,
 	}
 
-	return uc.repo.CreateLesson(ctx, lesson)
+	lessonID, err := uc.repo.CreateLesson(ctx, lesson)
+	if err != nil {
+		return "", err
+	}
+
+	if input.HasHomework {
+		_ = uc.repo.EnsureAssignment(ctx, lessonID, input.Title)
+	}
+
+	return lessonID, nil
 }
 
 func (uc *ContentAdminUseCase) DeleteLesson(ctx context.Context, id string) error {
@@ -850,7 +859,15 @@ func (uc *ContentAdminUseCase) UpdateLesson(ctx context.Context, lessonID string
 
 	existing.HasHomework = input.HasHomework
 
-	return uc.repo.UpdateLesson(ctx, existing)
+	if err := uc.repo.UpdateLesson(ctx, existing); err != nil {
+		return err
+	}
+
+	if input.HasHomework {
+		_ = uc.repo.EnsureAssignment(ctx, lessonID, existing.Title)
+	}
+
+	return nil
 }
 func (uc *ContentAdminUseCase) GetLesson(ctx context.Context, lessonID string) (*domain.Lesson, error) {
 	return uc.repo.GetLessonByID(ctx, lessonID)

@@ -59,6 +59,7 @@ type ContentAdminRepository interface {
 	GetLessonByID(ctx context.Context, id string) (*domain.Lesson, error)
 	CancelLesson(ctx context.Context, lessonID, reason string) error
 	SubstituteTeacher(ctx context.Context, lessonID, teacherID string) error
+	EnsureAssignment(ctx context.Context, lessonID, title string) error
 }
 
 type ContentAdminRepoImpl struct {

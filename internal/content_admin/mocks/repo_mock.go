@@ -165,3 +165,6 @@ func (m *ContentAdminRepoMock) CancelLesson(ctx context.Context, lessonID, reaso
 func (m *ContentAdminRepoMock) SubstituteTeacher(ctx context.Context, lessonID, teacherID string) error {
 	return nil
 }
+func (m *ContentAdminRepoMock) EnsureAssignment(ctx context.Context, lessonID, title string) error {
+	return nil
+}
