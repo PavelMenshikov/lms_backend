@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -69,7 +70,15 @@ func (c *S3Client) UploadFile(ctx context.Context, file io.Reader, key string, s
 	})
 
 	if err != nil {
-		return "", fmt.Errorf("failed to upload file to S3: %w", err)
+		slog.Error("S3 UploadFile failed",
+			slog.String("bucket", c.BucketName),
+			slog.String("key", key),
+			slog.String("endpoint", c.EndpointURL),
+			slog.Int64("size", size),
+			slog.String("mime_type", mimeType),
+			slog.String("error", err.Error()),
+		)
+		return "", fmt.Errorf("failed to upload file to S3 (bucket=%s, key=%s, endpoint=%s): %w", c.BucketName, key, c.EndpointURL, err)
 	}
 	return key, nil
 }

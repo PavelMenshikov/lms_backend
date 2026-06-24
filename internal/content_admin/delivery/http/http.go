@@ -232,7 +232,7 @@ func (h *ContentAdminHandler) UploadMedia(w http.ResponseWriter, r *http.Request
 	url, err := h.uc.UploadMedia(r.Context(), header)
 	if err != nil {
 		slog.Error("uploading media", logger.Err(err))
-		httperror.Internal(w, err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
