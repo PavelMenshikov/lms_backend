@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"mime"
 	"mime/multipart"
+	"path/filepath"
 	"time"
 
 	"lms_backend/internal/domain"
@@ -52,7 +54,13 @@ type SubmitAssignmentInput struct {
 func (uc *LearningUseCase) SubmitAssignment(ctx context.Context, input SubmitAssignmentInput) error {
 	assignmentID, err := uc.repo.GetAssignmentIDByLesson(ctx, input.LessonID)
 	if err != nil {
-		return fmt.Errorf("assignment not found: %w", err)
+		if err := uc.repo.EnsureAssignment(ctx, input.LessonID, ""); err != nil {
+			return fmt.Errorf("failed to ensure assignment: %w", err)
+		}
+		assignmentID, err = uc.repo.GetAssignmentIDByLesson(ctx, input.LessonID)
+		if err != nil {
+			return fmt.Errorf("assignment not found after ensure: %w", err)
+		}
 	}
 	var fileURLs []string
 	for _, fh := range input.FileHeaders {
@@ -64,7 +72,15 @@ func (uc *LearningUseCase) SubmitAssignment(ctx context.Context, input SubmitAss
 		s3Ctx, cancel := s3Context(ctx)
 		defer cancel()
 		s3Key := fmt.Sprintf("submissions/%s_%s_%s", input.UserID, assignmentID, fh.Filename)
-		key, err := uc.s3Storage.UploadFile(s3Ctx, file, s3Key, fh.Size, fh.Header.Get("Content-Type"))
+		mimeType := fh.Header.Get("Content-Type")
+		if mimeType == "" {
+			ext := filepath.Ext(fh.Filename)
+			mimeType = mime.TypeByExtension(ext)
+			if mimeType == "" {
+				mimeType = "application/octet-stream"
+			}
+		}
+		key, err := uc.s3Storage.UploadFile(s3Ctx, file, s3Key, fh.Size, mimeType)
 		if err != nil {
 			return err
 		}

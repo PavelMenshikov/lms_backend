@@ -3,10 +3,13 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"mime"
+	"mime/multipart"
+	"path/filepath"
+
 	"lms_backend/internal/domain"
 	"lms_backend/internal/profile/repository"
 	storageService "lms_backend/pkg/storage"
-	"mime/multipart"
 )
 
 type ProfileUseCase struct {
@@ -49,7 +52,15 @@ func (uc *ProfileUseCase) UpdateProfile(ctx context.Context, input UpdateProfile
 		defer file.Close()
 
 		s3Key := fmt.Sprintf("avatars/%s_%s", input.UserID, input.FileHeader.Filename)
-		key, err := uc.s3Storage.UploadFile(ctx, file, s3Key, input.FileHeader.Size, input.FileHeader.Header.Get("Content-Type"))
+		mimeType := input.FileHeader.Header.Get("Content-Type")
+		if mimeType == "" {
+			ext := filepath.Ext(input.FileHeader.Filename)
+			mimeType = mime.TypeByExtension(ext)
+			if mimeType == "" {
+				mimeType = "application/octet-stream"
+			}
+		}
+		key, err := uc.s3Storage.UploadFile(ctx, file, s3Key, input.FileHeader.Size, mimeType)
 		if err != nil {
 			return err
 		}

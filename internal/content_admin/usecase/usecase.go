@@ -7,7 +7,9 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"mime"
 	"mime/multipart"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -197,6 +199,13 @@ func (uc *ContentAdminUseCase) UploadMedia(ctx context.Context, fileHeader *mult
 
 	s3Key := fmt.Sprintf("editor_content/%d_%s", time.Now().Unix(), fileHeader.Filename)
 	mimeType := fileHeader.Header.Get("Content-Type")
+	if mimeType == "" {
+		ext := filepath.Ext(fileHeader.Filename)
+		mimeType = mime.TypeByExtension(ext)
+		if mimeType == "" {
+			mimeType = "application/octet-stream"
+		}
+	}
 
 	s3Ctx, cancel := s3Context(ctx)
 	defer cancel()
@@ -224,6 +233,13 @@ func (uc *ContentAdminUseCase) CreateCourse(ctx context.Context, input CreateCou
 
 		s3Key := fmt.Sprintf("course_previews/%s", input.FileHeader.Filename)
 		mimeType := input.FileHeader.Header.Get("Content-Type")
+		if mimeType == "" {
+			ext := filepath.Ext(input.FileHeader.Filename)
+			mimeType = mime.TypeByExtension(ext)
+			if mimeType == "" {
+				mimeType = "application/octet-stream"
+			}
+		}
 
 		s3Ctx, cancel := s3Context(ctx)
 		defer cancel()
@@ -267,6 +283,13 @@ func (uc *ContentAdminUseCase) UpdateCourseSettings(ctx context.Context, input U
 
 		s3Key := fmt.Sprintf("course_previews/%s_%s", input.CourseID, input.FileHeader.Filename)
 		mimeType := input.FileHeader.Header.Get("Content-Type")
+		if mimeType == "" {
+			ext := filepath.Ext(input.FileHeader.Filename)
+			mimeType = mime.TypeByExtension(ext)
+			if mimeType == "" {
+				mimeType = "application/octet-stream"
+			}
+		}
 
 		s3Ctx, cancel := s3Context(ctx)
 		defer cancel()
@@ -432,9 +455,17 @@ func (uc *ContentAdminUseCase) CreateLesson(ctx context.Context, input CreateLes
 			return "", err
 		}
 		defer file.Close()
+		mimeType := input.VideoFile.Header.Get("Content-Type")
+		if mimeType == "" {
+			ext := filepath.Ext(input.VideoFile.Filename)
+			mimeType = mime.TypeByExtension(ext)
+			if mimeType == "" {
+				mimeType = "application/octet-stream"
+			}
+		}
 		s3Ctx, cancel := s3Context(ctx)
 		defer cancel()
-		key, err := uc.s3Storage.UploadFile(s3Ctx, file, "lessons/videos/"+input.VideoFile.Filename, input.VideoFile.Size, input.VideoFile.Header.Get("Content-Type"))
+		key, err := uc.s3Storage.UploadFile(s3Ctx, file, "lessons/videos/"+input.VideoFile.Filename, input.VideoFile.Size, mimeType)
 		if err != nil {
 			return "", err
 		}

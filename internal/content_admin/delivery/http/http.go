@@ -262,6 +262,7 @@ func (h *ContentAdminHandler) UploadMedia(w http.ResponseWriter, r *http.Request
 // @Router /admin/courses/{id}/settings [put]
 func (h *ContentAdminHandler) UpdateCourseSettings(w http.ResponseWriter, r *http.Request) {
 	const MAX_UPLOAD_SIZE = 10 << 20
+	r.Body = http.MaxBytesReader(w, r.Body, MAX_UPLOAD_SIZE)
 	if err := r.ParseMultipartForm(MAX_UPLOAD_SIZE); err != nil {
 		http.Error(w, "File upload size exceeded limit.", http.StatusBadRequest)
 		return

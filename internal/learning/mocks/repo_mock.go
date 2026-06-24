@@ -13,6 +13,7 @@ type LearningRepoMock struct {
 	GetCourseContentFunc        func(ctx context.Context, courseID, userID string) (*domain.StudentCourseView, error)
 	GetLessonDetailFunc         func(ctx context.Context, lessonID, userID string) (*domain.StudentLessonDetail, error)
 	GetAssignmentIDByLessonFunc func(ctx context.Context, lessonID string) (string, error)
+	EnsureAssignmentFunc        func(ctx context.Context, lessonID, title string) error
 	SaveSubmissionFunc          func(ctx context.Context, userID, assignmentID, text string, files []string) error
 	SetLessonAttendanceFunc     func(ctx context.Context, userID, lessonID, status, recordingURL, teacherComment string) error
 	GetTeachersListFunc         func(ctx context.Context) ([]*domain.TeacherPublicInfo, error)
@@ -48,6 +49,10 @@ func (m *LearningRepoMock) GetLessonDetail(ctx context.Context, lessonID, userID
 
 func (m *LearningRepoMock) GetAssignmentIDByLesson(ctx context.Context, lessonID string) (string, error) {
 	return m.GetAssignmentIDByLessonFunc(ctx, lessonID)
+}
+
+func (m *LearningRepoMock) EnsureAssignment(ctx context.Context, lessonID, title string) error {
+	return m.EnsureAssignmentFunc(ctx, lessonID, title)
 }
 
 func (m *LearningRepoMock) SaveSubmission(ctx context.Context, userID, assignmentID, text string, files []string) error {

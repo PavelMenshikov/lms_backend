@@ -15,6 +15,7 @@ type LearningRepository interface {
 	GetCourseContent(ctx context.Context, courseID, userID string) (*domain.StudentCourseView, error)
 	GetLessonDetail(ctx context.Context, lessonID, userID string) (*domain.StudentLessonDetail, error)
 	GetAssignmentIDByLesson(ctx context.Context, lessonID string) (string, error)
+	EnsureAssignment(ctx context.Context, lessonID, title string) error
 	SaveSubmission(ctx context.Context, userID, assignmentID, text string, files []string) error
 	SetLessonAttendance(ctx context.Context, userID, lessonID, status, recordingURL, teacherComment string) error
 
@@ -274,6 +275,21 @@ func (r *LearningRepoImpl) GetAssignmentIDByLesson(ctx context.Context, lessonID
 	query := `SELECT id FROM assignments WHERE lesson_id = $1 LIMIT 1`
 	err := r.db.QueryRowContext(ctx, query, lessonID).Scan(&id)
 	return id, err
+}
+
+func (r *LearningRepoImpl) EnsureAssignment(ctx context.Context, lessonID, title string) error {
+	var exists bool
+	err := r.db.QueryRowContext(ctx, "SELECT EXISTS(SELECT 1 FROM assignments WHERE lesson_id = $1)", lessonID).Scan(&exists)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		_, err = r.db.ExecContext(ctx,
+			"INSERT INTO assignments (lesson_id, title, description, max_score) VALUES ($1, $2, '', 100)",
+			lessonID, title,
+		)
+	}
+	return err
 }
 
 func (r *LearningRepoImpl) SaveSubmission(ctx context.Context, userID, assignmentID, text string, files []string) error {
