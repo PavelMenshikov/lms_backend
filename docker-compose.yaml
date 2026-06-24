@@ -103,14 +103,12 @@ services:
   minio-init:
     image: minio/mc:latest
     container_name: cap-edu-minio-init
-    entrypoint: ["/bin/sh", "-c"]
-    command: >
-      until mc alias set myminio http://minio:9000 "$${MINIO_ROOT_USER}" "$${MINIO_ROOT_PASSWORD}"; do echo "waiting for minio..."; sleep 2; done && mc mb myminio/capeducation --ignore-existing && echo "bucket created"
-    depends_on:
-      - minio
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    entrypoint: ["/bin/sh", "-c", "until mc alias set myminio http://minio:9000 minioadmin f51b5e5fe3d1594b9bdda9fe611a2f7b; do sleep 2; done && mc mb myminio/capeducation --ignore-existing && echo bucket created"]
+    depends_on:
+      - minio
 
 volumes:
   postgres_data:
