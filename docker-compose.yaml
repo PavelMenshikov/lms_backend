@@ -104,13 +104,8 @@ services:
     image: minio/mc:latest
     container_name: cap-edu-minio-init
     entrypoint: ["/bin/sh", "-c"]
-    command: |
-      until mc alias set myminio http://minio:9000 "${MINIO_ROOT_USER}" "${MINIO_ROOT_PASSWORD}"; do
-        echo "waiting for minio..."
-        sleep 2
-      done
-      mc mb myminio/capeducation --ignore-existing
-      echo "bucket capeducation created"
+    command: >
+      until mc alias set myminio http://minio:9000 "$${MINIO_ROOT_USER}" "$${MINIO_ROOT_PASSWORD}"; do echo "waiting for minio..."; sleep 2; done && mc mb myminio/capeducation --ignore-existing && echo "bucket created"
     depends_on:
       - minio
     environment:
