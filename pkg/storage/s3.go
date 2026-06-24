@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"net/http"
+	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -57,7 +59,40 @@ func NewS3Client(endpoint, region, bucket, accessKey, secretKey string) (*S3Clie
 var _ ObjectStorage = (*S3Client)(nil)
 
 func (c *S3Client) GetPublicURL(ctx context.Context, key string) (string, error) {
-	return fmt.Sprintf("%s/%s/%s", c.EndpointURL, c.BucketName, key), nil
+	return "/api/files/" + key, nil
+}
+
+func (c *S3Client) ServeFile(w http.ResponseWriter, r *http.Request) {
+	key := strings.TrimPrefix(r.URL.Path, "/api/files/")
+	if key == "" {
+		http.Error(w, "file key is required", http.StatusBadRequest)
+		return
+	}
+
+	result, err := c.S3.GetObject(r.Context(), &s3.GetObjectInput{
+		Bucket: &c.BucketName,
+		Key:    &key,
+	})
+	if err != nil {
+		slog.Error("S3 GetObject failed",
+			slog.String("bucket", c.BucketName),
+			slog.String("key", key),
+			slog.String("error", err.Error()),
+		)
+		if strings.Contains(err.Error(), "NoSuchKey") {
+			http.Error(w, "file not found", http.StatusNotFound)
+		} else {
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+		}
+		return
+	}
+	defer result.Body.Close()
+
+	if result.ContentType != nil {
+		w.Header().Set("Content-Type", *result.ContentType)
+	}
+	w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+	io.Copy(w, result.Body)
 }
 
 func (c *S3Client) UploadFile(ctx context.Context, file io.Reader, key string, size int64, mimeType string) (string, error) {
